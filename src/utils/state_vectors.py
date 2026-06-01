@@ -1,8 +1,12 @@
 
 import math
 import torch
-from scipy.spatial.transform import Rotation
 from typing import Optional, Union
+
+try:
+    from .utils import as_rotation_matrix, quat_to_euler
+except Exception:
+    from utils import as_rotation_matrix, quat_to_euler
 
 
 class StateVectors:
@@ -32,10 +36,18 @@ class StateVectors:
         self._quat = torch.tensor([1.0, 0.0, 0.0, 0.0], dtype=self.datatype, device=self.device)  # [qw, qx, qy, qz]
         self._orient = torch.tensor([0.0, 0.0, 0.0], dtype=self.datatype, device=self.device) # -pi ~ pi
         self._R_mat = torch.eye(3, dtype=self.datatype, device=self.device) # identity matrix
-        self.R = Rotation.from_quat(self._quat.cpu().numpy(), scalar_first=True)
+        self.R = None
 
         self._linear_velocity = torch.tensor([0.0, 0.0, 0.0], dtype=self.datatype, device=self.device)
         self._angular_velocity = torch.tensor([0.0, 0.0, 0.0], dtype=self.datatype, device=self.device)
+
+    def _to_state_tensor(self, value, trailing_dim: int, name: str) -> torch.Tensor:
+        tensor = torch.as_tensor(value, dtype=self.datatype, device=self.device)
+        if tensor.shape[-1] != trailing_dim:
+            raise ValueError(
+                f"{name} must have trailing dim {trailing_dim}, got shape {tuple(tensor.shape)}"
+            )
+        return tensor
 
     @property
     def position(self):
@@ -84,7 +96,7 @@ class StateVectors:
         """
         # Update position if provided
         if position is not None:
-            self._position = position.to(dtype=self.datatype, device=self.device)
+            self._position = self._to_state_tensor(position, 3, "position")
         
         # Update orientation representations with priority handling
         if orient is not None and quat is not None:
@@ -100,10 +112,14 @@ class StateVectors:
         
         # Update velocities if provided
         if linear_velocity is not None:
-            self._linear_velocity = linear_velocity.to(dtype=self.datatype, device=self.device)
+            self._linear_velocity = self._to_state_tensor(
+                linear_velocity, 3, "linear_velocity"
+            )
         
         if angular_velocity is not None:
-            self._angular_velocity = angular_velocity.to(dtype=self.datatype, device=self.device)
+            self._angular_velocity = self._to_state_tensor(
+                angular_velocity, 3, "angular_velocity"
+            )
 
     def add(self, 
             position: Optional[torch.Tensor] = None,
@@ -126,7 +142,7 @@ class StateVectors:
         """
         # Add position increment if provided
         if position is not None:
-            position_increment = position.to(dtype=self.datatype, device=self.device)
+            position_increment = self._to_state_tensor(position, 3, "position")
             self._position = self._position + position_increment
         
         # Add orientation increments with priority handling
@@ -136,7 +152,7 @@ class StateVectors:
         
         if orient is not None:
             # Add to Euler angles and update other representations
-            orient_increment = orient.to(dtype=self.datatype, device=self.device)
+            orient_increment = self._to_state_tensor(orient, 3, "orient")
             new_orient = self._orient + orient_increment
             self._update_rotation_matrices_from_euler(new_orient)
             # new_R = Rotation.from_euler(self.euler_order, orient.cpu().numpy()) * self.R
@@ -145,46 +161,83 @@ class StateVectors:
             # self._update_rotation_matrices_from_quat(new_quat)
         elif quat is not None:
             # Add to quaternion and update other representations
-            quat_increment = quat.to(dtype=self.datatype, device=self.device)
+            quat_increment = self._to_state_tensor(quat, 4, "quat")
             new_quat = self._quat + quat_increment
             # Normalize quaternion after addition to maintain unit quaternion property
-            new_quat = new_quat / torch.norm(new_quat)
+            new_quat = new_quat / torch.clamp(
+                torch.norm(new_quat, dim=-1, keepdim=True),
+                min=torch.tensor(1e-12, dtype=self.datatype, device=self.device),
+            )
             self._update_rotation_matrices_from_quat(new_quat)
         
         # Add velocity increments if provided
         if linear_velocity is not None:
-            linear_velocity_increment = linear_velocity.to(dtype=self.datatype, device=self.device)
+            linear_velocity_increment = self._to_state_tensor(
+                linear_velocity, 3, "linear_velocity"
+            )
             self._linear_velocity = self._linear_velocity + linear_velocity_increment
         
         if angular_velocity is not None:
-            angular_velocity_increment = angular_velocity.to(dtype=self.datatype, device=self.device)
+            angular_velocity_increment = self._to_state_tensor(
+                angular_velocity, 3, "angular_velocity"
+            )
             self._angular_velocity = self._angular_velocity + angular_velocity_increment
 
     def _update_rotation_matrices_from_quat(self, quat: torch.Tensor):
         """Update rotation matrices from global quaternion [qw, qx, qy, qz]"""
+        quat = self._to_state_tensor(quat, 4, "quat")
+
         # Check if quaternion is not zero
         if torch.allclose(quat, torch.zeros_like(quat)):
-            quat_normalized = torch.tensor([1.0, 0.0, 0.0, 0.0]) # Use identity quaternion if input is zero
+            quat_normalized = torch.zeros_like(quat)
+            quat_normalized[..., 0] = 1.0
         else:
-            quat_normalized = quat / torch.norm(quat) # Normalize the quaternion to ensure it's a unit quaternion
+            quat_normalized = quat / torch.clamp(
+                torch.norm(quat, dim=-1, keepdim=True),
+                min=torch.tensor(1e-12, dtype=self.datatype, device=self.device),
+            )
 
         self._quat = quat_normalized.to(dtype=self.datatype, device=self.device)
 
         # Update orientation angles
-        self.R = Rotation.from_quat(quat_normalized.cpu().numpy(), scalar_first=True)  # [qw, qx, qy, qz]
-        self._orient = torch.tensor(self.R.as_euler(self.euler_order, degrees=False), dtype=self.datatype, device=self.device)
-        self._R_mat = torch.tensor(self.R.as_matrix(), dtype=self.datatype, device=self.device) # transfer to this frame from others
+        self.R = None
+        euler = quat_to_euler(self._quat[..., [1, 2, 3, 0]])
+        if isinstance(euler, tuple):
+            euler = torch.tensor(euler, dtype=self.datatype, device=self.device)
+        self._orient = euler.to(dtype=self.datatype, device=self.device)
+        self._R_mat = as_rotation_matrix(self._quat, order="wxyz").to(
+            dtype=self.datatype, device=self.device
+        )
 
     def _update_rotation_matrices_from_euler(self, euler: torch.Tensor):
         """Update rotation matrices from global Euler angles"""
+        euler = self._to_state_tensor(euler, 3, "orient")
         # -pi ~ pi
         euler = torch.remainder(euler + math.pi, 2*math.pi) - math.pi
         self._orient = euler.to(dtype=self.datatype, device=self.device)
 
-        # Update quaternions
-        self.R = Rotation.from_euler(self.euler_order, euler.cpu().numpy(), degrees=False)
-        self._quat = torch.tensor(self.R.as_quat(scalar_first=True), dtype=self.datatype, device=self.device)
-        self._R_mat = torch.tensor(self.R.as_matrix(), dtype=self.datatype, device=self.device) # transfer to this frame from others
+        roll = self._orient[..., 0]
+        pitch = self._orient[..., 1]
+        yaw = self._orient[..., 2]
+
+        cr = torch.cos(roll * 0.5)
+        sr = torch.sin(roll * 0.5)
+        cp = torch.cos(pitch * 0.5)
+        sp = torch.sin(pitch * 0.5)
+        cy = torch.cos(yaw * 0.5)
+        sy = torch.sin(yaw * 0.5)
+
+        qw = cr * cp * cy + sr * sp * sy
+        qx = sr * cp * cy - cr * sp * sy
+        qy = cr * sp * cy + sr * cp * sy
+        qz = cr * cp * sy - sr * sp * cy
+        self._quat = torch.stack([qw, qx, qy, qz], dim=-1).to(
+            dtype=self.datatype, device=self.device
+        )
+        self._R_mat = as_rotation_matrix(self._quat, order="wxyz").to(
+            dtype=self.datatype, device=self.device
+        )
+        self.R = None
 
     def to(self, device: Union[str, torch.device]):
         """Move all state tensors to the specified device"""

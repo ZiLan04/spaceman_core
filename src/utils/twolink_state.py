@@ -1,15 +1,13 @@
-import numpy as np
 import torch
-from scipy.spatial.transform import Rotation
 from typing import Optional
 
 # Extension APIs
 try:
     from .state_vectors import StateVectors
-    from .utils import reorder_quaternion
+    from .utils import quat_to_euler, reorder_quaternion
 except:
     from state_vectors import StateVectors
-    from utils import reorder_quaternion
+    from utils import quat_to_euler, reorder_quaternion
 
 class TwoLinkState:
     """
@@ -71,7 +69,7 @@ class TwoLinkState:
         self._R_parent_to_global = self._link_parent_global_state.R_mat
         
         # Update rotation matrices from global frame to parent link
-        self._R_global_to_parent = self._R_parent_to_global.T
+        self._R_global_to_parent = self._R_parent_to_global.transpose(-1, -2)
 
     def _update_child_rotation_matrices(self):
         """Update rotation matrices between child link and global frame"""
@@ -79,7 +77,7 @@ class TwoLinkState:
         self._R_child_to_global = self._link_child_global_state.R_mat
 
         # Update rotation matrices from parent link frame to child link frame
-        self._R_global_to_child = self._R_child_to_global.T
+        self._R_global_to_child = self._R_child_to_global.transpose(-1, -2)
 
     def _update_R_child_to_parent(self):
         """Update rotation matrices between parent link and child link"""
@@ -87,7 +85,7 @@ class TwoLinkState:
         self._R_child_to_parent = self._link_child_in_parent.R_mat
 
         # Update rotation matrices from parent link frame to child link frame
-        self._R_parent_to_child = self._R_child_to_parent.T
+        self._R_parent_to_child = self._R_child_to_parent.transpose(-1, -2)
 
     def update_parent_from_global_frame(self, 
                                position: Optional[torch.Tensor] = None,
@@ -141,24 +139,43 @@ class TwoLinkState:
         
         # 计算相对位置
         position_diff = child_global.position - parent_global.position
-        relative_position = torch.matmul(self._R_global_to_parent, position_diff)
+        relative_position = torch.matmul(
+            self._R_global_to_parent, position_diff.unsqueeze(-1)
+        ).squeeze(-1)
         
         # 计算相对旋转矩阵：R_child_in_parent = R_parent^T * R_child
         self._R_child_to_parent = torch.matmul(self._R_global_to_parent, self._R_child_to_global)
         
         # Update rotation matrices from parent link frame to child link frame
-        self._R_parent_to_child = self._R_child_to_parent.T
+        self._R_parent_to_child = self._R_child_to_parent.transpose(-1, -2)
 
-        # 将相对旋转矩阵转换为四元数
-        R_c2p_numpy = self._R_child_to_parent.cpu().numpy()
-        rotation_c2p = Rotation.from_matrix(R_c2p_numpy)
-        relative_quat = torch.tensor(rotation_c2p.as_quat(), # scalar-last [qx, qy, qz, qw]
-                                    dtype=self.datatype, device=self.device)
-        
+        parent_quat_xyzw = reorder_quaternion(parent_global.quat, "xyzw")
+        child_quat_xyzw = reorder_quaternion(child_global.quat, "xyzw")
+        parent_conj_xyzw = parent_quat_xyzw.clone()
+        parent_conj_xyzw[..., 0:3] = -parent_conj_xyzw[..., 0:3]
+
+        px, py, pz, pw = (
+            parent_conj_xyzw[..., 0],
+            parent_conj_xyzw[..., 1],
+            parent_conj_xyzw[..., 2],
+            parent_conj_xyzw[..., 3],
+        )
+        cx, cy, cz, cw = (
+            child_quat_xyzw[..., 0],
+            child_quat_xyzw[..., 1],
+            child_quat_xyzw[..., 2],
+            child_quat_xyzw[..., 3],
+        )
+        rel_x = pw * cx + px * cw + py * cz - pz * cy
+        rel_y = pw * cy - px * cz + py * cw + pz * cx
+        rel_z = pw * cz + px * cy - py * cx + pz * cw
+        rel_w = pw * cw - px * cx - py * cy - pz * cz
+        relative_quat_xyzw = torch.stack([rel_x, rel_y, rel_z, rel_w], dim=-1)
+        relative_quat = reorder_quaternion(relative_quat_xyzw, "wxyz")
         # 更新子连杆在父连杆坐标系下的状态
         self._link_child_in_parent.update(
             position=relative_position,
-            quat=relative_quat
+            quat=relative_quat,
         )
 
 

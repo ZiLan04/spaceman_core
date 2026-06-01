@@ -66,6 +66,11 @@ class Robot:
                 if camera_params:
                     self.wrist_camera = wrist_cam._cam
                     self.wrist_camera_enable_recording = self.wrist_camera_params.get("enable_recording", False)
+                    self.wrist_camera_episodes_per_video = max(
+                        1, int(self.wrist_camera_params.get("episodes_per_video", 5))
+                    )
+                    self._wrist_camera_recorded_episode_count = 0
+                    self._wrist_camera_video_segment_index = 0
                     self.logger.info(f"Wrist camera recording enabled: {self.wrist_camera_enable_recording}")
                 else:
                     self.logger.warning("No camera parameters found for wrist camera")
@@ -173,6 +178,10 @@ class Robot:
         self.logger.debug(f"Robot {self._robot_name} initialization completed")
         print(self.joints_info)
         print(self.links_info)
+        if hasattr(self, "_wrist_camera_recorded_episode_count"):
+            self._wrist_camera_recorded_episode_count = 0
+        if hasattr(self, "_wrist_camera_video_segment_index"):
+            self._wrist_camera_video_segment_index = 0
         # 启动腕部相机录制（如果启用）
         if hasattr(self, 'wrist_camera') and hasattr(self, 'wrist_camera_enable_recording'):
             if self.wrist_camera_enable_recording:
@@ -216,8 +225,14 @@ class Robot:
             torque = control_output.get('orientation')
             
             # 检查力和力矩是否非零
-            force_nonzero = force is not None and not torch.allclose(torch.tensor(force), torch.zeros_like(torch.tensor(force)))
-            torque_nonzero = torque is not None and not torch.allclose(torch.tensor(torque), torch.zeros_like(torch.tensor(torque)))
+            force_nonzero = False
+            torque_nonzero = False
+            if force is not None:
+                force_tensor = torch.as_tensor(force, dtype=self.datatype, device=self.device)
+                force_nonzero = not torch.allclose(force_tensor, torch.zeros_like(force_tensor))
+            if torque is not None:
+                torque_tensor = torch.as_tensor(torque, dtype=self.datatype, device=self.device)
+                torque_nonzero = not torch.allclose(torque_tensor, torch.zeros_like(torque_tensor))
             
             if force_nonzero or torque_nonzero:
                 self.apply_force(force=force, torque=torque, link_name=link_name)
@@ -230,9 +245,7 @@ class Robot:
         if hasattr(self, 'wrist_camera') and hasattr(self, 'wrist_camera_enable_recording'):
             if self.wrist_camera_enable_recording:
                 try:
-                    save_file = generate_filename(prefix=f"wrist_camera_{self._robot_name}", extension="mp4", folder_path="recordings")
-                    self.wrist_camera.stop_recording(save_to_filename=save_file, fps=60)
-                    self.logger.info(f"Wrist camera recording saved to: {save_file}")
+                    self._save_wrist_camera_segment()
                 except Exception as e:
                     self.logger.error(f"Failed to stop wrist camera recording: {e}")
         
@@ -244,6 +257,35 @@ class Robot:
             
         self.logger.info("All robot components stopped")
         return
+
+    def _save_wrist_camera_segment(self):
+        if not hasattr(self, "wrist_camera") or not getattr(self, "wrist_camera_enable_recording", False):
+            return
+        if not getattr(self.wrist_camera, "_in_recording", False):
+            return
+        if not getattr(self.wrist_camera, "_recorded_imgs", None):
+            return
+
+        self._wrist_camera_video_segment_index += 1
+        save_file = generate_filename(
+            prefix=f"wrist_camera_{self._robot_name}_ep_chunk_{self._wrist_camera_video_segment_index:04d}",
+            extension="mp4",
+            folder_path="recordings",
+        )
+        self.wrist_camera.stop_recording(save_to_filename=save_file, fps=60)
+        self.logger.info(f"Wrist camera recording saved to: {save_file}")
+
+    def on_episode_end(self, episode_count: int = 1):
+        if not hasattr(self, "wrist_camera") or not getattr(self, "wrist_camera_enable_recording", False):
+            return
+
+        self._wrist_camera_recorded_episode_count += max(0, int(episode_count))
+        if self._wrist_camera_recorded_episode_count < self.wrist_camera_episodes_per_video:
+            return
+
+        self._save_wrist_camera_segment()
+        self._wrist_camera_recorded_episode_count = 0
+        self.wrist_camera.start_recording()
 
     def reset(self):
         self.logger.info("Robot reset method called")
@@ -284,13 +326,29 @@ class Robot:
         force_tensor = self._format_wrench_input(force)
         torque_tensor = self._format_wrench_input(torque)
 
+        links_idx = link_idx
+        if force_tensor is not None and force_tensor.dim() == 2 and force_tensor.shape[0] > 1:
+            links_idx = [link_idx] * force_tensor.shape[0]
+        elif torque_tensor is not None and torque_tensor.dim() == 2 and torque_tensor.shape[0] > 1:
+            links_idx = [link_idx] * torque_tensor.shape[0]
+
         # Get the handle of the rigidbody that we will apply the force to
         if force_tensor is not None:
-            self._scene.sim.rigid_solver.apply_links_external_force(force=force_tensor, links_idx=link_idx)
-            self.logger.debug(f"Applied force {force_tensor.squeeze().tolist()} to link '{link_name}' (ID: {link_idx})")
+            self._scene.sim.rigid_solver.apply_links_external_force(
+                force=force_tensor,
+                links_idx=links_idx,
+            )
+            self.logger.debug(
+                f"Applied force with shape {tuple(force_tensor.shape)} to link '{link_name}' (ID: {link_idx})"
+            )
         if torque_tensor is not None:
-            self._scene.sim.rigid_solver.apply_links_external_torque(torque=torque_tensor, links_idx=link_idx)
-            self.logger.debug(f"Applied torque {torque_tensor.squeeze().tolist()} to link '{link_name}' (ID: {link_idx})")
+            self._scene.sim.rigid_solver.apply_links_external_torque(
+                torque=torque_tensor,
+                links_idx=links_idx,
+            )
+            self.logger.debug(
+                f"Applied torque with shape {tuple(torque_tensor.shape)} to link '{link_name}' (ID: {link_idx})"
+            )
         # print("Yes")
         
     def _format_wrench_input(self, vec):
@@ -302,12 +360,16 @@ class Robot:
         else:
             vec = vec.to(dtype=self.datatype, device=self.device)
 
-        if vec.numel() != 3:
-            error_msg = f"Wrench inputs must contain exactly 3 elements, got shape {tuple(vec.shape)}"
+        if vec.shape[-1] != 3:
+            error_msg = f"Wrench inputs must have trailing dim 3, got shape {tuple(vec.shape)}"
             self.logger.error(error_msg)
             raise ValueError(error_msg)
-        
-        vec = vec.reshape(1, 3)
+
+        if vec.dim() == 1:
+            vec = vec.reshape(1, 3)
+        elif vec.dim() > 2:
+            error_msg = f"Wrench inputs must be shape (3,) or (N, 3), got {tuple(vec.shape)}"
+            self.logger.error(error_msg)
+            raise ValueError(error_msg)
 
         return vec
-

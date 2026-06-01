@@ -18,6 +18,13 @@ from controllers.smooth_IK_solver import SmoothIKSolver
 from controllers.pid import PIDController
 from utils.setup_logger import setup_logger
 
+
+def _round_nested(value, digits: int = 5):
+    if isinstance(value, list):
+        return [_round_nested(v, digits) for v in value]
+    return round(float(value), digits)
+
+
 class Manipulator(Robot):
     def __init__(
         self,
@@ -42,7 +49,13 @@ class Manipulator(Robot):
             
             # 检查是否启用PID控制器
             if manipulator_pid_params.get("enable_pid", False):
-                manipulator_pid_params["setpoint"] = torch.cat([self.ee_state.link_parent_global_state.position, self.ee_state.link_parent_global_state.orient])
+                manipulator_pid_params["setpoint"] = torch.cat(
+                    [
+                        self.ee_state.link_parent_global_state.position,
+                        self.ee_state.link_parent_global_state.orient,
+                    ],
+                    dim=-1,
+                )
                 
                 pid_controller = PIDController(
                     P=manipulator_pid_params["P"],
@@ -104,6 +117,9 @@ class Manipulator(Robot):
         # gripper states
         self.gripper_value = torch.tensor(self.params["finger_open"][0], dtype=self.datatype, device=self.device)  # absolute value for gripper
         self.gripper_state = 1.0  # gripper state within range of [0, 1], and 1 for hand open
+        self.base_pose_batch = None
+        self.ee_pose_batch = None
+        self.pid_enabled = hasattr(self, "pid")
 
     """
     Properties
@@ -164,12 +180,13 @@ class Manipulator(Robot):
                 [
                     self.ee_state.link_parent_global_state.position.detach().clone(),
                     self.ee_state.link_parent_global_state.orient.detach().clone(),
-                ]
+                ],
+                dim=-1,
             )
             self.pid.update_setpoint(base_pose_setpoint)
             self.logger.info(
                 "Base PID setpoint initialized to current base pose: %s",
-                [round(x, 5) for x in base_pose_setpoint.detach().cpu().tolist()],
+                _round_nested(base_pose_setpoint.detach().cpu().tolist()),
             )
 
         self.logger.info(f"End effector state initialized: {self.ee_state}")
@@ -215,19 +232,43 @@ class Manipulator(Robot):
         self.logger.debug("Robot configuration applied")
 
     def update_state(self):
-        # Update end effector's base's position and attitude
+        base_pos = torch.as_tensor(self.base.get_pos(), dtype=self.datatype, device=self.device)
+        base_quat = torch.as_tensor(self.base.get_quat(), dtype=self.datatype, device=self.device)
+        ee_pos = torch.as_tensor(self.end_effector.get_pos(), dtype=self.datatype, device=self.device)
+        ee_quat = torch.as_tensor(self.end_effector.get_quat(), dtype=self.datatype, device=self.device)
+
+        if base_pos.dim() == 1:
+            base_pos_batch = base_pos.unsqueeze(0)
+            base_quat_batch = base_quat.unsqueeze(0)
+            ee_pos_batch = ee_pos.unsqueeze(0)
+            ee_quat_batch = ee_quat.unsqueeze(0)
+        else:
+            base_pos_batch = base_pos
+            base_quat_batch = base_quat
+            ee_pos_batch = ee_pos
+            ee_quat_batch = ee_quat
+
+        self.base_pose_batch = {
+            "position": base_pos_batch,
+            "quat": base_quat_batch,
+        }
+        self.ee_pose_batch = {
+            "position": ee_pos_batch,
+            "quat": ee_quat_batch,
+        }
+
+        # Update end effector's base and child state with either single-env or
+        # batched pose tensors. The state containers now support both shapes.
         self.ee_state.update_parent_from_global_frame(
-            position=self.base.get_pos(),
-            quat=self.base.get_quat(),  # quaternion: [qw, qx, qy, qz]
+            position=base_pos_batch if base_pos.dim() > 1 else base_pos_batch[0],
+            quat=base_quat_batch if base_quat.dim() > 1 else base_quat_batch[0],  # quaternion: [qw, qx, qy, qz]
         )
 
-        # Update end effector's position and attitude
         self.ee_state.update_child_from_global_frame(
-            position=self.end_effector.get_pos(),
-            quat=self.end_effector.get_quat(),  # quaternion: [qw, qx, qy, qz]
+            position=ee_pos_batch if ee_pos.dim() > 1 else ee_pos_batch[0],
+            quat=ee_quat_batch if ee_quat.dim() > 1 else ee_quat_batch[0],  # quaternion: [qw, qx, qy, qz]
         )
 
-        # Update end effector's position and attitude regard to base link
         self.ee_state.update_child_in_parent()
     
     def step(self):
@@ -238,6 +279,8 @@ class Manipulator(Robot):
             sensor.step()
 
         for backend in self._backends:
+            if backend is getattr(self, "pid", None) and not self.pid_enabled:
+                continue
             if hasattr(backend, 'update_state') and self._base_state:
                 backend.update_state(
                     position=self.ee_state.link_parent_global_state.position, 
@@ -248,6 +291,26 @@ class Manipulator(Robot):
             if hasattr(backend, 'input_reference'):
                 control_output = backend.input_reference()
                 self._apply_control_output(control_output=control_output, link_name=self.params["base"])
+
+    def set_pid_enabled(self, enabled: bool):
+        self.pid_enabled = bool(enabled) and hasattr(self, "pid")
+        if hasattr(self, "pid") and hasattr(self.pid, "set_enabled"):
+            self.pid.set_enabled(self.pid_enabled)
+        return self.pid_enabled
+
+    def capture_current_base_pose_as_pid_setpoint(self):
+        if not hasattr(self, "pid"):
+            raise RuntimeError("PID backend is not configured for this manipulator.")
+        self.update_state()
+        base_pose_setpoint = torch.cat(
+            [
+                self.ee_state.link_parent_global_state.position.detach().clone(),
+                self.ee_state.link_parent_global_state.orient.detach().clone(),
+            ],
+            dim=-1 if self.ee_state.link_parent_global_state.position.dim() > 1 else 0,
+        )
+        self.pid.update_setpoint(base_pose_setpoint)
+        return base_pose_setpoint
     
     def control_joints(self, position, quaternion):
         """
@@ -382,14 +445,22 @@ class Manipulator(Robot):
         if qpos_fingers.numel() == 0:
             raise ValueError("gripper qpos array is empty")
 
-        # Store absolute gripper joint position as a torch scalar
-        self.gripper_value = qpos_fingers[0, 0] if qpos_fingers.dim() == 2 else qpos_fingers.reshape(-1)[0]
+        if qpos_fingers.dim() == 1:
+            self.gripper_value = qpos_fingers.reshape(-1)[0]
+        else:
+            self.gripper_value = qpos_fingers[:, 0]
 
         # Normalize to [0, 1] using configured open/close endpoints
         finger_close_0 = self.finger_close.reshape(-1)[0]
         finger_open_0 = self.finger_open.reshape(-1)[0]
         mapped = map_to_range(self.gripper_value, finger_close_0, finger_open_0, 0.0, 1.0)
-        self.gripper_state = float(mapped.detach().cpu().item()) if isinstance(mapped, torch.Tensor) else float(mapped)
+        if isinstance(mapped, torch.Tensor):
+            if mapped.dim() == 0:
+                self.gripper_state = float(mapped.detach().cpu().item())
+            else:
+                self.gripper_state = mapped.detach().clone()
+        else:
+            self.gripper_state = float(mapped)
         return self.gripper_value
 
     def show_info(self):

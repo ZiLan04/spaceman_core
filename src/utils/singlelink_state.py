@@ -1,6 +1,4 @@
-import numpy as np
 import torch
-from scipy.spatial.transform import Rotation
 from typing import Optional, Union
 
 # Extension APIs
@@ -59,7 +57,7 @@ class SingleLinkState:
             return tensor.to(self.device)
         return tensor
 
-    def _to_tensor(self, array: np.ndarray) -> torch.Tensor:
+    def _to_tensor(self, array) -> torch.Tensor:
         """Convert numpy array to tensor on the correct device"""
         return torch.tensor(array, dtype=self.datatype, device=self.device)
     
@@ -86,10 +84,10 @@ class SingleLinkState:
 
     def __repr__(self):
         return (f"State(euler_order='{self.euler_order}', device='{self.device}')\n"
-                f"Global Position: {self.position_global.cpu().numpy()}\n"
-                f"Global Orientation: {self.orient_global.cpu().numpy()}\n"
-                f"Body Position: {self.position_body.cpu().numpy()}\n"
-                f"Body Orientation: {self.orient_body.cpu().numpy()}")
+                f"Global Position: {self.position_global.detach().cpu().numpy()}\n"
+                f"Global Orientation: {self.orient_global.detach().cpu().numpy()}\n"
+                f"Body Position: {self.position_body.detach().cpu().numpy()}\n"
+                f"Body Orientation: {self.orient_body.detach().cpu().numpy()}")
 
     @property
     def global_state(self):
@@ -151,7 +149,7 @@ class SingleLinkState:
     @property
     def R_global_to_body(self):
         """Warning: as_quat() [qx, qy, qz, qw]."""
-        return self._global_state._R_mat.T
+        return self._global_state._R_mat.transpose(-1, -2)
 
     def _update_rotation_matrices(self):
         """Update rotation matrices based on global quaternion"""
@@ -162,7 +160,7 @@ class SingleLinkState:
             self._R_body_to_global = self._global_state._R_mat
             
             # Update rotation from global to body
-            self._R_global_to_body = self._R_body_to_global.T        
+            self._R_global_to_body = self._R_body_to_global.transpose(-1, -2)
 
     def _synchronize_global_to_body(self):
         """Transform velocities from global frame to body frame.
@@ -175,8 +173,12 @@ class SingleLinkState:
         ang_vel_global = self._global_state.angular_velocity
         
         # Use rotation matrix from global frame to body frame
-        linear_velocity_body = self.R_global_to_body @ lin_vel_global
-        angular_velocity_body = self.R_global_to_body @ ang_vel_global
+        linear_velocity_body = torch.matmul(
+            self.R_global_to_body, lin_vel_global.unsqueeze(-1)
+        ).squeeze(-1)
+        angular_velocity_body = torch.matmul(
+            self.R_global_to_body, ang_vel_global.unsqueeze(-1)
+        ).squeeze(-1)
         self._body_state.update(
             linear_velocity=linear_velocity_body,
             angular_velocity=angular_velocity_body
@@ -193,8 +195,12 @@ class SingleLinkState:
         ang_vel_body = self._body_state.angular_velocity
         
         # Use rotation matrix from body frame to global frame
-        linear_velocity_global = self.R_body_to_global @ lin_vel_body
-        angular_velocity_global = self.R_body_to_global @ ang_vel_body
+        linear_velocity_global = torch.matmul(
+            self.R_body_to_global, lin_vel_body.unsqueeze(-1)
+        ).squeeze(-1)
+        angular_velocity_global = torch.matmul(
+            self.R_body_to_global, ang_vel_body.unsqueeze(-1)
+        ).squeeze(-1)
         self._global_state.update(
             linear_velocity=linear_velocity_global,
             angular_velocity=angular_velocity_global

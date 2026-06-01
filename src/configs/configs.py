@@ -60,25 +60,34 @@ SCENE_SETTINGS = {
         show_world_frame=True,
         visualize_mpm_boundary=False,
     ),
-    "show_viewer": False,
+    "show_viewer": True,
     "show_FPS": False,
 }
 
 TPV_CAM_SETTINGS = {
     "camera": {
         "res": (640, 480),
-        "pos": (-2.5, -3.0, 2.5),
-        "lookat": (0, 0, 0.5),
+        "pos": (-3.0, -3.5, 2.5),
+        "lookat": (0, 0.5, 0.5),
         "fov": 40,
         "far": 100.0,
         "GUI": True,
     },
-    "enable_recording": True  # 控制是否启用录制的flag
+    "enable_recording": True,  # 控制是否启用录制的flag
+    "episodes_per_video": 10,
+}
+
+PARALLEL_ENV_SETTINGS = {
+    "num_envs": 1,
+    "env_spacing": (10.0, 10.0),
+    "n_envs_per_row": None,
+    "center_envs_at_origin": True,
 }
 
 __all__ = [
     'APP_SETTINGS',
     'EARTH_BACKGROUND_SETTINGS',
+    'PARALLEL_ENV_SETTINGS',
     'SCENE_SETTINGS', 
     'SPACE_BACKGROUND_SETTINGS',
     'TPV_CAM_SETTINGS',

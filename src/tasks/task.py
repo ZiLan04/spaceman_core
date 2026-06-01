@@ -48,7 +48,11 @@ class Task(abc.ABC):
     def __init__(
         self,
         task_name: str,
-        logger: logging.Logger = None
+        logger: logging.Logger = None,
+        num_envs: int = None,
+        env_spacing=None,
+        n_envs_per_row=None,
+        center_envs_at_origin: bool = None,
     ):
         """
         Initialize a task
@@ -58,11 +62,20 @@ class Task(abc.ABC):
             logger: Logger instance for task logging
         """
         self.task_name = task_name
-        
-        self.gsim = GenesisSim()
+
+        self.gsim = GenesisSim(
+            num_envs=num_envs,
+            env_spacing=env_spacing,
+            n_envs_per_row=n_envs_per_row,
+            center_envs_at_origin=center_envs_at_origin,
+        )
         self._scene = self.gsim.scene
         self.device = self.gsim.device
         self.datatype = self.gsim.datatype
+        self.num_envs = self.gsim.num_envs
+        self.env_spacing = self.gsim.env_spacing
+        self.n_envs_per_row = self.gsim.n_envs_per_row
+        self.center_envs_at_origin = self.gsim.center_envs_at_origin
         
         # Setup logger
         self.logger = logger if logger else setup_task_logger(task_name)

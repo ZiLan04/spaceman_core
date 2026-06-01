@@ -94,6 +94,13 @@ class WristCamera(Backend):
         # 转换为张量
         position = torch.tensor(position, dtype=self.datatype, device=self.device)
         quaternion = torch.tensor(quaternion, dtype=self.datatype, device=self.device)
+
+        # A single Genesis camera can only render one env at a time. When the
+        # robot state is batched, default to env 0 for wrist-camera rendering.
+        if position.dim() > 1:
+            position = position[0]
+        if quaternion.dim() > 1:
+            quaternion = quaternion[0]
         
         # 使用配置中的偏移参数计算相机位姿
         pos_offset = self.config.get("pos_offset", DEFAULT_WRIST_CAM_SETTINGS["pos_offset"])

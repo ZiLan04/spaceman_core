@@ -11,27 +11,24 @@ project_src_path = current_file_path.parent
 project_root_path = project_src_path.parent
 sys.path.append(str(project_src_path))
 
-from tasks.RL_task import PPO, SatelliteSideGraspEnv, gym, spaces
+from tasks.RL_task_parallel import PPO, gym, make_parallel_vec_env, spaces
 
 try:
     from stable_baselines3.common.callbacks import CheckpointCallback
-    from stable_baselines3.common.vec_env import DummyVecEnv, VecMonitor
 except Exception:
     CheckpointCallback = None
-    DummyVecEnv = None
-    VecMonitor = None
-
-
-def build_env(target_asset: str):
-    return SatelliteSideGraspEnv(target_asset_name=target_asset)
 
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description="Train PPO for the satellite side-edge grasp task."
+        description="Train PPO for the batched satellite side-edge grasp task."
     )
     parser.add_argument("--total-timesteps", type=int, default=200_000)
-    parser.add_argument("--save-dir", type=str, default="outputs/rl/ppo_satellite_side_grasp")
+    parser.add_argument(
+        "--save-dir",
+        type=str,
+        default="outputs/rl/ppo_satellite_side_grasp_parallel",
+    )
     parser.add_argument("--run-name", type=str, default="")
     parser.add_argument("--learning-rate", type=float, default=3e-4)
     parser.add_argument("--n-steps", type=int, default=1024)
@@ -52,6 +49,34 @@ def parse_args():
         help="Training device for PPO. Use 'auto', 'cuda', 'cuda:0', or 'cpu'.",
     )
     parser.add_argument("--target-asset", type=str, default="starlink")
+    parser.add_argument("--num-envs", type=int, default=2)
+    parser.add_argument(
+        "--env-spacing",
+        type=float,
+        nargs=2,
+        metavar=("X", "Y"),
+        default=(10.0, 10.0),
+        help="Spacing between parallel env replicas in the Genesis batched scene.",
+    )
+    parser.add_argument(
+        "--n-envs-per-row",
+        type=int,
+        default=None,
+        help="Optional row width for env grid layout.",
+    )
+    parser.add_argument(
+        "--center-envs-at-origin",
+        dest="center_envs_at_origin",
+        action="store_true",
+        help="Center the env grid around the origin.",
+    )
+    parser.add_argument(
+        "--no-center-envs-at-origin",
+        dest="center_envs_at_origin",
+        action="store_false",
+        help="Do not center the env grid around the origin.",
+    )
+    parser.set_defaults(center_envs_at_origin=True)
     return parser.parse_args()
 
 
@@ -72,7 +97,7 @@ def ensure_dependencies():
         missing.append("gymnasium")
     if PPO is None:
         missing.append("stable-baselines3")
-    if CheckpointCallback is None or DummyVecEnv is None or VecMonitor is None:
+    if CheckpointCallback is None:
         missing.append("stable-baselines3 common utilities")
 
     if missing:
@@ -107,6 +132,10 @@ def save_run_config(run_dir: Path, args):
         "seed": args.seed,
         "checkpoint_freq": args.checkpoint_freq,
         "target_asset": args.target_asset,
+        "num_envs": args.num_envs,
+        "env_spacing": list(args.env_spacing),
+        "n_envs_per_row": args.n_envs_per_row,
+        "center_envs_at_origin": args.center_envs_at_origin,
     }
     with open(run_dir / "train_config.json", "w", encoding="utf-8") as f:
         json.dump(config, f, indent=2, ensure_ascii=False)
@@ -121,8 +150,13 @@ def train():
     run_dir = make_run_dir(base_dir, args.run_name)
     save_run_config(run_dir, args)
 
-    env = DummyVecEnv([lambda: build_env(args.target_asset)])
-    env = VecMonitor(env)
+    env = make_parallel_vec_env(
+        num_envs=args.num_envs,
+        target_asset=args.target_asset,
+        env_spacing=tuple(args.env_spacing),
+        n_envs_per_row=args.n_envs_per_row,
+        center_envs_at_origin=args.center_envs_at_origin,
+    )
 
     checkpoint_dir = run_dir / "checkpoints"
     checkpoint_dir.mkdir(parents=True, exist_ok=True)
@@ -130,7 +164,7 @@ def train():
     checkpoint_callback = CheckpointCallback(
         save_freq=max(1, args.checkpoint_freq),
         save_path=str(checkpoint_dir),
-        name_prefix="ppo_satellite_side_grasp",
+        name_prefix="ppo_satellite_side_grasp_parallel",
     )
 
     model = PPO(
@@ -152,7 +186,8 @@ def train():
         tensorboard_log=str(run_dir / "tensorboard"),
     )
 
-    print(f"Using PPO training device: {training_device}")
+    print(f"Using batched PPO training device: {training_device}")
+    print(f"Using Genesis batched scene count: {args.num_envs}")
 
     model.learn(
         total_timesteps=args.total_timesteps,

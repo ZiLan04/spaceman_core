@@ -187,7 +187,7 @@ def calculate_camera_pose(wrist_position, wrist_quaternion,
     
     # 计算相机的朝向方向（假设相机朝向手腕的z轴负方向）
     transform_matrix = as_transform_matrix(wrist_position, wrist_quaternion)
-    rotation_matrix = transform_matrix[:3, :3]  # 3x3旋转矩阵
+    rotation_matrix = transform_matrix[..., :3, :3]  # 3x3旋转矩阵
     
     # 相机位置：手腕位置 + 旋转后的偏移量
     pos = wrist_position + torch.matmul(rotation_matrix, pos_offset)
@@ -238,11 +238,25 @@ def as_rotation_matrix(quaternion, order="wxyz"):
     返回:
         rotation_matrix: 旋转矩阵
     """
+    quaternion = torch.as_tensor(quaternion)
+    if quaternion.shape[-1] != 4:
+        raise ValueError(f"Quaternion must have 4 elements, got shape {tuple(quaternion.shape)}")
+
     # 提取四元数分量
     if order in ["wxyz", "qwqxqyqz"]:
-        qw, qx, qy, qz = quaternion[0], quaternion[1], quaternion[2], quaternion[3]
+        qw, qx, qy, qz = (
+            quaternion[..., 0],
+            quaternion[..., 1],
+            quaternion[..., 2],
+            quaternion[..., 3],
+        )
     elif order in ["xyzw", "qxqyqzqw"]:
-        qx, qy, qz, qw = quaternion[0], quaternion[1], quaternion[2], quaternion[3]
+        qx, qy, qz, qw = (
+            quaternion[..., 0],
+            quaternion[..., 1],
+            quaternion[..., 2],
+            quaternion[..., 3],
+        )
     else:
         raise ValueError(f"不支持的顺序格式: {order}。支持的格式: 'wxyz', 'xyzw', 'qwqxqyqz', 'qxqyqzqw'")
     
@@ -262,13 +276,12 @@ def as_rotation_matrix(quaternion, order="wxyz"):
     r12 = 2*(qy*qz - qw*qx)
     r22 = 1 - 2*(qx*qx + qy*qy)
     
-    # 构建旋转矩阵
-    rotation_matrix = torch.tensor([
-        [r00, r01, r02],
-        [r10, r11, r12],
-        [r20, r21, r22]
-    ], device=quaternion.device, dtype=quaternion.dtype)
-    
+    # 构建旋转矩阵，兼容单体 [3, 3] 和 batch [N, 3, 3]
+    row0 = torch.stack([r00, r01, r02], dim=-1)
+    row1 = torch.stack([r10, r11, r12], dim=-1)
+    row2 = torch.stack([r20, r21, r22], dim=-1)
+    rotation_matrix = torch.stack([row0, row1, row2], dim=-2)
+
     return rotation_matrix
 
 def as_transform_matrix(position, quaternion, order="wxyz"):
@@ -283,39 +296,64 @@ def as_transform_matrix(position, quaternion, order="wxyz"):
     返回:
         torch.Tensor: 4x4变换矩阵
     """
+    position = torch.as_tensor(position)
+    quaternion = torch.as_tensor(quaternion, device=position.device, dtype=position.dtype)
+
+    if position.shape[-1] != 3:
+        raise ValueError(f"Position must have 3 elements, got shape {tuple(position.shape)}")
+
     device = position.device
     dtype = position.dtype
     
     # 使用as_rotation_matrix函数获取3x3旋转矩阵
     rotation_matrix = as_rotation_matrix(quaternion, order=order)
     
-    # 构建4x4变换矩阵
-    transform_matrix = torch.eye(4, device=device, dtype=dtype)
-    transform_matrix[:3, :3] = rotation_matrix
-    transform_matrix[:3, 3] = position
+    if rotation_matrix.dim() == 2:
+        transform_matrix = torch.eye(4, device=device, dtype=dtype)
+        transform_matrix[:3, :3] = rotation_matrix
+        transform_matrix[:3, 3] = position
+        return transform_matrix
+
+    batch_size = rotation_matrix.shape[0]
+    transform_matrix = torch.eye(4, device=device, dtype=dtype).unsqueeze(0).repeat(batch_size, 1, 1)
+    transform_matrix[:, :3, :3] = rotation_matrix
+    transform_matrix[:, :3, 3] = position
     
     return transform_matrix
 
 def quaternion_conjugate(q, order="xyzw"):
     """[qx, qy, qz, qw] -> [-qx, -qy, -qz, qw]"""
+    q = torch.as_tensor(q)
+    if q.shape[-1] != 4:
+        raise ValueError(f"Quaternion must have 4 elements, got shape {tuple(q.shape)}")
     if order in ["xyzw", "qxqyqzqw"]:
-        return torch.tensor([-q[0], -q[1], -q[2], q[3]], 
-                        dtype=q.dtype, device=q.device)
-    elif order in ["wxyzw", "qwqxqyqz"]:
-        return torch.tensor([q[0], -q[1], -q[2], -q[3]], 
-                        dtype=q.dtype, device=q.device)
+        result = q.clone()
+        result[..., 0:3] = -result[..., 0:3]
+        return result
+    elif order in ["wxyz", "qwqxqyqz"]:
+        result = q.clone()
+        result[..., 1:4] = -result[..., 1:4]
+        return result
+    raise ValueError(f"Unsupported quaternion order: {order}")
 
 def quaternion_multiply(q1, q2):
     """[qx, qy, qz, qw]"""
-    x1, y1, z1, w1 = q1[0], q1[1], q1[2], q1[3]
-    x2, y2, z2, w2 = q2[0], q2[1], q2[2], q2[3]
+    q1 = torch.as_tensor(q1)
+    q2 = torch.as_tensor(q2, device=q1.device, dtype=q1.dtype)
+    if q1.shape[-1] != 4 or q2.shape[-1] != 4:
+        raise ValueError(
+            f"Quaternion multiply expects trailing dim 4, got {tuple(q1.shape)} and {tuple(q2.shape)}"
+        )
+
+    x1, y1, z1, w1 = q1[..., 0], q1[..., 1], q1[..., 2], q1[..., 3]
+    x2, y2, z2, w2 = q2[..., 0], q2[..., 1], q2[..., 2], q2[..., 3]
     
     x = w1 * x2 + x1 * w2 + y1 * z2 - z1 * y2
     y = w1 * y2 - x1 * z2 + y1 * w2 + z1 * x2
     z = w1 * z2 + x1 * y2 - y1 * x2 + z1 * w2
     w = w1 * w2 - x1 * x2 - y1 * y2 - z1 * z2
     
-    return torch.stack([x, y, z, w])  
+    return torch.stack([x, y, z, w], dim=-1)
 
 
 def map_to_range(x, x_close, x_open, new_close, new_open):
@@ -350,7 +388,7 @@ def map_to_range(x, x_close, x_open, new_close, new_open):
         out_of_range = (x_t < x_min) | (x_t > x_max)
         try:
             if out_of_range.any().item():
-                print(f"警告: x 不在原区间 [{x_min.item()}, {x_max.item()}] 内")
+                pass
         except Exception:
             pass
 
@@ -396,7 +434,15 @@ def quat_to_euler(quat):
         tuple: (roll, pitch, yaw)
     """
     from scipy.spatial.transform import Rotation
-    # scipy使用 [x, y, z, w] 格式
-    rotation = Rotation.from_quat(quat)
+
+    quat = torch.as_tensor(quat)
+    if quat.shape[-1] != 4:
+        raise ValueError(f"Quaternion must have 4 elements, got shape {tuple(quat.shape)}")
+
+    quat_np = quat.detach().cpu().numpy()
+    rotation = Rotation.from_quat(quat_np)
     euler = rotation.as_euler('xyz', degrees=False)
-    return euler[0], euler[1], euler[2]
+
+    if quat.dim() == 1:
+        return euler[0], euler[1], euler[2]
+    return torch.as_tensor(euler, dtype=quat.dtype, device=quat.device)

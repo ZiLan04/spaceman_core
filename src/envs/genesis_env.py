@@ -10,6 +10,7 @@ sys.path.append(str(current_file_path.parent))
 from configs.configs import (
     APP_SETTINGS,
     EARTH_BACKGROUND_SETTINGS,
+    PARALLEL_ENV_SETTINGS,
     SCENE_SETTINGS,
     SPACE_BACKGROUND_SETTINGS,
     TPV_CAM_SETTINGS,
@@ -26,24 +27,68 @@ class GenesisSim:
     # The object instance
     _instance = None
     _is_initialized = False
+    _init_config = None
 
     # Lock for safe multi-threading
     _lock: Lock = Lock()
 
-    def __init__(self):
+    def __init__(
+        self,
+        num_envs: int = None,
+        env_spacing=None,
+        n_envs_per_row=None,
+        center_envs_at_origin: bool = None,
+    ):
         """
         Initialize the GenesisSim environment.
         """
+        has_explicit_parallel_config = any(
+            value is not None
+            for value in (
+                num_envs,
+                env_spacing,
+                n_envs_per_row,
+                center_envs_at_origin,
+            )
+        )
+
         # If we already have an instance of the PegasusInterface, do not overwrite it!
         if GenesisSim._is_initialized:
+            if has_explicit_parallel_config:
+                requested_config = self._normalize_init_config(
+                    num_envs=num_envs,
+                    env_spacing=env_spacing,
+                    n_envs_per_row=n_envs_per_row,
+                    center_envs_at_origin=center_envs_at_origin,
+                )
+                if GenesisSim._init_config != requested_config:
+                    raise ValueError(
+                        "GenesisSim is a singleton and has already been initialized with "
+                        f"{GenesisSim._init_config}. Requested {requested_config}. "
+                        "Please reuse the existing instance or reset the singleton first."
+                    )
             return
         
         GenesisSim._is_initialized = True
+        self._build_config = self._normalize_init_config(
+            num_envs=num_envs,
+            env_spacing=env_spacing,
+            n_envs_per_row=n_envs_per_row,
+            center_envs_at_origin=center_envs_at_origin,
+        )
+        GenesisSim._init_config = dict(self._build_config)
 
         # Initialize the simulation
         gs.init(**APP_SETTINGS)
+
         try:
-            print(f"[DEBUG] APP_SETTINGS: seed={APP_SETTINGS.get('seed', None)} precision={APP_SETTINGS.get('precision', None)}")
+            print(
+                "[DEBUG] APP_SETTINGS: "
+                f"seed={APP_SETTINGS.get('seed', None)} "
+                f"precision={APP_SETTINGS.get('precision', None)} "
+                f"backend={APP_SETTINGS.get('backend', None)} "
+                f"num_envs={self.num_envs}"
+            )
         except Exception:
             pass
 
@@ -60,12 +105,77 @@ class GenesisSim:
         # Add third-person view (TPV) camera
         # if with_camera(TPV_CAM_SETTINGS):
         self.cam = self.scene.add_camera(**TPV_CAM_SETTINGS["camera"])
+        self.camera_enable_recording = with_camera(TPV_CAM_SETTINGS)
+        self.camera_episodes_per_video = max(
+            1, int(TPV_CAM_SETTINGS.get("episodes_per_video", 5))
+        )
+        self._camera_recorded_episode_count = 0
+        self._camera_video_segment_index = 0
         
         # plane = self.scene.add_entity(
         #     gs.morphs.Plane(
         #         pos=(0, 0, -100.0),
         #     ),
         # )
+
+    @staticmethod
+    def _normalize_init_config(
+        num_envs,
+        env_spacing,
+        n_envs_per_row,
+        center_envs_at_origin,
+    ):
+        default_num_envs = PARALLEL_ENV_SETTINGS.get("num_envs", 1)
+        default_env_spacing = PARALLEL_ENV_SETTINGS.get("env_spacing", (1.0, 1.0))
+        default_n_envs_per_row = PARALLEL_ENV_SETTINGS.get("n_envs_per_row", None)
+        default_center_envs_at_origin = PARALLEL_ENV_SETTINGS.get(
+            "center_envs_at_origin", True
+        )
+
+        resolved_num_envs = default_num_envs if num_envs is None else num_envs
+        resolved_env_spacing = (
+            default_env_spacing if env_spacing is None else env_spacing
+        )
+        resolved_n_envs_per_row = (
+            default_n_envs_per_row if n_envs_per_row is None else n_envs_per_row
+        )
+        resolved_center_envs_at_origin = (
+            default_center_envs_at_origin
+            if center_envs_at_origin is None
+            else center_envs_at_origin
+        )
+
+        normalized_num_envs = max(1, int(resolved_num_envs))
+        if (
+            not isinstance(resolved_env_spacing, (tuple, list))
+            or len(resolved_env_spacing) != 2
+        ):
+            raise ValueError("env_spacing must be a tuple/list of length 2.")
+        return {
+            "num_envs": normalized_num_envs,
+            "env_spacing": (
+                float(resolved_env_spacing[0]),
+                float(resolved_env_spacing[1]),
+            ),
+            "n_envs_per_row": resolved_n_envs_per_row,
+            "center_envs_at_origin": bool(resolved_center_envs_at_origin),
+        }
+
+    @property
+    def num_envs(self):
+        return self._build_config["num_envs"]
+
+    @property
+    def env_spacing(self):
+        return self._build_config["env_spacing"]
+
+    @property
+    def n_envs_per_row(self):
+        return self._build_config["n_envs_per_row"]
+
+    @property
+    def center_envs_at_origin(self):
+        return self._build_config["center_envs_at_origin"]
 
     def _add_space_background(self):
         if not SPACE_BACKGROUND_SETTINGS["enable"]:
@@ -124,26 +234,57 @@ class GenesisSim:
     """
     def start(self):
         print("[DEBUG] Building scene...")
-        self.scene.build()
+        self.scene.build(
+            n_envs=self.num_envs,
+            env_spacing=self.env_spacing,
+            n_envs_per_row=self.n_envs_per_row,
+            center_envs_at_origin=self.center_envs_at_origin,
+        )
         print("[DEBUG] Scene built.")
         
         self.timer = SimpleTimer()
-        # If scene camera is set
-        if with_camera(TPV_CAM_SETTINGS):
+        self._camera_recorded_episode_count = 0
+        self._camera_video_segment_index = 0
+        if self.camera_enable_recording:
             self.cam.start_recording()
 
     def step(self):
         self.scene.step()
-        # If scene camera is set
-        if with_camera(TPV_CAM_SETTINGS):
+        if self.camera_enable_recording:
             self.cam.render()
-        
-    
+
+    def _save_camera_segment(self):
+        if not self.camera_enable_recording:
+            return
+        if not getattr(self.cam, "_in_recording", False):
+            return
+        if not getattr(self.cam, "_recorded_imgs", None):
+            return
+
+        self._camera_video_segment_index += 1
+        save_file = generate_filename(
+            prefix=f"video_ep_chunk_{self._camera_video_segment_index:04d}",
+            extension="mp4",
+            folder_path="recordings",
+        )
+        self.cam.stop_recording(save_to_filename=save_file, fps=60)
+        print("Recorded video is saved to ", save_file)
+
+    def on_episode_end(self, episode_count: int = 1):
+        if not self.camera_enable_recording:
+            return
+
+        self._camera_recorded_episode_count += max(0, int(episode_count))
+        if self._camera_recorded_episode_count < self.camera_episodes_per_video:
+            return
+
+        self._save_camera_segment()
+        self._camera_recorded_episode_count = 0
+        self.cam.start_recording()
+
     def stop(self):
-        if with_camera(TPV_CAM_SETTINGS):
-            save_file = generate_filename(prefix="video", extension="mp4", folder_path="recordings")
-            self.cam.stop_recording(save_to_filename=save_file, fps=60)
-            print("Recorded video is saved to ", save_file)
+        if self.camera_enable_recording:
+            self._save_camera_segment()
 
 
     def reset(self):
@@ -158,7 +299,7 @@ class GenesisSim:
         self.scene.link_entities(obj, robot, "base", "panda_link0")
 
 
-    def __new__(cls):
+    def __new__(cls, *args, **kwargs):
         """Allocates the memory and creates the actual simulation object is not instance exists yet. Otherwise,
         returns the existing instance of the simulation class.
 
@@ -178,6 +319,7 @@ class GenesisSim:
         """Destructor for the object. Destroys the only existing instance of this class."""
         GenesisSim._instance = None
         GenesisSim._is_initialized = False
+        GenesisSim._init_config = None
 
 
 

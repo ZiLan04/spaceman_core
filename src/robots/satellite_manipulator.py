@@ -12,6 +12,13 @@ from utils.utils import convert_dict_to_tensors,map_to_range
 from controllers.smooth_IK_solver import SmoothIKSolver
 from utils.setup_logger import setup_logger
 
+
+def _round_nested(value, digits: int = 5):
+    if isinstance(value, list):
+        return [_round_nested(v, digits) for v in value]
+    return round(float(value), digits)
+
+
 class SatelliteManipulator(Manipulator):
     def __init__(
         self,
@@ -51,12 +58,13 @@ class SatelliteManipulator(Manipulator):
                 [
                     self.ee_state.link_parent_global_state.position.detach().clone(),
                     self.ee_state.link_parent_global_state.orient.detach().clone(),
-                ]
+                ],
+                dim=-1,
             )
             self.pid.update_setpoint(base_pose_setpoint)
             self.logger.info(
                 "Base PID setpoint initialized to current base pose: %s",
-                [round(x, 5) for x in base_pose_setpoint.detach().cpu().tolist()],
+                _round_nested(base_pose_setpoint.detach().cpu().tolist()),
             )
 
         self.IK = SmoothIKSolver(
@@ -65,6 +73,10 @@ class SatelliteManipulator(Manipulator):
             smooth_factor=self.params["ik_params"]["smooth_factor"], 
             max_joint_change=self.params["ik_params"]["max_joint_change"],
         )
+        if hasattr(self, "wrist_camera") and hasattr(self, "wrist_camera_enable_recording"):
+            if self.wrist_camera_enable_recording:
+                self.wrist_camera.start_recording()
+                self.logger.info("Wrist camera recording started")
         self.logger.info(f"SatelliteManipulator robot {self._robot_name} initialization completed")
 
 
@@ -84,23 +96,38 @@ class SatelliteManipulator(Manipulator):
         if joint_position.dim() == 0:
             joint_position = joint_position.unsqueeze(0)
 
-        
-        # Ensure joint position has shape [6]
-        if joint_position.shape[-1] != 6:
-            error_msg = f"Joint_position should have shape [6], got {joint_position.shape}"
+        if joint_position.dim() == 1:
+            joint_position = joint_position.reshape(1, -1)
+        elif joint_position.dim() > 2:
+            error_msg = (
+                f"Joint_position should have shape [6] or [N, 6], got {joint_position.shape}"
+            )
             self.logger.error(error_msg)
-            raise ValueError(error_msg)       
+            raise ValueError(error_msg)
+
+        # Ensure joint position has shape [6] or [N, 6]
+        if joint_position.shape[-1] != 6:
+            error_msg = (
+                f"Joint_position should have trailing dim 6, got {joint_position.shape}"
+            )
+            self.logger.error(error_msg)
+            raise ValueError(error_msg)
 
         # Control joints' dofs
         try:
-            # self.robot.set_dofs_position(position=joint_position, dofs_idx_local=self.motors_dof, zero_velocity=False) # 就是这个robot.set_qpos的问题
-            # self.robot.set_qpos(qpos=joint_position, qs_idx_local=self.motors_qs, zero_velocity=False)
-            self.robot.control_dofs_position(position=joint_position, dofs_idx_local=self.motors_dof) # control必须加物理引擎和刚度阻尼参数
+            self.robot.control_dofs_position(
+                position=joint_position,
+                dofs_idx_local=self.motors_dof,
+            )
 
             # Optional: Get feedback for verification
             qpos_fb = self.robot.get_qpos()
-            self.logger.debug(f"Current joint feedback position: {qpos_fb}")
-            self.logger.debug(f"Target joint position: {joint_position}")
+            self.logger.debug(
+                f"Current joint feedback position shape: {getattr(qpos_fb, 'shape', None)}"
+            )
+            self.logger.debug(
+                f"Target joint position shape: {tuple(joint_position.shape)}"
+            )
             self.logger.debug(f"joint index: {self.motors_qs}")
             return True
         
@@ -117,6 +144,17 @@ class SatelliteManipulator(Manipulator):
         """
         try:         
             gripper_value = torch.as_tensor(gripper_value, dtype=self.datatype, device=self.device)
+            if gripper_value.dim() == 0:
+                gripper_value = gripper_value.reshape(1)
+            elif gripper_value.dim() > 1 and gripper_value.shape[-1] == 1:
+                gripper_value = gripper_value.reshape(-1)
+            elif gripper_value.dim() > 1:
+                error_msg = (
+                    f"gripper_value should be scalar or shape [N], got {tuple(gripper_value.shape)}"
+                )
+                self.logger.error(error_msg)
+                raise ValueError(error_msg)
+
             force_scalar = map_to_range(
                 gripper_value,
                 0.0,
@@ -124,20 +162,25 @@ class SatelliteManipulator(Manipulator):
                 self.gripper_force_scale,
                 -self.gripper_force_scale,
             )
-            finger_force = force_scalar * self.config_gripper_joints
-            self.logger.debug(f"gripper_value={gripper_value}, finger_force={finger_force}")
+            finger_force = force_scalar.unsqueeze(-1) * self.config_gripper_joints.reshape(1, -1)
+            self.logger.debug(
+                f"gripper_value shape={tuple(gripper_value.shape)}, finger_force shape={tuple(finger_force.shape)}"
+            )
 
             self.robot.control_dofs_force(force=finger_force, dofs_idx_local=self.fingers_dof)
             
             _ = self.get_gripper_value()
             self.logger.debug(f"\rGripper current value={self.gripper_value}")
             
-            if self.gripper_value > self.params["finger_open"][0] and self.gripper_state == 1.0:
-                self.gripper_state = 0.0
-            elif self.gripper_value < self.params["finger_close"][0] and self.gripper_state == 0.0:
-                self.gripper_state = 1.0
-            # Update current state
-            # self.gripper_state = gripper_value
+            if isinstance(self.gripper_value, torch.Tensor) and self.gripper_value.dim() > 0:
+                self.gripper_state = (
+                    self.gripper_value < self.params["finger_close"][0]
+                ).to(dtype=self.datatype)
+            else:
+                if self.gripper_value > self.params["finger_open"][0] and self.gripper_state == 1.0:
+                    self.gripper_state = 0.0
+                elif self.gripper_value < self.params["finger_close"][0] and self.gripper_state == 0.0:
+                    self.gripper_state = 1.0
             self.logger.debug(f"\rGripper control completed")
             return True
             

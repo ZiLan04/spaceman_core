@@ -2,13 +2,13 @@
 # 输出：机械臂关节角、卫星二维平面位置（8维）
 # 奖励：底座先对位，再让TCP逼近抓取点，最后闭合夹爪完成抓取
 
-import math
 import sys
 from pathlib import Path
 from typing import Optional, Tuple
 
 import numpy as np
 import torch
+import genesis as gs
 
 current_file_path = Path(__file__).resolve().parent
 sys.path.append(str(current_file_path.parent))
@@ -43,8 +43,21 @@ def resolve_training_device(device: str = "auto") -> str:
 
 
 class RLTask(Task):
-    def __init__(self, target_asset_name: str = "starlink"):
-        super().__init__(task_name="RL_task")
+    def __init__(
+        self,
+        target_asset_name: str = "starlink",
+        num_envs: int = None,
+        env_spacing=None,
+        n_envs_per_row=None,
+        center_envs_at_origin: bool = None,
+    ):
+        super().__init__(
+            task_name="RL_task",
+            num_envs=num_envs,
+            env_spacing=env_spacing,
+            n_envs_per_row=n_envs_per_row,
+            center_envs_at_origin=center_envs_at_origin,
+        )
 
         self.starlink_manipulator: Optional[SatelliteManipulator] = None
         self.target_object: Optional[Robot] = None
@@ -106,21 +119,112 @@ class RLTask(Task):
             "starlink_space_manipulator_merged.SLDASM9_starlink_space_manipulator_Finger1_2_Link",
             "starlink_space_manipulator_merged.SLDASM9_starlink_space_manipulator_Finger2_1_Link",
         )
+        self.env_step_count = None
+        self.env_episode_return = None
+        self.last_done_mask = None
+        self.last_truncated_mask = None
+        self.grasp_point_marker = None
+        self.grasp_point_marker_size = (0.1, 0.1, 0.1)
+        self.debug_grasp_marker = True
+        self.debug_grasp_marker_interval = 30
+
+    def _create_grasp_point_marker(self):
+        marker = self._scene.add_entity(
+            morph=gs.morphs.Box(
+                pos=(-10.0, -10.0, -10.0),
+                size=self.grasp_point_marker_size,
+                fixed=True,
+                collision=False,
+                visualization=True,
+            ),
+            material=gs.materials.Rigid(
+                gravity_compensation=1.0,
+            ),
+            surface=gs.surfaces.Plastic(
+                color=(1.0, 0.1, 0.1, 1.0),
+            ),
+            name=f"{self.task_name}_grasp_point_marker",
+        )
+        return marker
+
+    def _sync_grasp_point_marker(self, grasp_point_pos: torch.Tensor):
+        if self.grasp_point_marker is None:
+            return
+
+        marker_pos = grasp_point_pos.detach().clone()
+        if marker_pos.dim() == 1:
+            self.grasp_point_marker.set_pos(marker_pos, zero_velocity=True)
+        else:
+            self.grasp_point_marker.set_pos(marker_pos, zero_velocity=True)
+
+    def _log_grasp_marker_debug(self, grasp_point_pos: torch.Tensor):
+        if not self.debug_grasp_marker:
+            return
+
+        if self.step_count != 0 and self.step_count % self.debug_grasp_marker_interval != 0:
+            return
+
+        target_link = self.target_object.robot.get_link(self.target_link_name)
+        target_link_pos = self._as_task_tensor(
+            target_link.get_pos(), expected_last_dim=3
+        ).detach().cpu()
+        grasp_point_pos_cpu = grasp_point_pos.detach().cpu()
+
+        if self.grasp_point_marker is None:
+            marker_pos_cpu = None
+        else:
+            marker_pos_cpu = self._as_task_tensor(
+                self.grasp_point_marker.get_pos(), expected_last_dim=3
+            ).detach().cpu().tolist()
+
+        print(
+            "[GRASP_MARKER_DEBUG]",
+            f"step={self.step_count}",
+            f"target_link_pos={target_link_pos.tolist()}",
+            f"grasp_point_pos={grasp_point_pos_cpu.tolist()}",
+            f"marker_pos={marker_pos_cpu}",
+            flush=True,
+        )
+
+    def _as_task_tensor(
+        self,
+        value,
+        expected_last_dim: Optional[int] = None,
+        keep_batch_dim: bool = False,
+    ) -> torch.Tensor:
+        tensor = torch.as_tensor(value, dtype=self.datatype, device=self.device)
+        if expected_last_dim is not None and tensor.shape[-1] != expected_last_dim:
+            raise ValueError(
+                f"Expected trailing dim {expected_last_dim}, got shape {tuple(tensor.shape)}"
+            )
+        if self.num_envs > 1:
+            if tensor.dim() == 1:
+                tensor = tensor.unsqueeze(0)
+            if tensor.shape[0] != self.num_envs:
+                if tensor.shape[0] == 1:
+                    tensor = tensor.repeat(self.num_envs, *([1] * (tensor.dim() - 1)))
+                else:
+                    raise ValueError(
+                        f"Expected batch size {self.num_envs}, got shape {tuple(tensor.shape)}"
+                    )
+        if keep_batch_dim and tensor.dim() == 1:
+            tensor = tensor.unsqueeze(0)
+        return tensor
 
     def _get_tcp_pose(self) -> Tuple[torch.Tensor, torch.Tensor]:
         ee_link = self.starlink_manipulator.robot.get_link(
             self.starlink_manipulator.params["end_effector"]
         )
-        ee_pos = ee_link.get_pos()
-        ee_quat = ee_link.get_quat()
+        ee_pos = self._as_task_tensor(ee_link.get_pos(), expected_last_dim=3)
+        ee_quat = self._as_task_tensor(ee_link.get_quat(), expected_last_dim=4)
         ee_rot = as_rotation_matrix(ee_quat, order="wxyz")
         tcp_pos = ee_pos + torch.matmul(ee_rot, self.tcp_offset_local)
         return tcp_pos, ee_quat
 
     def _get_target_grasp_pose(self) -> Tuple[torch.Tensor, torch.Tensor]:
         target_link = self.target_object.robot.get_link(self.target_link_name)
-        target_pos = target_link.get_pos()
-        target_quat = target_link.get_quat()
+        target_pos = self._as_task_tensor(target_link.get_pos(), expected_last_dim=3)
+        target_quat = self._as_task_tensor(target_link.get_quat(), expected_last_dim=4)
         target_rot = as_rotation_matrix(target_quat, order="wxyz")
         grasp_point_pos = target_pos + torch.matmul(
             target_rot, self.target_grasp_offset_local
@@ -128,10 +232,11 @@ class RLTask(Task):
         return grasp_point_pos, target_quat
 
     def _get_base_pose(self) -> Tuple[torch.Tensor, torch.Tensor]:
-        base_link = self.starlink_manipulator.robot.get_link(
-            self.starlink_manipulator.params["base"]
+        root_qpos = self.starlink_manipulator.robot.get_qpos(
+            qs_idx_local=list(range(7))
         )
-        return base_link.get_pos(), base_link.get_quat()
+        root_qpos = self._as_task_tensor(root_qpos, expected_last_dim=7)
+        return root_qpos[..., :3], root_qpos[..., 3:7]
 
     def _compute_approach_alignment(self, tcp_quat: torch.Tensor) -> torch.Tensor:
         tcp_rot = as_rotation_matrix(tcp_quat, order="wxyz")
@@ -143,7 +248,9 @@ class RLTask(Task):
         world_down_axis = torch.tensor(
             [0.0, 0.0, -1.0], dtype=self.datatype, device=self.device
         )
-        return torch.dot(world_approach_axis, world_down_axis)
+        if world_approach_axis.dim() == 1:
+            return torch.dot(world_approach_axis, world_down_axis)
+        return torch.sum(world_approach_axis * world_down_axis, dim=-1)
 
     def _get_contact_world_positions(self, finger_link_name: str):
         finger_link = self.starlink_manipulator.robot.get_link(finger_link_name)
@@ -177,6 +284,21 @@ class RLTask(Task):
         return positions
 
     def _check_edge_grasp_contact(self) -> bool:
+        if self.num_envs > 1:
+            self.edge_contact_active = torch.zeros(
+                self.num_envs, dtype=torch.bool, device=self.device
+            )
+            if not isinstance(self.edge_contact_hold_count, torch.Tensor):
+                self.edge_contact_hold_count = torch.zeros(
+                    self.num_envs, dtype=torch.int32, device=self.device
+                )
+            self.edge_contact_hold_count = torch.where(
+                self.edge_contact_active,
+                self.edge_contact_hold_count + 1,
+                torch.zeros_like(self.edge_contact_hold_count),
+            )
+            return False
+
         grasp_point_pos, _ = self._get_target_grasp_pose()
         finger_a_contacts = self._get_contact_world_positions(self.grasp_finger_link_names[0])
         finger_b_contacts = self._get_contact_world_positions(self.grasp_finger_link_names[1])
@@ -201,53 +323,242 @@ class RLTask(Task):
     def _update_io_tensors(self):
         tcp_pos, tcp_quat = self._get_tcp_pose()
         grasp_point_pos, grasp_point_quat = self._get_target_grasp_pose()
+        self._sync_grasp_point_marker(grasp_point_pos)
+        self._log_grasp_marker_debug(grasp_point_pos)
         base_pos, base_quat = self._get_base_pose()
         joint_qpos = self.starlink_manipulator.robot.get_qpos(
             qs_idx_local=self.starlink_manipulator.motors_qs
         )
 
-        self.tcp_pose = torch.cat([tcp_pos, tcp_quat]).to(
-            dtype=self.datatype, device=self.device
-        )
-        self.target_grasp_pose = torch.cat([grasp_point_pos, grasp_point_quat]).to(
-            dtype=self.datatype, device=self.device
-        )
-        self.base_satellite_pose = torch.cat([base_pos, base_quat]).to(
-            dtype=self.datatype, device=self.device
-        )
-        self.arm_joint_positions = torch.as_tensor(
-            joint_qpos, dtype=self.datatype, device=self.device
-        ).reshape(-1)
-        self.base_planar_position = base_pos[:2].to(
-            dtype=self.datatype, device=self.device
-        )
+        if self.num_envs > 1:
+            joint_qpos = self._as_task_tensor(joint_qpos, expected_last_dim=6)
+            self.tcp_pose = torch.cat([tcp_pos, tcp_quat], dim=-1).to(
+                dtype=self.datatype, device=self.device
+            )
+            self.target_grasp_pose = torch.cat(
+                [grasp_point_pos, grasp_point_quat], dim=-1
+            ).to(dtype=self.datatype, device=self.device)
+            self.base_satellite_pose = torch.cat([base_pos, base_quat], dim=-1).to(
+                dtype=self.datatype, device=self.device
+            )
+            self.arm_joint_positions = joint_qpos.reshape(self.num_envs, -1)
+            self.base_planar_position = base_pos[:, :2].to(
+                dtype=self.datatype, device=self.device
+            )
 
-        self.observation = torch.cat(
-            [self.tcp_pose, self.target_grasp_pose, self.base_satellite_pose]
-        )
-        self.action = torch.cat(
-            [self.arm_joint_positions, self.base_planar_position]
-        )
+            self.observation = torch.cat(
+                [self.tcp_pose, self.target_grasp_pose, self.base_satellite_pose], dim=-1
+            )
+            self.action = torch.cat(
+                [self.arm_joint_positions, self.base_planar_position], dim=-1
+            )
 
-        self.base_alignment_error = torch.norm(
-            grasp_point_pos[:2] - self.base_planar_position
-        )
-        self.tcp_to_grasp_error = torch.norm(grasp_point_pos - tcp_pos)
-        self.approach_alignment = self._compute_approach_alignment(tcp_quat)
+            self.base_alignment_error = torch.norm(
+                grasp_point_pos[:, :2] - self.base_planar_position, dim=-1
+            )
+            self.tcp_to_grasp_error = torch.norm(grasp_point_pos - tcp_pos, dim=-1)
+            self.approach_alignment = self._compute_approach_alignment(tcp_quat)
 
-        if self.base_alignment_error <= self.base_alignment_threshold:
-            self.phase = "arm_approach"
+            phase = np.where(
+                self.base_alignment_error.detach().cpu().numpy() <= self.base_alignment_threshold,
+                "arm_approach",
+                "base_alignment",
+            ).astype(object)
+            grasp_mask = (
+                (self.tcp_to_grasp_error <= self.grasp_success_threshold)
+                & (self.approach_alignment >= self.approach_alignment_threshold)
+            )
+            self.phase = np.where(grasp_mask.detach().cpu().numpy(), "grasp", phase).astype(object)
         else:
-            self.phase = "base_alignment"
+            self.tcp_pose = torch.cat([tcp_pos, tcp_quat]).to(
+                dtype=self.datatype, device=self.device
+            )
+            self.target_grasp_pose = torch.cat([grasp_point_pos, grasp_point_quat]).to(
+                dtype=self.datatype, device=self.device
+            )
+            self.base_satellite_pose = torch.cat([base_pos, base_quat]).to(
+                dtype=self.datatype, device=self.device
+            )
+            self.arm_joint_positions = torch.as_tensor(
+                joint_qpos, dtype=self.datatype, device=self.device
+            ).reshape(-1)
+            self.base_planar_position = base_pos[:2].to(
+                dtype=self.datatype, device=self.device
+            )
 
-        if (
-            self.tcp_to_grasp_error <= self.grasp_success_threshold
-            and self.approach_alignment >= self.approach_alignment_threshold
-        ):
-            self.phase = "grasp"
+            self.observation = torch.cat(
+                [self.tcp_pose, self.target_grasp_pose, self.base_satellite_pose]
+            )
+            self.action = torch.cat(
+                [self.arm_joint_positions, self.base_planar_position]
+            )
+
+            self.base_alignment_error = torch.norm(
+                grasp_point_pos[:2] - self.base_planar_position
+            )
+            self.tcp_to_grasp_error = torch.norm(grasp_point_pos - tcp_pos)
+            self.approach_alignment = self._compute_approach_alignment(tcp_quat)
+
+            if self.base_alignment_error <= self.base_alignment_threshold:
+                self.phase = "arm_approach"
+            else:
+                self.phase = "base_alignment"
+
+            if (
+                self.tcp_to_grasp_error <= self.grasp_success_threshold
+                and self.approach_alignment >= self.approach_alignment_threshold
+            ):
+                self.phase = "grasp"
+
+    def _reset_rollout_tracking(self):
+        if self.num_envs > 1:
+            self.env_step_count = torch.zeros(
+                self.num_envs, dtype=torch.int32, device=self.device
+            )
+            self.env_episode_return = torch.zeros(
+                self.num_envs, dtype=self.datatype, device=self.device
+            )
+            self.last_done_mask = torch.zeros(
+                self.num_envs, dtype=torch.bool, device=self.device
+            )
+            self.last_truncated_mask = torch.zeros(
+                self.num_envs, dtype=torch.bool, device=self.device
+            )
+        else:
+            self.env_step_count = torch.zeros(1, dtype=torch.int32, device=self.device)
+            self.env_episode_return = torch.zeros(
+                1, dtype=self.datatype, device=self.device
+            )
+            self.last_done_mask = torch.zeros(1, dtype=torch.bool, device=self.device)
+            self.last_truncated_mask = torch.zeros(
+                1, dtype=torch.bool, device=self.device
+            )
+
+    def get_done_mask(self) -> torch.Tensor:
+        if self.last_done_mask is None:
+            self._reset_rollout_tracking()
+        return self.last_done_mask.detach().clone()
+
+    def get_truncated_mask(self) -> torch.Tensor:
+        if self.last_truncated_mask is None:
+            self._reset_rollout_tracking()
+        return self.last_truncated_mask.detach().clone()
+
+    def reset_done_envs(self, env_ids=None) -> bool:
+        if env_ids is None:
+            return self.reset()
+        env_ids = list(env_ids)
+        if not env_ids:
+            return True
+        if self.num_envs == 1 and env_ids == [0]:
+            return self.reset()
+        raise NotImplementedError(
+            "Partial env reset is only implemented by batched task variants."
+        )
+
+    def _sample_target_reset_noise(self, env_count: int):
+        target_pos_noise = torch.tensor(
+            np.stack(
+                [
+                    np.random.uniform(-0.03, 0.03, size=env_count),
+                    np.random.uniform(-0.03, 0.03, size=env_count),
+                    np.random.uniform(-0.02, 0.02, size=env_count),
+                ],
+                axis=-1,
+            ),
+            dtype=self.datatype,
+            device=self.device,
+        )
+        target_yaw_noise = torch.tensor(
+            np.random.uniform(-0.15, 0.15, size=env_count),
+            dtype=self.datatype,
+            device=self.device,
+        )
+        yaw_half = 0.5 * target_yaw_noise
+        yaw_quat = torch.stack(
+            [
+                torch.cos(yaw_half),
+                torch.zeros_like(yaw_half),
+                torch.zeros_like(yaw_half),
+                torch.sin(yaw_half),
+            ],
+            dim=-1,
+        )
+        return target_pos_noise, yaw_quat
+
+    def _reset_task_state_buffers(self):
+        self.step_count = 0
+        if self.num_envs > 1:
+            self.total_reward = torch.zeros(
+                self.num_envs, dtype=self.datatype, device=self.device
+            )
+            self.success = torch.zeros(
+                self.num_envs, dtype=torch.bool, device=self.device
+            )
+            self.edge_contact_hold_count = torch.zeros(
+                self.num_envs, dtype=torch.int32, device=self.device
+            )
+            self.edge_contact_active = torch.zeros(
+                self.num_envs, dtype=torch.bool, device=self.device
+            )
+            self.last_gripper_command = torch.full(
+                (self.num_envs,),
+                self.gripper_open_value,
+                dtype=self.datatype,
+                device=self.device,
+            )
+        else:
+            self.total_reward = 0.0
+            self.success = False
+            self.edge_contact_hold_count = 0
+            self.edge_contact_active = False
+            self.last_gripper_command = self.gripper_open_value
+        self._reset_rollout_tracking()
+
+    def _apply_reset_state(
+        self,
+        base_pos,
+        base_quat,
+        target_pos,
+        target_quat,
+        relative_yaw_quat,
+        initial_full_dofs,
+        zero_velocity,
+        env_ids=None,
+    ):
+        root_qpos = torch.cat([base_pos, base_quat], dim=-1)
+        self.starlink_manipulator.robot.set_qpos(
+            root_qpos,
+            qs_idx_local=list(range(7)),
+            envs_idx=env_ids,
+            zero_velocity=True,
+        )
+        self.target_object.robot.set_pos(target_pos, envs_idx=env_ids, zero_velocity=True)
+        self.target_object.robot.set_quat(target_quat, envs_idx=env_ids, zero_velocity=True)
+        self.target_object.robot.set_quat(
+            relative_yaw_quat,
+            envs_idx=env_ids,
+            zero_velocity=True,
+            relative=True,
+        )
+        self.starlink_manipulator.robot.set_dofs_position(
+            initial_full_dofs,
+            dofs_idx_local=self.starlink_manipulator.motors_dof
+            + self.starlink_manipulator.fingers_dof,
+            envs_idx=env_ids,
+            zero_velocity=True,
+        )
+        self.starlink_manipulator.robot.set_dofs_velocity(
+            zero_velocity,
+            dofs_idx_local=self.starlink_manipulator.motors_dof
+            + self.starlink_manipulator.fingers_dof,
+            envs_idx=env_ids,
+        )
 
     def initialize(self) -> bool:
         try:
+            if self.grasp_point_marker is None:
+                self.grasp_point_marker = self._create_grasp_point_marker()
             if self.starlink_manipulator is None:
                 self.starlink_manipulator = SatelliteManipulator(
                     name="franka_merge",
@@ -274,23 +585,36 @@ class RLTask(Task):
 
             self.initial_target_pos = self.target_object.robot.get_link(
                 self.target_link_name
-            ).get_pos().detach().clone()
+            ).get_pos()
             self.initial_target_quat = self.target_object.robot.get_link(
                 self.target_link_name
-            ).get_quat().detach().clone()
-            self.initial_base_pos = self.base_satellite_pose[:3].detach().clone()
-            self.initial_base_quat = self.base_satellite_pose[3:].detach().clone()
-            self.initial_joint_positions = self.arm_joint_positions.detach().clone()
+            ).get_quat()
+            self.initial_target_pos = self._as_task_tensor(
+                self.initial_target_pos, expected_last_dim=3
+            ).detach().clone()
+            self.initial_target_quat = self._as_task_tensor(
+                self.initial_target_quat, expected_last_dim=4
+            ).detach().clone()
+            self.initial_base_pos = self._as_task_tensor(
+                self.base_satellite_pose[..., :3] if self.num_envs > 1 else self.base_satellite_pose[:3],
+                expected_last_dim=3,
+            ).detach().clone()
+            self.initial_base_quat = self._as_task_tensor(
+                self.base_satellite_pose[..., 3:] if self.num_envs > 1 else self.base_satellite_pose[3:],
+                expected_last_dim=4,
+            ).detach().clone()
+            self.initial_joint_positions = self._as_task_tensor(
+                self.arm_joint_positions, expected_last_dim=6
+            ).detach().clone()
 
-            self.base_planar_reference = self.base_planar_position.detach().clone()
-            self.joint_reference = self.arm_joint_positions.detach().clone()
+            self.base_planar_reference = self._as_task_tensor(
+                self.base_planar_position, expected_last_dim=2
+            ).detach().clone()
+            self.joint_reference = self._as_task_tensor(
+                self.arm_joint_positions, expected_last_dim=6
+            ).detach().clone()
 
-            self.step_count = 0
-            self.total_reward = 0.0
-            self.success = False
-            self.last_gripper_command = self.gripper_open_value
-            self.edge_contact_hold_count = 0
-            self.edge_contact_active = False
+            self._reset_task_state_buffers()
             self.status = TaskStatus.RUNNING
             return True
         except Exception as e:
@@ -299,36 +623,70 @@ class RLTask(Task):
             return False
 
     def _apply_base_action(self, planar_action: torch.Tensor):
-        force_xy = planar_action * self.base_force_scale_xy
-        force_cmd = torch.tensor(
-            [force_xy[0], force_xy[1], 0.0],
-            dtype=self.datatype,
-            device=self.device,
+        planar_action = self._as_task_tensor(
+            planar_action,
+            expected_last_dim=2,
+            keep_batch_dim=self.num_envs > 1,
         )
+        force_xy = planar_action * self.base_force_scale_xy
+        if self.num_envs > 1:
+            force_cmd = torch.cat(
+                [
+                    force_xy,
+                    torch.zeros((force_xy.shape[0], 1), dtype=self.datatype, device=self.device),
+                ],
+                dim=-1,
+            )
+        else:
+            force_cmd = torch.tensor(
+                [force_xy[0], force_xy[1], 0.0],
+                dtype=self.datatype,
+                device=self.device,
+            )
         self.starlink_manipulator.apply_force(
             force=force_cmd,
             link_name=self.starlink_manipulator.params["base"],
         )
 
     def _apply_arm_action(self, joint_action: torch.Tensor):
+        joint_action = self._as_task_tensor(
+            joint_action,
+            expected_last_dim=6,
+            keep_batch_dim=self.num_envs > 1,
+        )
         target_joint = self.arm_joint_positions + joint_action * self.joint_action_scale
         self.starlink_manipulator.control_joint_pos(target_joint)
 
     def apply_rl_action(self, action: torch.Tensor):
-        action = torch.as_tensor(action, dtype=self.datatype, device=self.device).reshape(-1)
-        if action.shape[0] != 8:
-            raise ValueError(f"RL action should have 8 dims, got {tuple(action.shape)}")
-
-        joint_action = torch.clamp(action[:6], -1.0, 1.0)
-        planar_action = torch.clamp(action[6:], -1.0, 1.0)
+        action = torch.as_tensor(action, dtype=self.datatype, device=self.device)
+        if self.num_envs > 1:
+            action = self._as_task_tensor(action, expected_last_dim=8)
+            joint_action = torch.clamp(action[:, :6], -1.0, 1.0)
+            planar_action = torch.clamp(action[:, 6:], -1.0, 1.0)
+        else:
+            action = action.reshape(-1)
+            if action.shape[0] != 8:
+                raise ValueError(f"RL action should have 8 dims, got {tuple(action.shape)}")
+            joint_action = torch.clamp(action[:6], -1.0, 1.0)
+            planar_action = torch.clamp(action[6:], -1.0, 1.0)
 
         self._apply_base_action(planar_action)
         self._apply_arm_action(joint_action)
 
-        if self.phase == "grasp":
-            self.last_gripper_command = self.gripper_close_value
+        if self.num_envs > 1:
+            grasp_mask = torch.as_tensor(
+                self.phase == "grasp", dtype=self.datatype, device=self.device
+            )
+            self.last_gripper_command = torch.where(
+                grasp_mask > 0,
+                torch.full((self.num_envs,), self.gripper_close_value, dtype=self.datatype, device=self.device),
+                torch.full((self.num_envs,), self.gripper_open_value, dtype=self.datatype, device=self.device),
+            )
         else:
-            self.last_gripper_command = self.gripper_open_value
+            if self.phase == "grasp":
+                self.last_gripper_command = self.gripper_close_value
+            else:
+                self.last_gripper_command = self.gripper_open_value
         self.starlink_manipulator.control_gripper(self.last_gripper_command)
 
     def step(self, dt: float = None, action: Optional[torch.Tensor] = None) -> bool:
@@ -348,13 +706,35 @@ class RLTask(Task):
             self._check_edge_grasp_contact()
 
             reward = self.reward()
-            self.total_reward += reward.item()
+            if self.num_envs > 1:
+                self.total_reward = self.total_reward + reward
+            else:
+                self.total_reward += reward.item()
             self.step_count += 1
+            self.env_step_count += 1
+            self.env_episode_return += reward.reshape(-1)
 
-            if self.is_success():
-                self.success = True
-                self.status = TaskStatus.SUCCEED
-                return False
+            success_mask = self.is_success()
+            if self.num_envs > 1:
+                self.success = success_mask
+                self.last_done_mask = success_mask.detach().clone()
+                self.last_truncated_mask = self.env_step_count >= self.max_steps
+                if bool(torch.all(success_mask).item()):
+                    self.status = TaskStatus.SUCCEED
+                    return False
+            else:
+                self.last_done_mask = torch.tensor(
+                    [bool(success_mask)], dtype=torch.bool, device=self.device
+                )
+                self.last_truncated_mask = torch.tensor(
+                    [self.step_count >= self.max_steps],
+                    dtype=torch.bool,
+                    device=self.device,
+                )
+                if success_mask:
+                    self.success = True
+                    self.status = TaskStatus.SUCCEED
+                    return False
 
             if self.step_count >= self.max_steps:
                 self.status = TaskStatus.COMPLETED
@@ -372,6 +752,8 @@ class RLTask(Task):
             or self.tcp_to_grasp_error is None
             or self.approach_alignment is None
         ):
+            if self.num_envs > 1:
+                return torch.zeros(self.num_envs, dtype=self.datatype, device=self.device)
             return torch.tensor(0.0, dtype=self.datatype, device=self.device)
 
         reward = -0 * self.base_alignment_error - 1.5 * self.tcp_to_grasp_error
@@ -379,7 +761,13 @@ class RLTask(Task):
 
         #if self.base_alignment_error <= self.base_alignment_threshold:
         #   reward = reward + 2.0
-        if self.tcp_to_grasp_error <= self.grasp_success_threshold:
+        if self.num_envs > 1:
+            reward = reward + torch.where(
+                self.tcp_to_grasp_error <= self.grasp_success_threshold,
+                torch.full_like(reward, 10.0),
+                torch.zeros_like(reward),
+            )
+        elif self.tcp_to_grasp_error <= self.grasp_success_threshold:
             reward = reward + 10.0
         #if self.approach_alignment >= self.approach_alignment_threshold:
         #    reward = reward + 4.0
@@ -387,7 +775,13 @@ class RLTask(Task):
         #    reward = reward + 5.0
         #if self.edge_contact_hold_count >= self.contact_hold_steps:
         #    reward = reward + 15.0
-        if not self.is_success():
+        if self.num_envs > 1:
+            reward = reward - torch.where(
+                self.is_success(),
+                torch.zeros_like(reward),
+                torch.full_like(reward, self.time_penalty),
+            )
+        elif not self.is_success():
             reward = reward - self.time_penalty
 
         return reward.to(dtype=self.datatype, device=self.device)
@@ -398,6 +792,8 @@ class RLTask(Task):
             or self.tcp_to_grasp_error is None
             or self.approach_alignment is None
         ):
+            if self.num_envs > 1:
+                return torch.zeros(self.num_envs, dtype=torch.bool, device=self.device)
             return False
         return (
             self.tcp_to_grasp_error <= self.grasp_success_threshold
@@ -413,81 +809,70 @@ class RLTask(Task):
                 self.logger.warning("Reset skipped because task is not initialized.")
                 return False
 
+            self.gsim.on_episode_end(1)
+            self.starlink_manipulator.on_episode_end(1)
+            self.target_object.on_episode_end(1)
+
             self.gsim.reset()
 
             if self.initial_joint_positions is None:
-                self.initial_joint_positions = self.joint_reference.detach().clone()
+                self.initial_joint_positions = self._as_task_tensor(
+                    self.joint_reference, expected_last_dim=6
+                ).detach().clone()
             if self.initial_target_pos is None or self.initial_target_quat is None:
                 target_link = self.target_object.robot.get_link(self.target_link_name)
-                self.initial_target_pos = target_link.get_pos().detach().clone()
-                self.initial_target_quat = target_link.get_quat().detach().clone()
+                self.initial_target_pos = self._as_task_tensor(
+                    target_link.get_pos(), expected_last_dim=3
+                ).detach().clone()
+                self.initial_target_quat = self._as_task_tensor(
+                    target_link.get_quat(), expected_last_dim=4
+                ).detach().clone()
 
-            target_pos_noise = torch.tensor(
-                [
-                    np.random.uniform(-0.03, 0.03),
-                    np.random.uniform(-0.03, 0.03),
-                    np.random.uniform(-0.02, 0.02),
-                ],
-                dtype=self.datatype,
-                device=self.device,
-            )
-            target_yaw_noise = float(np.random.uniform(-0.15, 0.15))
-            yaw_half = 0.5 * target_yaw_noise
-            yaw_quat = torch.tensor(
-                [math.cos(yaw_half), 0.0, 0.0, math.sin(yaw_half)],
-                dtype=self.datatype,
-                device=self.device,
-            )
-
-            self.target_object.robot.set_pos(
-                self.initial_target_pos + target_pos_noise,
-                zero_velocity=True,
-            )
-            self.target_object.robot.set_quat(
-                self.initial_target_quat,
-                zero_velocity=True,
-            )
-            self.target_object.robot.set_quat(
-                yaw_quat,
-                zero_velocity=True,
-                relative=True,
-            )
+            if self.num_envs > 1:
+                base_pos = self.initial_base_pos
+                base_quat = self.initial_base_quat
+                target_pos_noise, yaw_quat = self._sample_target_reset_noise(self.num_envs)
+                target_pos = self.initial_target_pos + target_pos_noise
+                target_quat = self.initial_target_quat
+                relative_yaw_quat = yaw_quat
+            else:
+                base_pos = self.initial_base_pos[0]
+                base_quat = self.initial_base_quat[0]
+                target_pos_noise, yaw_quat = self._sample_target_reset_noise(1)
+                target_pos = (self.initial_target_pos + target_pos_noise)[0]
+                target_quat = self.initial_target_quat[0]
+                relative_yaw_quat = yaw_quat[0]
 
             all_dofs = self.starlink_manipulator.motors_dof + self.starlink_manipulator.fingers_dof
             initial_full_dofs = self.starlink_manipulator.config["initial_dofs"].detach().clone()
-            initial_full_dofs[:6] = self.initial_joint_positions
-            self.starlink_manipulator.robot.set_dofs_position(
+            if self.num_envs > 1:
+                initial_full_dofs = initial_full_dofs.unsqueeze(0).repeat(self.num_envs, 1)
+                initial_full_dofs[:, :6] = self.initial_joint_positions
+                zero_velocity = torch.zeros_like(initial_full_dofs)
+            else:
+                initial_full_dofs[:6] = self.initial_joint_positions.reshape(-1)
+                zero_velocity = [0.0] * len(all_dofs)
+            self._apply_reset_state(
+                base_pos,
+                base_quat,
+                target_pos,
+                target_quat,
+                relative_yaw_quat,
                 initial_full_dofs,
-                dofs_idx_local=all_dofs,
-                zero_velocity=True,
-            )
-            self.starlink_manipulator.robot.set_dofs_velocity(
-                [0.0] * len(all_dofs),
-                dofs_idx_local=all_dofs,
+                zero_velocity,
             )
 
             self.starlink_manipulator.update_state()
             if hasattr(self.starlink_manipulator, "pid"):
                 self.starlink_manipulator.pid.reset()
-                base_pose_setpoint = torch.cat(
-                    [
-                        self.starlink_manipulator.ee_state.link_parent_global_state.position.detach().clone(),
-                        self.starlink_manipulator.ee_state.link_parent_global_state.orient.detach().clone(),
-                    ]
-                )
-                self.starlink_manipulator.pid.update_setpoint(base_pose_setpoint)
+                self.starlink_manipulator.capture_current_base_pose_as_pid_setpoint()
 
-            self.last_gripper_command = self.gripper_open_value
             self.starlink_manipulator.control_gripper(self.gripper_open_value)
             self.gsim.step()
             self.starlink_manipulator.update_state()
             self._update_io_tensors()
 
-            self.step_count = 0
-            self.total_reward = 0.0
-            self.success = False
-            self.edge_contact_hold_count = 0
-            self.edge_contact_active = False
+            self._reset_task_state_buffers()
             self.status = TaskStatus.RUNNING
             return True
         except Exception as e:
@@ -516,9 +901,27 @@ if gym is not None and spaces is not None:
     class SatelliteSideGraspEnv(gym.Env):
         metadata = {"render_modes": []}
 
-        def __init__(self, target_asset_name: str = "starlink"):
+        def __init__(
+            self,
+            target_asset_name: str = "starlink",
+            num_envs: int = None,
+            env_spacing=None,
+            n_envs_per_row=None,
+            center_envs_at_origin: bool = None,
+        ):
             super().__init__()
-            self.task = RLTask(target_asset_name=target_asset_name)
+            self.task = RLTask(
+                target_asset_name=target_asset_name,
+                num_envs=num_envs,
+                env_spacing=env_spacing,
+                n_envs_per_row=n_envs_per_row,
+                center_envs_at_origin=center_envs_at_origin,
+            )
+            if self.task.num_envs != 1:
+                raise ValueError(
+                    "SatelliteSideGraspEnv is the serial Gym wrapper and only supports "
+                    f"num_envs=1, got {self.task.num_envs}."
+                )
             self.observation_space = spaces.Box(
                 low=-np.inf, high=np.inf, shape=(21,), dtype=np.float32
             )
