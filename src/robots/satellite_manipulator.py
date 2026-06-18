@@ -77,6 +77,10 @@ class SatelliteManipulator(Manipulator):
             if self.wrist_camera_enable_recording:
                 self.wrist_camera.start_recording()
                 self.logger.info("Wrist camera recording started")
+        if hasattr(self, "base_camera") and hasattr(self, "base_camera_enable_recording"):
+            if self.base_camera_enable_recording:
+                self.base_camera.start_recording()
+                self.logger.info("Base camera recording started")
         self.logger.info(f"SatelliteManipulator robot {self._robot_name} initialization completed")
 
 

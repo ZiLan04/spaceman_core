@@ -7,7 +7,7 @@ Genesis batched scenes as the primary source of parallelism.
 import math
 import sys
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Sequence
 
 import numpy as np
 import torch
@@ -57,6 +57,9 @@ class ParallelRLTask(RLTask):
         env_spacing=None,
         n_envs_per_row=None,
         center_envs_at_origin: bool = None,
+        enable_visual_obs: bool = False,
+        image_shape: Sequence[int] = (3, 84, 84),
+        normalize_images: bool = False,
     ):
         super().__init__(
             target_asset_name=target_asset_name,
@@ -68,6 +71,62 @@ class ParallelRLTask(RLTask):
         self.task_name = "RL_task_parallel"
         self.env_done = None
         self.env_truncated = None
+        self.enable_visual_obs = bool(enable_visual_obs)
+        self.image_shape = tuple(int(dim) for dim in image_shape)
+        self.normalize_images = bool(normalize_images)
+        self.state_observation = None
+        self.image_observation = None
+        self.reach_distance_threshold = 0.06
+        self.hold_velocity_threshold = 0.02
+        self.success_hold_steps = 15
+        self.hold_zone_bonus = 0.5
+        self.stable_hold_bonus = 1.0
+        self.success_bonus = 100.0
+        self.progress_reward_scale = 5.0
+        self.distance_penalty_scale = 0.5
+        self.action_penalty_scale = 1e-3
+        self.target_hold_count = None
+        self.prev_tcp_to_grasp_error = None
+        self.prev_tcp_pos = None
+        self.tcp_speed = None
+        self.last_action_tensor = None
+
+    def _zero_image_observation(self) -> torch.Tensor:
+        dtype = torch.float32 if self.normalize_images else torch.uint8
+        return torch.zeros(
+            (self.num_envs, *self.image_shape),
+            dtype=dtype,
+            device=self.device,
+        )
+
+    def _capture_visual_observation(self) -> Optional[torch.Tensor]:
+        if not self.enable_visual_obs:
+            return None
+
+        camera_sensor = getattr(self.starlink_manipulator, "rl_wrist_camera", None)
+        if camera_sensor is None:
+            return self._zero_image_observation()
+
+        rgb = camera_sensor.capture()
+        rgb = torch.as_tensor(rgb, device=self.device)
+        expected_shape = (self.num_envs, *self.image_shape)
+        if tuple(rgb.shape) != expected_shape:
+            raise ValueError(
+                "Unexpected batched wrist camera output shape: "
+                f"expected {expected_shape}, got {tuple(rgb.shape)}"
+            )
+
+        if self.normalize_images:
+            rgb = rgb.float()
+            if rgb.max().item() > 1.0:
+                rgb = rgb / 255.0
+        else:
+            if rgb.dtype != torch.uint8:
+                rgb = torch.clamp(rgb, 0, 255)
+                if rgb.max().item() <= 1.0:
+                    rgb = rgb * 255.0
+                rgb = rgb.to(torch.uint8)
+        return rgb
 
     def _reset_parallel_buffers(self):
         self.env_done = torch.zeros(
@@ -75,6 +134,49 @@ class ParallelRLTask(RLTask):
         )
         self.env_truncated = torch.zeros(
             self.num_envs, dtype=torch.bool, device=self.device
+        )
+
+    def _ensure_parallel_state_buffers(self):
+        self.total_reward = torch.as_tensor(
+            self.total_reward, dtype=self.datatype, device=self.device
+        ).reshape(self.num_envs)
+        self.success = torch.as_tensor(
+            self.success, dtype=torch.bool, device=self.device
+        ).reshape(self.num_envs)
+        self.edge_contact_hold_count = torch.as_tensor(
+            self.edge_contact_hold_count, dtype=torch.int32, device=self.device
+        ).reshape(self.num_envs)
+        self.edge_contact_active = torch.as_tensor(
+            self.edge_contact_active, dtype=torch.bool, device=self.device
+        ).reshape(self.num_envs)
+        self.last_gripper_command = torch.as_tensor(
+            self.last_gripper_command, dtype=self.datatype, device=self.device
+        ).reshape(self.num_envs)
+
+    def _update_hold_metrics(self, tcp_pos: torch.Tensor):
+        if self.prev_tcp_pos is None:
+            self.prev_tcp_pos = tcp_pos.detach().clone()
+            self.tcp_speed = torch.zeros(
+                self.num_envs, dtype=self.datatype, device=self.device
+            )
+        else:
+            self.tcp_speed = torch.norm(tcp_pos - self.prev_tcp_pos, dim=-1)
+            self.prev_tcp_pos = tcp_pos.detach().clone()
+
+        if self.target_hold_count is None:
+            self.target_hold_count = torch.zeros(
+                self.num_envs, dtype=torch.int32, device=self.device
+            )
+
+        hold_mask = (
+            (self.tcp_to_grasp_error <= self.reach_distance_threshold)
+            & (self.tcp_speed <= self.hold_velocity_threshold)
+            & (self.approach_alignment >= self.approach_alignment_threshold)
+        )
+        self.target_hold_count = torch.where(
+            hold_mask,
+            self.target_hold_count + 1,
+            torch.zeros_like(self.target_hold_count),
         )
 
     def _get_tcp_pose(self):
@@ -139,9 +241,6 @@ class ParallelRLTask(RLTask):
         return torch.stack(alignments, dim=0)
 
     def _check_edge_grasp_contact(self):
-        if self.num_envs == 1:
-            return super()._check_edge_grasp_contact()
-
         self.edge_contact_active = torch.zeros(
             self.num_envs, dtype=torch.bool, device=self.device
         )
@@ -206,9 +305,18 @@ class ParallelRLTask(RLTask):
         self.arm_joint_positions = joint_qpos.reshape(self.num_envs, -1)
         self.base_planar_position = base_pos[:, :2].to(dtype=self.datatype, device=self.device)
 
-        self.observation = torch.cat(
-            [self.tcp_pose, self.target_grasp_pose, self.base_satellite_pose], dim=-1
+        self.state_observation = torch.cat(
+            [self.tcp_pose, self.base_satellite_pose, self.arm_joint_positions], dim=-1
         )
+        if self.enable_visual_obs:
+            self.image_observation = self._capture_visual_observation()
+            self.observation = {
+                "state": self.state_observation,
+                "image": self.image_observation,
+            }
+        else:
+            self.image_observation = None
+            self.observation = self.state_observation
         self.action = torch.cat(
             [self.arm_joint_positions, self.base_planar_position], dim=-1
         )
@@ -218,6 +326,7 @@ class ParallelRLTask(RLTask):
         )
         self.tcp_to_grasp_error = torch.norm(grasp_point_pos - tcp_pos, dim=-1)
         self.approach_alignment = self._compute_approach_alignment(tcp_quat)
+        self._update_hold_metrics(tcp_pos)
 
         self.phase = np.where(
             self.base_alignment_error.detach().cpu().numpy() <= self.base_alignment_threshold,
@@ -225,17 +334,26 @@ class ParallelRLTask(RLTask):
             "base_alignment",
         ).astype(object)
 
-        grasp_mask = (
-            (self.tcp_to_grasp_error <= self.grasp_success_threshold)
-            & (self.approach_alignment >= self.approach_alignment_threshold)
-        )
+        grasp_mask = self.target_hold_count >= self.success_hold_steps
         grasp_mask_np = grasp_mask.detach().cpu().numpy()
         self.phase = np.where(grasp_mask_np, "grasp", self.phase).astype(object)
 
     def initialize(self) -> bool:
         result = super().initialize()
-        if result and self.num_envs > 1:
+        if result:
+            self._ensure_parallel_state_buffers()
             self._reset_parallel_buffers()
+            self.target_hold_count = torch.zeros(
+                self.num_envs, dtype=torch.int32, device=self.device
+            )
+            self.prev_tcp_to_grasp_error = self.tcp_to_grasp_error.detach().clone()
+            self.prev_tcp_pos = self._get_tcp_pose()[0].detach().clone()
+            self.tcp_speed = torch.zeros(
+                self.num_envs, dtype=self.datatype, device=self.device
+            )
+            self.last_action_tensor = torch.zeros(
+                (self.num_envs, 8), dtype=self.datatype, device=self.device
+            )
         return result
 
     def _apply_base_action(self, planar_action: torch.Tensor):
@@ -268,30 +386,19 @@ class ParallelRLTask(RLTask):
 
         joint_action = torch.clamp(action[:, :6], -1.0, 1.0)
         planar_action = torch.clamp(action[:, 6:], -1.0, 1.0)
+        self.last_action_tensor = action.detach().clone()
 
         self._apply_base_action(planar_action)
         self._apply_arm_action(joint_action)
-
-        if self.num_envs == 1:
-            if self.phase == "grasp":
-                self.last_gripper_command = self.gripper_close_value
-            else:
-                self.last_gripper_command = self.gripper_open_value
-        else:
-            grasp_mask = torch.as_tensor(
-                self.phase == "grasp", device=self.device, dtype=self.datatype
-            )
-            self.last_gripper_command = torch.where(
-                grasp_mask > 0,
-                torch.full((self.num_envs,), self.gripper_close_value, dtype=self.datatype, device=self.device),
-                torch.full((self.num_envs,), self.gripper_open_value, dtype=self.datatype, device=self.device),
-            )
+        self.last_gripper_command = torch.full(
+            (self.num_envs,),
+            self.gripper_open_value,
+            dtype=self.datatype,
+            device=self.device,
+        )
         self.starlink_manipulator.control_gripper(self.last_gripper_command)
 
     def step(self, dt: float = None, action: Optional[torch.Tensor] = None) -> bool:
-        if self.num_envs == 1:
-            return super().step(dt=dt, action=action)
-
         if self.status != TaskStatus.RUNNING:
             return False
 
@@ -336,9 +443,6 @@ class ParallelRLTask(RLTask):
             return False
 
     def reward(self) -> torch.Tensor:
-        if self.num_envs == 1:
-            return super().reward()
-
         if (
             self.base_alignment_error is None
             or self.tcp_to_grasp_error is None
@@ -346,12 +450,38 @@ class ParallelRLTask(RLTask):
         ):
             return torch.zeros(self.num_envs, dtype=self.datatype, device=self.device)
 
-        reward = -1.5 * self.tcp_to_grasp_error
+        if self.prev_tcp_to_grasp_error is None:
+            progress_reward = torch.zeros_like(self.tcp_to_grasp_error)
+        else:
+            progress_reward = self.prev_tcp_to_grasp_error - self.tcp_to_grasp_error
+        self.prev_tcp_to_grasp_error = self.tcp_to_grasp_error.detach().clone()
+
+        reward = self.progress_reward_scale * progress_reward
+        reward = reward - self.distance_penalty_scale * self.tcp_to_grasp_error
         reward = reward + torch.where(
-            self.tcp_to_grasp_error <= self.grasp_success_threshold,
-            torch.full_like(reward, 100.0),
+            self.tcp_to_grasp_error <= self.reach_distance_threshold,
+            torch.full_like(reward, self.hold_zone_bonus),
             torch.zeros_like(reward),
         )
+        stable_hold_mask = (
+            (self.tcp_to_grasp_error <= self.reach_distance_threshold)
+            & (self.tcp_speed <= self.hold_velocity_threshold)
+            & (self.approach_alignment >= self.approach_alignment_threshold)
+        )
+        reward = reward + torch.where(
+            stable_hold_mask,
+            torch.full_like(reward, self.stable_hold_bonus),
+            torch.zeros_like(reward),
+        )
+        reward = reward + torch.where(
+            self.is_success(),
+            torch.full_like(reward, self.success_bonus),
+            torch.zeros_like(reward),
+        )
+        if self.last_action_tensor is not None:
+            reward = reward - self.action_penalty_scale * torch.sum(
+                self.last_action_tensor ** 2, dim=-1
+            )
         reward = reward - torch.where(
             self.is_success(),
             torch.zeros_like(reward),
@@ -360,25 +490,19 @@ class ParallelRLTask(RLTask):
         return reward.to(dtype=self.datatype, device=self.device)
 
     def is_success(self):
-        if self.num_envs == 1:
-            return super().is_success()
         if (
             self.base_alignment_error is None
             or self.tcp_to_grasp_error is None
             or self.approach_alignment is None
         ):
             return torch.zeros(self.num_envs, dtype=torch.bool, device=self.device)
-        return self.tcp_to_grasp_error <= self.grasp_success_threshold
+        return self.target_hold_count >= self.success_hold_steps
 
     def reset(self) -> bool:
-        result = super().reset()
-        if result and self.num_envs > 1:
-            self._reset_parallel_buffers()
-        return result
+        env_ids = torch.arange(self.num_envs, dtype=torch.long, device=self.device)
+        return self.reset_done_envs(env_ids=env_ids)
 
     def reset_done_envs(self, env_ids=None) -> bool:
-        if self.num_envs == 1:
-            return super().reset_done_envs(env_ids=env_ids)
         if env_ids is None:
             return self.reset()
 
@@ -388,6 +512,7 @@ class ParallelRLTask(RLTask):
 
         try:
             env_ids_list = env_ids.detach().cpu().tolist()
+            self._ensure_parallel_state_buffers()
             print(
                 "[PARTIAL_RESET_DEBUG]",
                 f"global_step={self.step_count}",
@@ -599,6 +724,10 @@ class ParallelRLTask(RLTask):
             self.success[env_ids] = False
             self.edge_contact_hold_count[env_ids] = 0
             self.edge_contact_active[env_ids] = False
+            self.target_hold_count[env_ids] = 0
+            self.prev_tcp_to_grasp_error[env_ids] = self.tcp_to_grasp_error[env_ids]
+            self.prev_tcp_pos[env_ids] = self._get_tcp_pose()[0][env_ids].detach().clone()
+            self.tcp_speed[env_ids] = 0.0
             self.last_gripper_command = updated_gripper_command
             self.env_done[env_ids] = False
             self.env_truncated[env_ids] = False
@@ -613,16 +742,6 @@ class ParallelRLTask(RLTask):
             return False
 
     def get_info(self) -> List[Dict[str, Any]]:
-        if self.num_envs == 1:
-            return [
-                {
-                    "phase": self.phase,
-                    "base_alignment_error": float(self.base_alignment_error.item()),
-                    "tcp_to_grasp_error": float(self.tcp_to_grasp_error.item()),
-                    "success": bool(self.success),
-                }
-            ]
-
         infos: List[Dict[str, Any]] = []
         for env_idx in range(self.num_envs):
             infos.append(
@@ -647,6 +766,9 @@ if gym is not None and spaces is not None:
             env_spacing=None,
             n_envs_per_row=None,
             center_envs_at_origin: bool = None,
+            enable_visual_obs: bool = False,
+            image_shape: Sequence[int] = (3, 84, 84),
+            normalize_images: bool = False,
         ):
             super().__init__()
             self.task = ParallelRLTask(
@@ -655,20 +777,65 @@ if gym is not None and spaces is not None:
                 env_spacing=env_spacing,
                 n_envs_per_row=n_envs_per_row,
                 center_envs_at_origin=center_envs_at_origin,
+                enable_visual_obs=enable_visual_obs,
+                image_shape=image_shape,
+                normalize_images=normalize_images,
             )
             self.num_envs = self.task.num_envs
-            self.single_observation_space = spaces.Box(
-                low=-float("inf"), high=float("inf"), shape=(21,), dtype="float32"
-            )
+            if self.task.enable_visual_obs:
+                image_low = 0.0 if self.task.normalize_images else 0
+                image_high = 1.0 if self.task.normalize_images else 255
+                image_dtype = np.float32 if self.task.normalize_images else np.uint8
+                self.single_observation_space = spaces.Dict(
+                    {
+                        "state": spaces.Box(
+                            low=-float("inf"),
+                            high=float("inf"),
+                            shape=(20,),
+                            dtype=np.float32,
+                        ),
+                        "image": spaces.Box(
+                            low=image_low,
+                            high=image_high,
+                            shape=tuple(self.task.image_shape),
+                            dtype=image_dtype,
+                        ),
+                    }
+                )
+            else:
+                self.single_observation_space = spaces.Box(
+                    low=-float("inf"), high=float("inf"), shape=(20,), dtype="float32"
+                )
             self.single_action_space = spaces.Box(
                 low=-1.0, high=1.0, shape=(8,), dtype="float32"
             )
-            self.observation_space = spaces.Box(
-                low=-float("inf"),
-                high=float("inf"),
-                shape=(self.num_envs, 21),
-                dtype="float32",
-            )
+            if self.task.enable_visual_obs:
+                image_low = 0.0 if self.task.normalize_images else 0
+                image_high = 1.0 if self.task.normalize_images else 255
+                image_dtype = np.float32 if self.task.normalize_images else np.uint8
+                self.observation_space = spaces.Dict(
+                    {
+                        "state": spaces.Box(
+                            low=-float("inf"),
+                            high=float("inf"),
+                            shape=(self.num_envs, 20),
+                            dtype=np.float32,
+                        ),
+                        "image": spaces.Box(
+                            low=image_low,
+                            high=image_high,
+                            shape=(self.num_envs, *tuple(self.task.image_shape)),
+                            dtype=image_dtype,
+                        ),
+                    }
+                )
+            else:
+                self.observation_space = spaces.Box(
+                    low=-float("inf"),
+                    high=float("inf"),
+                    shape=(self.num_envs, 20),
+                    dtype="float32",
+                )
             self.action_space = spaces.Box(
                 low=-1.0,
                 high=1.0,
@@ -677,6 +844,15 @@ if gym is not None and spaces is not None:
             )
 
         def _get_obs(self):
+            if self.task.enable_visual_obs:
+                state_obs = self.task.state_observation.detach().cpu().numpy().astype("float32")
+                image_obs = self.task.image_observation.detach().cpu().numpy()
+                if self.task.normalize_images:
+                    image_obs = image_obs.astype("float32")
+                return {
+                    "state": state_obs,
+                    "image": image_obs,
+                }
             return self.task.observation.detach().cpu().numpy().astype("float32")
 
         def reset(self, *, seed=None, options=None):
@@ -716,6 +892,9 @@ if VecEnv is not None and VecEnvStepReturn is not None:
             env_spacing=None,
             n_envs_per_row=None,
             center_envs_at_origin: bool = None,
+            enable_visual_obs: bool = False,
+            image_shape: Sequence[int] = (3, 84, 84),
+            normalize_images: bool = False,
         ):
             self.env = ParallelSatelliteSideGraspEnv(
                 target_asset_name=target_asset_name,
@@ -723,6 +902,9 @@ if VecEnv is not None and VecEnvStepReturn is not None:
                 env_spacing=env_spacing,
                 n_envs_per_row=n_envs_per_row,
                 center_envs_at_origin=center_envs_at_origin,
+                enable_visual_obs=enable_visual_obs,
+                image_shape=image_shape,
+                normalize_images=normalize_images,
             )
             super().__init__(
                 num_envs=self.env.num_envs,
@@ -749,7 +931,12 @@ if VecEnv is not None and VecEnvStepReturn is not None:
             for idx, done in enumerate(dones):
                 if done:
                     infos[idx] = dict(infos[idx])
-                    infos[idx]["terminal_observation"] = obs[idx].copy()
+                    if isinstance(obs, dict):
+                        infos[idx]["terminal_observation"] = {
+                            key: value[idx].copy() for key, value in obs.items()
+                        }
+                    else:
+                        infos[idx]["terminal_observation"] = obs[idx].copy()
                     infos[idx]["TimeLimit.truncated"] = bool(truncated[idx] and not terminated[idx])
             if done_indices.size > 0:
                 if not self.env.task.reset_done_envs(done_indices.tolist()):
@@ -791,6 +978,9 @@ def build_parallel_env(
     env_spacing=None,
     n_envs_per_row=None,
     center_envs_at_origin: bool = None,
+    enable_visual_obs: bool = False,
+    image_shape: Sequence[int] = (3, 84, 84),
+    normalize_images: bool = False,
 ):
     if gym is None or spaces is None:
         raise ImportError("gymnasium is not installed. Please install gymnasium first.")
@@ -800,6 +990,9 @@ def build_parallel_env(
         env_spacing=env_spacing,
         n_envs_per_row=n_envs_per_row,
         center_envs_at_origin=center_envs_at_origin,
+        enable_visual_obs=enable_visual_obs,
+        image_shape=image_shape,
+        normalize_images=normalize_images,
     )
 
 
@@ -809,6 +1002,9 @@ def make_parallel_vec_env(
     env_spacing=None,
     n_envs_per_row=None,
     center_envs_at_origin: bool = None,
+    enable_visual_obs: bool = False,
+    image_shape: Sequence[int] = (3, 84, 84),
+    normalize_images: bool = False,
 ):
     if VecEnv is None or VecMonitor is None:
         raise ImportError(
@@ -820,6 +1016,9 @@ def make_parallel_vec_env(
         env_spacing=env_spacing,
         n_envs_per_row=n_envs_per_row,
         center_envs_at_origin=center_envs_at_origin,
+        enable_visual_obs=enable_visual_obs,
+        image_shape=image_shape,
+        normalize_images=normalize_images,
     )
     return VecMonitor(vec_env)
 

@@ -1,0 +1,248 @@
+"""
+Batched wrist camera sensor for parallel RL training.
+
+This sensor mirrors the single-camera ``WristCamera`` behavior, but manages one
+Genesis camera per parallel environment and returns a batched RGB tensor.
+"""
+
+from copy import deepcopy
+from pathlib import Path
+import sys
+from typing import Optional
+
+import numpy as np
+import torch
+
+current_file_path = Path(__file__).resolve().parent
+sys.path.append(str(current_file_path.parent))
+
+from controllers.backend import Backend
+from envs.genesis_env import GenesisSim
+from utils.utils import calculate_camera_pose
+
+
+DEFAULT_BATCHED_WRIST_CAM_SETTINGS = {
+    "camera": {
+        "res": (84, 84),
+        "pos": (-1, -1, -1),
+        "lookat": (0, 0, 0),
+        "fov": 70,
+        "GUI": False,
+    },
+    "end_effector_link": "panda_grasptarget",
+    "pos_offset": torch.tensor([-0.08, 0.0, 0.12], dtype=torch.float32),
+    "lookat_offset": torch.tensor([0.05, -1.0, 0.0], dtype=torch.float32),
+    "up_offset": torch.tensor([0.0, 0.0, 1.0], dtype=torch.float32),
+    "rl_obs": {
+        "enabled": True,
+        "channels_first": True,
+        "normalize": False,
+        "update_interval": 1,
+    },
+}
+
+
+def _clone_config(config):
+    if config is None:
+        return deepcopy(DEFAULT_BATCHED_WRIST_CAM_SETTINGS)
+
+    merged = deepcopy(DEFAULT_BATCHED_WRIST_CAM_SETTINGS)
+    for key, value in config.items():
+        if key == "camera" and isinstance(value, dict):
+            merged["camera"].update(value)
+        elif key == "rl_obs" and isinstance(value, dict):
+            merged["rl_obs"].update(value)
+        else:
+            merged[key] = value
+    return merged
+
+
+class BatchedWristCamera(Backend):
+    """
+    Wrist camera sensor that returns one RGB observation per parallel env.
+
+    Notes:
+    - Genesis batched scenes expose batched robot poses, but camera rendering is
+      still handled per camera instance here.
+    - To keep the interface stable for RL, ``capture()`` returns a tensor with
+      shape ``(num_envs, C, H, W)`` by default.
+    """
+
+    def __init__(self, config=None):
+        super().__init__()
+        self.config = _clone_config(config)
+        self._scene = GenesisSim().scene
+        self.device = GenesisSim().device
+        self.datatype = torch.float32
+        self.num_envs = GenesisSim().num_envs
+
+        self._cams = []
+        self.end_effector = None
+        self.cam_pos = None
+        self.cam_lookat = None
+        self.cam_up = None
+
+        rl_obs_config = self.config.get("rl_obs", {})
+        self.channels_first = bool(rl_obs_config.get("channels_first", True))
+        self.normalize = bool(rl_obs_config.get("normalize", False))
+        self.update_interval = max(1, int(rl_obs_config.get("update_interval", 1)))
+
+        camera_config = deepcopy(self.config["camera"])
+        base_gui = bool(camera_config.get("GUI", False))
+        for env_idx in range(self.num_envs):
+            env_camera_config = deepcopy(camera_config)
+            env_camera_config["GUI"] = base_gui and env_idx == 0
+            self._cams.append(self._scene.add_camera(**env_camera_config))
+
+        self.latest_rgb: Optional[torch.Tensor] = None
+        self._step_counter = 0
+
+    @property
+    def cams(self):
+        return self._cams
+
+    def initialize(self, robot=None):
+        self._robot = robot
+        if robot is None or not hasattr(robot, "robot"):
+            raise AttributeError(
+                "BatchedWristCamera requires a Robot wrapper with a 'robot' Genesis entity."
+            )
+
+        end_effector_link = self.config.get(
+            "end_effector_link",
+            DEFAULT_BATCHED_WRIST_CAM_SETTINGS["end_effector_link"],
+        )
+        self.end_effector = robot.robot.get_link(end_effector_link)
+
+        camera_res = self.config["camera"]["res"]
+        channels = 3
+        if self.channels_first:
+            shape = (self.num_envs, channels, camera_res[1], camera_res[0])
+        else:
+            shape = (self.num_envs, camera_res[1], camera_res[0], channels)
+        dtype = torch.float32 if self.normalize else torch.uint8
+        self.latest_rgb = torch.zeros(shape, dtype=dtype, device=self.device)
+
+    def _get_offsets(self):
+        pos_offset = self.config.get(
+            "pos_offset", DEFAULT_BATCHED_WRIST_CAM_SETTINGS["pos_offset"]
+        )
+        lookat_offset = self.config.get(
+            "lookat_offset", DEFAULT_BATCHED_WRIST_CAM_SETTINGS["lookat_offset"]
+        )
+        up_offset = self.config.get(
+            "up_offset", DEFAULT_BATCHED_WRIST_CAM_SETTINGS["up_offset"]
+        )
+        pos_offset = torch.as_tensor(pos_offset, dtype=self.datatype, device=self.device)
+        lookat_offset = torch.as_tensor(
+            lookat_offset, dtype=self.datatype, device=self.device
+        )
+        up_offset = torch.as_tensor(up_offset, dtype=self.datatype, device=self.device)
+        return pos_offset, lookat_offset, up_offset
+
+    def _ensure_batched_pose(self):
+        position = torch.as_tensor(
+            self.end_effector.get_pos(), dtype=self.datatype, device=self.device
+        )
+        quaternion = torch.as_tensor(
+            self.end_effector.get_quat(), dtype=self.datatype, device=self.device
+        )
+        if position.dim() == 1:
+            position = position.unsqueeze(0)
+        if quaternion.dim() == 1:
+            quaternion = quaternion.unsqueeze(0)
+        if position.shape[0] != self.num_envs or quaternion.shape[0] != self.num_envs:
+            raise ValueError(
+                "BatchedWristCamera pose batch size mismatch: "
+                f"expected {self.num_envs}, got pos={tuple(position.shape)}, "
+                f"quat={tuple(quaternion.shape)}"
+            )
+        return position, quaternion
+
+    def _format_rgb(self, rgb) -> torch.Tensor:
+        if torch.is_tensor(rgb):
+            rgb_tensor = rgb.detach().to(device=self.device).contiguous()
+        else:
+            rgb_array = np.asarray(rgb)
+            if any(stride < 0 for stride in rgb_array.strides) or not rgb_array.flags["C_CONTIGUOUS"]:
+                rgb_array = np.ascontiguousarray(rgb_array)
+            rgb_tensor = torch.from_numpy(rgb_array).to(device=self.device)
+
+        if rgb_tensor.dtype != torch.uint8:
+            rgb_tensor = torch.clamp(rgb_tensor, 0, 255)
+            if rgb_tensor.max().item() <= 1.0:
+                rgb_tensor = rgb_tensor * 255.0
+            rgb_tensor = rgb_tensor.to(torch.uint8)
+
+        if rgb_tensor.dim() != 3:
+            raise ValueError(
+                f"Expected RGB image with 3 dims, got shape {tuple(rgb_tensor.shape)}"
+            )
+
+        if rgb_tensor.shape[-1] != 3 and rgb_tensor.shape[0] == 3:
+            rgb_tensor = rgb_tensor.permute(1, 2, 0)
+
+        if rgb_tensor.shape[-1] != 3:
+            raise ValueError(
+                f"Expected RGB image with 3 channels, got shape {tuple(rgb_tensor.shape)}"
+            )
+
+        if self.channels_first:
+            rgb_tensor = rgb_tensor.permute(2, 0, 1).contiguous()
+
+        if self.normalize:
+            rgb_tensor = rgb_tensor.to(torch.float32) / 255.0
+
+        return rgb_tensor
+
+    def capture(self, force_render: bool = False) -> torch.Tensor:
+        if self.latest_rgb is None:
+            raise RuntimeError(
+                "BatchedWristCamera is not initialized. Call initialize(robot) first."
+            )
+
+        if (not force_render) and self._step_counter > 0:
+            if self._step_counter % self.update_interval != 0:
+                return self.latest_rgb
+
+        position, quaternion = self._ensure_batched_pose()
+        pos_offset, lookat_offset, up_offset = self._get_offsets()
+
+        cam_pos = []
+        cam_lookat = []
+        cam_up = []
+        rendered = []
+
+        for env_idx, cam in enumerate(self._cams):
+            env_cam_pos, env_cam_lookat, env_cam_up = calculate_camera_pose(
+                position[env_idx],
+                quaternion[env_idx],
+                pos_offset,
+                lookat_offset,
+                up_offset,
+            )
+            cam.set_pose(pos=env_cam_pos, lookat=env_cam_lookat, up=env_cam_up)
+            rgb, *rest = cam.render(rgb=True)
+            rendered.append(self._format_rgb(rgb))
+            cam_pos.append(env_cam_pos)
+            cam_lookat.append(env_cam_lookat)
+            cam_up.append(env_cam_up)
+
+        self.cam_pos = torch.stack(cam_pos, dim=0)
+        self.cam_lookat = torch.stack(cam_lookat, dim=0)
+        self.cam_up = torch.stack(cam_up, dim=0)
+        self.latest_rgb = torch.stack(rendered, dim=0)
+        return self.latest_rgb
+
+    def step(self):
+        rgb = self.capture()
+        self._step_counter += 1
+        return rgb
+
+    def reset(self):
+        self._step_counter = 0
+        if self.latest_rgb is not None:
+            self.latest_rgb.zero_()
+
+    def stop(self):
+        pass

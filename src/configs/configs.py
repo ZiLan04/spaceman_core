@@ -37,6 +37,119 @@ APP_SETTINGS = {
     "logging_level": "debug",
 }
 
+LIGHT_SETTINGS = {
+    "enabled": True,
+    "active_preset": "front_right",
+    "ambient_light": (0.08, 0.08, 0.08),
+    "background_color": (0.04, 0.08, 0.12),
+    "shadow": True,
+    "presets": {
+        "front": {
+            "lights": (
+                gs.options.vis.DirectionalLight(
+                    dir=(0.0, 0.0, -1.0),
+                    color=(1.0, 1.0, 1.0),
+                    intensity=5.0,
+                ),
+            ),
+        },
+        "back": {
+            "lights": (
+                gs.options.vis.DirectionalLight(
+                    dir=(0.0, 0.0, 1.0),
+                    color=(1.0, 1.0, 1.0),
+                    intensity=5.0,
+                ),
+            ),
+        },
+        "left": {
+            "lights": (
+                gs.options.vis.DirectionalLight(
+                    dir=(1.0, 0.0, -0.2),
+                    color=(1.0, 1.0, 1.0),
+                    intensity=5.2,
+                ),
+            ),
+        },
+        "right": {
+            "lights": (
+                gs.options.vis.DirectionalLight(
+                    dir=(-1.0, 0.0, -0.2),
+                    color=(1.0, 1.0, 1.0),
+                    intensity=5.2,
+                ),
+            ),
+        },
+        "top": {
+            "lights": (
+                gs.options.vis.DirectionalLight(
+                    dir=(0.0, 0.0, -1.0),
+                    color=(1.0, 1.0, 1.0),
+                    intensity=6.0,
+                ),
+            ),
+        },
+        "front_left": {
+            "lights": (
+                gs.options.vis.DirectionalLight(
+                    dir=(0.7, 0.5, -0.5),
+                    color=(1.0, 1.0, 1.0),
+                    intensity=5.5,
+                ),
+            ),
+        },
+        "front_right": {
+            "lights": (
+                gs.options.vis.DirectionalLight(
+                    dir=(-0.7, 0.5, -0.5),
+                    color=(1.0, 1.0, 1.0),
+                    intensity=5.5,
+                ),
+            ),
+        },
+        "dual_side": {
+            "lights": (
+                gs.options.vis.DirectionalLight(
+                    dir=(0.8, 0.3, -0.4),
+                    color=(1.0, 1.0, 1.0),
+                    intensity=4.4,
+                ),
+                gs.options.vis.DirectionalLight(
+                    dir=(-0.8, -0.2, -0.3),
+                    color=(0.85, 0.9, 1.0),
+                    intensity=2.2,
+                ),
+            ),
+        },
+    },
+}
+
+
+def make_light_vis_options(preset_name: str | None = None):
+    active_preset = preset_name or LIGHT_SETTINGS.get("active_preset", "front")
+    presets = LIGHT_SETTINGS.get("presets", {})
+    if active_preset not in presets:
+        raise KeyError(
+            f"Unknown rasterizer light preset '{active_preset}'. "
+            f"Available presets: {sorted(presets.keys())}"
+        )
+
+    preset = presets[active_preset]
+    lights = preset.get("lights", ())
+    if not LIGHT_SETTINGS.get("enabled", True):
+        lights = ()
+
+    return gs.options.VisOptions(
+        show_world_frame=True,
+        visualize_mpm_boundary=False,
+        shadow=bool(LIGHT_SETTINGS.get("shadow", True)),
+        ambient_light=tuple(LIGHT_SETTINGS.get("ambient_light", (0.1, 0.1, 0.1))),
+        background_color=tuple(
+            LIGHT_SETTINGS.get("background_color", (0.04, 0.08, 0.12))
+        ),
+        lights=lights,
+    )
+
 SCENE_SETTINGS = {
     "sim_options": gs.options.SimOptions(
         dt=3e-3,
@@ -56,10 +169,7 @@ SCENE_SETTINGS = {
         camera_lookat=(0.0, 0.0, 0.0),
         camera_fov=40,
     ),
-    "vis_options": gs.options.VisOptions(
-        show_world_frame=True,
-        visualize_mpm_boundary=False,
-    ),
+    "vis_options": make_light_vis_options(),
     "show_viewer": True,
     "show_FPS": False,
 }
@@ -70,7 +180,7 @@ TPV_CAM_SETTINGS = {
         "pos": (-3.0, -3.5, 2.5),
         "lookat": (0, 0.5, 0.5),
         "fov": 40,
-        "far": 100.0,
+        "far": 200.0,
         "GUI": True,
     },
     "enable_recording": True,  # 控制是否启用录制的flag
@@ -82,13 +192,16 @@ PARALLEL_ENV_SETTINGS = {
     "env_spacing": (10.0, 10.0),
     "n_envs_per_row": None,
     "center_envs_at_origin": True,
+    "background_anchor_env": "rendered_env",
 }
 
 __all__ = [
     'APP_SETTINGS',
     'EARTH_BACKGROUND_SETTINGS',
     'PARALLEL_ENV_SETTINGS',
+    'LIGHT_SETTINGS',
     'SCENE_SETTINGS', 
     'SPACE_BACKGROUND_SETTINGS',
     'TPV_CAM_SETTINGS',
+    'make_light_vis_options',
 ]

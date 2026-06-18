@@ -1,7 +1,9 @@
 import sys
+import math
 import torch
 from threading import Lock
 import genesis as gs
+import numpy as np
 
 # Extension APIs
 from pathlib import Path
@@ -10,13 +12,18 @@ sys.path.append(str(current_file_path.parent))
 from configs.configs import (
     APP_SETTINGS,
     EARTH_BACKGROUND_SETTINGS,
+    LIGHT_SETTINGS,
     PARALLEL_ENV_SETTINGS,
     SCENE_SETTINGS,
     SPACE_BACKGROUND_SETTINGS,
     TPV_CAM_SETTINGS,
+    make_light_vis_options,
 )
 from sensors.timer import SimpleTimer
 from utils.utils import with_camera, generate_filename
+
+_RECORDINGS_DIR = current_file_path.parent / "recordings"
+_BACKGROUND_NULL_POS = (1.0e6, 1.0e6, 1.0e6)
 
 class GenesisSim:
     """
@@ -38,6 +45,7 @@ class GenesisSim:
         env_spacing=None,
         n_envs_per_row=None,
         center_envs_at_origin: bool = None,
+        light_preset: str = None,
     ):
         """
         Initialize the GenesisSim environment.
@@ -78,6 +86,9 @@ class GenesisSim:
         )
         GenesisSim._init_config = dict(self._build_config)
 
+        self.light_preset = light_preset or LIGHT_SETTINGS.get("active_preset", "front")
+        SCENE_SETTINGS["vis_options"] = make_light_vis_options(self.light_preset)
+
         # Initialize the simulation
         gs.init(**APP_SETTINGS)
 
@@ -99,7 +110,10 @@ class GenesisSim:
         self._add_earth_background()
         self.rigid = self.scene.sim.rigid_solver
         self.viewer = self.scene.viewer
-        self.device = torch.cuda.current_device()
+        if torch.cuda.is_available():
+            self.device = torch.device("cuda", torch.cuda.current_device())
+        else:
+            self.device = torch.device("cpu")
         self.datatype = torch.float32
         
         # Add third-person view (TPV) camera
@@ -131,6 +145,9 @@ class GenesisSim:
         default_center_envs_at_origin = PARALLEL_ENV_SETTINGS.get(
             "center_envs_at_origin", True
         )
+        default_background_anchor_env = PARALLEL_ENV_SETTINGS.get(
+            "background_anchor_env", "rendered_env"
+        )
 
         resolved_num_envs = default_num_envs if num_envs is None else num_envs
         resolved_env_spacing = (
@@ -159,7 +176,54 @@ class GenesisSim:
             ),
             "n_envs_per_row": resolved_n_envs_per_row,
             "center_envs_at_origin": bool(resolved_center_envs_at_origin),
+            "background_anchor_env": str(default_background_anchor_env),
         }
+
+    @staticmethod
+    def compute_env_offsets(
+        num_envs: int,
+        env_spacing,
+        n_envs_per_row=None,
+        center_envs_at_origin: bool = True,
+    ) -> np.ndarray:
+        normalized_num_envs = max(1, int(num_envs))
+        if not isinstance(env_spacing, (tuple, list)) or len(env_spacing) != 2:
+            raise ValueError("env_spacing must be a tuple/list of length 2.")
+
+        resolved_n_envs_per_row = n_envs_per_row
+        if resolved_n_envs_per_row is None:
+            resolved_n_envs_per_row = int(math.ceil(math.sqrt(normalized_num_envs)))
+        else:
+            resolved_n_envs_per_row = max(1, int(resolved_n_envs_per_row))
+
+        spacing_x = float(env_spacing[0])
+        spacing_y = float(env_spacing[1])
+        offset_x = (np.arange(normalized_num_envs) // resolved_n_envs_per_row) * spacing_x
+        offset_y = (np.arange(normalized_num_envs) % resolved_n_envs_per_row) * spacing_y
+        offset_z = np.zeros((normalized_num_envs,), dtype=np.float32)
+        env_offsets = np.stack((offset_x, offset_y, offset_z), axis=-1).astype(np.float32)
+
+        if center_envs_at_origin:
+            center = (np.max(env_offsets, axis=0) + np.min(env_offsets, axis=0)) / 2.0
+            env_offsets -= center
+
+        return env_offsets
+
+    @staticmethod
+    def find_central_env_idx(
+        num_envs: int,
+        env_spacing,
+        n_envs_per_row=None,
+        center_envs_at_origin: bool = True,
+    ) -> int:
+        env_offsets = GenesisSim.compute_env_offsets(
+            num_envs=num_envs,
+            env_spacing=env_spacing,
+            n_envs_per_row=n_envs_per_row,
+            center_envs_at_origin=center_envs_at_origin,
+        )
+        distances = np.linalg.norm(env_offsets, axis=1)
+        return int(np.argmin(distances))
 
     @property
     def num_envs(self):
@@ -176,6 +240,28 @@ class GenesisSim:
     @property
     def center_envs_at_origin(self):
         return self._build_config["center_envs_at_origin"]
+
+    @property
+    def background_anchor_env(self):
+        return self._build_config["background_anchor_env"]
+
+    def _resolve_background_anchor_env_idx(self) -> int:
+        anchor_mode = str(self.background_anchor_env).strip().lower()
+        if self.num_envs <= 1:
+            return 0
+        if anchor_mode == "rendered_env":
+            return 0
+        if anchor_mode == "center":
+            return self.find_central_env_idx(
+                num_envs=self.num_envs,
+                env_spacing=self.env_spacing,
+                n_envs_per_row=self.n_envs_per_row,
+                center_envs_at_origin=self.center_envs_at_origin,
+            )
+        raise ValueError(
+            "Unsupported parallel background anchor mode: "
+            f"{self.background_anchor_env!r}. Expected 'rendered_env' or 'center'."
+        )
 
     def _add_space_background(self):
         if not SPACE_BACKGROUND_SETTINGS["enable"]:
@@ -197,22 +283,55 @@ class GenesisSim:
             double_sided=False,
         )
 
+    def _build_background_morph_variants(self, settings):
+        return gs.morphs.Mesh(
+            file=settings["mesh_path"],
+            pos=settings["pos"],
+            scale=settings["scale"],
+            fixed=True,
+            collision=False,
+            visualization=True,
+            decimate=False,
+            convexify=False,
+        )
+
+    def _apply_parallel_background_layout(self):
+        if self.num_envs <= 1:
+            return
+
+        anchor_env_idx = self._resolve_background_anchor_env_idx()
+        hidden_env_ids = [env_idx for env_idx in range(self.num_envs) if env_idx != anchor_env_idx]
+        if not hidden_env_ids:
+            return
+
+        hidden_env_ids_tensor = torch.as_tensor(
+            hidden_env_ids, dtype=torch.long, device=self.device
+        )
+
+        for settings, entity in (
+            (SPACE_BACKGROUND_SETTINGS, self.space_background),
+            (EARTH_BACKGROUND_SETTINGS, self.earth_background),
+        ):
+            if entity is None:
+                continue
+
+            visible_pos = torch.tensor(
+                settings["pos"], dtype=self.datatype, device=self.device
+            ).reshape(1, 3)
+            hidden_pos = torch.tensor(
+                _BACKGROUND_NULL_POS, dtype=self.datatype, device=self.device
+            ).reshape(1, 3).repeat(len(hidden_env_ids), 1)
+
+            entity.set_pos(visible_pos, envs_idx=[anchor_env_idx], zero_velocity=True)
+            entity.set_pos(hidden_pos, envs_idx=hidden_env_ids_tensor, zero_velocity=True)
+
     def _add_textured_sphere(self, settings, name: str, double_sided: bool):
         texture = gs.textures.ImageTexture(
             image_path=settings["texture_path"],
             encoding="srgb",
         )
         return self.scene.add_entity(
-            morph=gs.morphs.Mesh(
-                file=settings["mesh_path"],
-                pos=settings["pos"],
-                scale=settings["scale"],
-                fixed=True,
-                collision=False,
-                visualization=True,
-                decimate=False,
-                convexify=False,
-            ),
+            morph=self._build_background_morph_variants(settings),
             material=gs.materials.Rigid(gravity_compensation=1.0),
             surface=gs.surfaces.Plastic(
                 diffuse_texture=texture,
@@ -240,6 +359,7 @@ class GenesisSim:
             n_envs_per_row=self.n_envs_per_row,
             center_envs_at_origin=self.center_envs_at_origin,
         )
+        self._apply_parallel_background_layout()
         print("[DEBUG] Scene built.")
         
         self.timer = SimpleTimer()
@@ -265,7 +385,7 @@ class GenesisSim:
         save_file = generate_filename(
             prefix=f"video_ep_chunk_{self._camera_video_segment_index:04d}",
             extension="mp4",
-            folder_path="recordings",
+            folder_path=str(_RECORDINGS_DIR),
         )
         self.cam.stop_recording(save_to_filename=save_file, fps=60)
         print("Recorded video is saved to ", save_file)

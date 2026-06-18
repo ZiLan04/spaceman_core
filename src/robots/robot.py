@@ -12,12 +12,18 @@ sys.path.append(str(current_file_path.parent))
 from envs.genesis_env import GenesisSim
 from configs.asset_configs import *
 from configs.configs import TPV_CAM_SETTINGS
+from sensors.batched_mounted_camera import BatchedMountedCamera
+from sensors.batched_wrist_camera import BatchedWristCamera
+from sensors.mounted_camera import MountedCamera
 from sensors.wrist_camera import WristCamera
 from controllers.backend import EmptyBackend, Backend
 from controllers.pid import PIDController
 from utils.singlelink_state import SingleLinkState
 from utils.setup_logger import setup_logger
 from utils.utils import generate_filename
+
+_RECORDINGS_DIR = current_file_path.parent / "recordings"
+
 class Robot:
     def __init__(
         self,
@@ -34,6 +40,12 @@ class Robot:
         self.device = GenesisSim().device
         self.datatype = GenesisSim().datatype
         self.static_camera_config = TPV_CAM_SETTINGS["camera"]
+        self.wrist_camera = None
+        self.rl_wrist_camera = None
+        self.base_camera = None
+        self.rl_base_camera = None
+        self.wrist_camera_enable_recording = False
+        self.base_camera_enable_recording = False
         # Initialize the base's position and orientation
         self._base_state = SingleLinkState(device=self.device)
            
@@ -57,6 +69,9 @@ class Robot:
 
         if self.wrist_camera_params["wrist_camera"]:
             try:
+                rl_obs_config = self.wrist_camera_params.get("rl_obs", {})
+                rl_obs_enabled = bool(rl_obs_config.get("enabled", False))
+
                 wrist_cam = WristCamera(config=self.wrist_camera_params)
                 sensors.append(wrist_cam)
                 self.logger.info(f"Added wrist camera for robot: {self._robot_name}")
@@ -74,11 +89,57 @@ class Robot:
                     self.logger.info(f"Wrist camera recording enabled: {self.wrist_camera_enable_recording}")
                 else:
                     self.logger.warning("No camera parameters found for wrist camera")
+
+                if rl_obs_enabled:
+                    batched_wrist_cam = BatchedWristCamera(config=self.wrist_camera_params)
+                    sensors.append(batched_wrist_cam)
+                    self.rl_wrist_camera = batched_wrist_cam
+                    self.logger.info(
+                        f"Added batched RL wrist camera for robot: {self._robot_name}"
+                    )
                     
             except ImportError as e:
                 self.logger.warning(f"Cannot import WristCamera: {e}")
             except Exception as e:
                 self.logger.error(f"Failed to add wrist camera: {e}")
+
+        base_camera_config = self.wrist_camera_params.get("base_camera", {})
+        if base_camera_config.get("enabled", False):
+            try:
+                rl_obs_config = base_camera_config.get("rl_obs", {})
+                rl_obs_enabled = bool(rl_obs_config.get("enabled", False))
+
+                base_cam = MountedCamera(config=base_camera_config)
+                sensors.append(base_cam)
+                camera_params = base_camera_config.get("camera", {})
+                if camera_params:
+                    self.base_camera = base_cam.cam
+                    self.base_camera_enable_recording = bool(
+                        base_camera_config.get("enable_recording", False)
+                    )
+                    self.base_camera_episodes_per_video = max(
+                        1, int(base_camera_config.get("episodes_per_video", 5))
+                    )
+                    self._base_camera_recorded_episode_count = 0
+                    self._base_camera_video_segment_index = 0
+                    self.logger.info(
+                        f"Base camera recording enabled: {self.base_camera_enable_recording}"
+                    )
+                else:
+                    self.logger.warning("No camera parameters found for base camera")
+                self.logger.info(f"Added base camera for robot: {self._robot_name}")
+
+                if rl_obs_enabled:
+                    batched_base_cam = BatchedMountedCamera(config=base_camera_config)
+                    sensors.append(batched_base_cam)
+                    self.rl_base_camera = batched_base_cam
+                    self.logger.info(
+                        f"Added batched RL base camera for robot: {self._robot_name}"
+                    )
+            except ImportError as e:
+                self.logger.warning(f"Cannot import MountedCamera: {e}")
+            except Exception as e:
+                self.logger.error(f"Failed to add base camera: {e}")
         self._sensors = sensors
 
         # 处理后端 - 确保是列表
@@ -182,11 +243,19 @@ class Robot:
             self._wrist_camera_recorded_episode_count = 0
         if hasattr(self, "_wrist_camera_video_segment_index"):
             self._wrist_camera_video_segment_index = 0
+        if hasattr(self, "_base_camera_recorded_episode_count"):
+            self._base_camera_recorded_episode_count = 0
+        if hasattr(self, "_base_camera_video_segment_index"):
+            self._base_camera_video_segment_index = 0
         # 启动腕部相机录制（如果启用）
         if hasattr(self, 'wrist_camera') and hasattr(self, 'wrist_camera_enable_recording'):
             if self.wrist_camera_enable_recording:
                 self.wrist_camera.start_recording()
                 self.logger.info("Wrist camera recording started")
+        if hasattr(self, "base_camera") and hasattr(self, "base_camera_enable_recording"):
+            if self.base_camera_enable_recording:
+                self.base_camera.start_recording()
+                self.logger.info("Base camera recording started")
         
         return
     
@@ -248,6 +317,12 @@ class Robot:
                     self._save_wrist_camera_segment()
                 except Exception as e:
                     self.logger.error(f"Failed to stop wrist camera recording: {e}")
+        if hasattr(self, "base_camera") and hasattr(self, "base_camera_enable_recording"):
+            if self.base_camera_enable_recording:
+                try:
+                    self._save_base_camera_segment()
+                except Exception as e:
+                    self.logger.error(f"Failed to stop base camera recording: {e}")
         
         for sensor in self._sensors:
             sensor.stop()
@@ -270,22 +345,42 @@ class Robot:
         save_file = generate_filename(
             prefix=f"wrist_camera_{self._robot_name}_ep_chunk_{self._wrist_camera_video_segment_index:04d}",
             extension="mp4",
-            folder_path="recordings",
+            folder_path=str(_RECORDINGS_DIR),
         )
         self.wrist_camera.stop_recording(save_to_filename=save_file, fps=60)
         self.logger.info(f"Wrist camera recording saved to: {save_file}")
 
+    def _save_base_camera_segment(self):
+        if not hasattr(self, "base_camera") or not getattr(self, "base_camera_enable_recording", False):
+            return
+        if not getattr(self.base_camera, "_in_recording", False):
+            return
+        if not getattr(self.base_camera, "_recorded_imgs", None):
+            return
+
+        self._base_camera_video_segment_index += 1
+        save_file = generate_filename(
+            prefix=f"base_camera_{self._robot_name}_ep_chunk_{self._base_camera_video_segment_index:04d}",
+            extension="mp4",
+            folder_path=str(_RECORDINGS_DIR),
+        )
+        self.base_camera.stop_recording(save_to_filename=save_file, fps=60)
+        self.logger.info(f"Base camera recording saved to: {save_file}")
+
     def on_episode_end(self, episode_count: int = 1):
-        if not hasattr(self, "wrist_camera") or not getattr(self, "wrist_camera_enable_recording", False):
-            return
+        if hasattr(self, "wrist_camera") and getattr(self, "wrist_camera_enable_recording", False):
+            self._wrist_camera_recorded_episode_count += max(0, int(episode_count))
+            if self._wrist_camera_recorded_episode_count >= self.wrist_camera_episodes_per_video:
+                self._save_wrist_camera_segment()
+                self._wrist_camera_recorded_episode_count = 0
+                self.wrist_camera.start_recording()
 
-        self._wrist_camera_recorded_episode_count += max(0, int(episode_count))
-        if self._wrist_camera_recorded_episode_count < self.wrist_camera_episodes_per_video:
-            return
-
-        self._save_wrist_camera_segment()
-        self._wrist_camera_recorded_episode_count = 0
-        self.wrist_camera.start_recording()
+        if hasattr(self, "base_camera") and getattr(self, "base_camera_enable_recording", False):
+            self._base_camera_recorded_episode_count += max(0, int(episode_count))
+            if self._base_camera_recorded_episode_count >= self.base_camera_episodes_per_video:
+                self._save_base_camera_segment()
+                self._base_camera_recorded_episode_count = 0
+                self.base_camera.start_recording()
 
     def reset(self):
         self.logger.info("Robot reset method called")

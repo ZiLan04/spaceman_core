@@ -78,7 +78,7 @@ class RLTask(Task):
         self.max_steps = 300
         self.base_alignment_threshold = 0.18
         self.grasp_success_threshold = 0.06
-        self.base_force_scale_xy = 60.0
+        self.base_force_scale_xy = 600.0
         self.joint_action_scale = 0.5
         self.base_action_scale = 0.03
         self.gripper_close_value = 0.0
@@ -595,12 +595,19 @@ class RLTask(Task):
             self.initial_target_quat = self._as_task_tensor(
                 self.initial_target_quat, expected_last_dim=4
             ).detach().clone()
+            base_pose = self.base_satellite_pose
+            if getattr(base_pose, "dim", lambda: 0)() > 1:
+                base_pos = base_pose[..., :3]
+                base_quat = base_pose[..., 3:]
+            else:
+                base_pos = base_pose[:3]
+                base_quat = base_pose[3:]
             self.initial_base_pos = self._as_task_tensor(
-                self.base_satellite_pose[..., :3] if self.num_envs > 1 else self.base_satellite_pose[:3],
+                base_pos,
                 expected_last_dim=3,
             ).detach().clone()
             self.initial_base_quat = self._as_task_tensor(
-                self.base_satellite_pose[..., 3:] if self.num_envs > 1 else self.base_satellite_pose[3:],
+                base_quat,
                 expected_last_dim=4,
             ).detach().clone()
             self.initial_joint_positions = self._as_task_tensor(

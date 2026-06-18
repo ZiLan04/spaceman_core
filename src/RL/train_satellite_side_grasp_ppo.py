@@ -8,9 +8,9 @@ import torch
 
 current_file_path = Path(__file__).resolve().parent
 project_src_path = current_file_path.parent
-project_root_path = project_src_path.parent
 sys.path.append(str(project_src_path))
 
+from RL.policies.multimodal_extractor import MultiModalExtractor
 from tasks.RL_task_parallel import PPO, gym, make_parallel_vec_env, spaces
 
 try:
@@ -23,21 +23,21 @@ def parse_args():
     parser = argparse.ArgumentParser(
         description="Train PPO for the batched satellite side-edge grasp task."
     )
-    parser.add_argument("--total-timesteps", type=int, default=200_000)
+    parser.add_argument("--total-timesteps", type=int, default=1_000_000)
     parser.add_argument(
         "--save-dir",
         type=str,
-        default="outputs/rl/ppo_satellite_side_grasp_parallel",
+        default="src/outputs/rl/ppo_satellite_side_grasp_parallel",
     )
     parser.add_argument("--run-name", type=str, default="")
     parser.add_argument("--learning-rate", type=float, default=3e-4)
-    parser.add_argument("--n-steps", type=int, default=1024)
+    parser.add_argument("--n-steps", type=int, default=2048)
     parser.add_argument("--batch-size", type=int, default=256)
     parser.add_argument("--n-epochs", type=int, default=10)
     parser.add_argument("--gamma", type=float, default=0.99)
     parser.add_argument("--gae-lambda", type=float, default=0.95)
     parser.add_argument("--clip-range", type=float, default=0.2)
-    parser.add_argument("--ent-coef", type=float, default=0.0)
+    parser.add_argument("--ent-coef", type=float, default=0.005)
     parser.add_argument("--vf-coef", type=float, default=0.5)
     parser.add_argument("--max-grad-norm", type=float, default=0.5)
     parser.add_argument("--seed", type=int, default=42)
@@ -50,6 +50,34 @@ def parse_args():
     )
     parser.add_argument("--target-asset", type=str, default="starlink")
     parser.add_argument("--num-envs", type=int, default=2)
+    parser.add_argument(
+        "--enable-visual-obs",
+        action="store_true",
+        help="Use wrist camera RGB observations in addition to low-dimensional state.",
+    )
+    parser.add_argument(
+        "--image-shape",
+        type=int,
+        nargs=3,
+        metavar=("C", "H", "W"),
+        default=(3, 84, 84),
+        help="Image observation shape passed to the policy extractor.",
+    )
+    parser.add_argument(
+        "--normalize-images",
+        action="store_true",
+        help="Normalize image observations to [0, 1] in the environment.",
+    )
+    parser.add_argument(
+        "--image-encoder-type",
+        type=str,
+        default="cnn",
+        choices=("cnn", "vit"),
+        help="Visual backbone used by the multimodal feature extractor.",
+    )
+    parser.add_argument("--state-feature-dim", type=int, default=128)
+    parser.add_argument("--image-feature-dim", type=int, default=256)
+    parser.add_argument("--fused-feature-dim", type=int, default=256)
     parser.add_argument(
         "--env-spacing",
         type=float,
@@ -133,6 +161,13 @@ def save_run_config(run_dir: Path, args):
         "checkpoint_freq": args.checkpoint_freq,
         "target_asset": args.target_asset,
         "num_envs": args.num_envs,
+        "enable_visual_obs": args.enable_visual_obs,
+        "image_shape": list(args.image_shape),
+        "normalize_images": args.normalize_images,
+        "image_encoder_type": args.image_encoder_type,
+        "state_feature_dim": args.state_feature_dim,
+        "image_feature_dim": args.image_feature_dim,
+        "fused_feature_dim": args.fused_feature_dim,
         "env_spacing": list(args.env_spacing),
         "n_envs_per_row": args.n_envs_per_row,
         "center_envs_at_origin": args.center_envs_at_origin,
@@ -146,7 +181,7 @@ def train():
     ensure_dependencies()
     training_device = resolve_training_device(args.device)
 
-    base_dir = project_root_path / args.save_dir
+    base_dir = Path(args.save_dir)
     run_dir = make_run_dir(base_dir, args.run_name)
     save_run_config(run_dir, args)
 
@@ -156,6 +191,9 @@ def train():
         env_spacing=tuple(args.env_spacing),
         n_envs_per_row=args.n_envs_per_row,
         center_envs_at_origin=args.center_envs_at_origin,
+        enable_visual_obs=args.enable_visual_obs,
+        image_shape=tuple(args.image_shape),
+        normalize_images=args.normalize_images,
     )
 
     checkpoint_dir = run_dir / "checkpoints"
@@ -167,8 +205,24 @@ def train():
         name_prefix="ppo_satellite_side_grasp_parallel",
     )
 
+    policy = "MlpPolicy"
+    policy_kwargs = None
+    if args.enable_visual_obs:
+        policy = "MultiInputPolicy"
+        policy_kwargs = dict(
+            features_extractor_class=MultiModalExtractor,
+            features_extractor_kwargs=dict(
+                image_encoder_type=args.image_encoder_type,
+                state_feature_dim=args.state_feature_dim,
+                image_feature_dim=args.image_feature_dim,
+                fused_feature_dim=args.fused_feature_dim,
+                normalize_images=not args.normalize_images,
+            ),
+            net_arch=dict(pi=[256, 128], vf=[256, 128]),
+        )
+
     model = PPO(
-        policy="MlpPolicy",
+        policy=policy,
         env=env,
         learning_rate=args.learning_rate,
         n_steps=args.n_steps,
@@ -184,10 +238,12 @@ def train():
         seed=args.seed,
         device=training_device,
         tensorboard_log=str(run_dir / "tensorboard"),
+        policy_kwargs=policy_kwargs,
     )
 
     print(f"Using batched PPO training device: {training_device}")
     print(f"Using Genesis batched scene count: {args.num_envs}")
+    print(f"Using visual observations: {args.enable_visual_obs}")
 
     model.learn(
         total_timesteps=args.total_timesteps,
