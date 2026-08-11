@@ -116,10 +116,11 @@ class GenesisSim:
             self.device = torch.device("cpu")
         self.datatype = torch.float32
         
-        # Add third-person view (TPV) camera
-        # if with_camera(TPV_CAM_SETTINGS):
-        self.cam = self.scene.add_camera(**TPV_CAM_SETTINGS["camera"])
+        # Add third-person view (TPV) camera only when explicitly recording.
         self.camera_enable_recording = with_camera(TPV_CAM_SETTINGS)
+        self.cam = None
+        if self.camera_enable_recording:
+            self.cam = self.scene.add_camera(**TPV_CAM_SETTINGS["camera"])
         self.camera_episodes_per_video = max(
             1, int(TPV_CAM_SETTINGS.get("episodes_per_video", 5))
         )
@@ -287,6 +288,7 @@ class GenesisSim:
         return gs.morphs.Mesh(
             file=settings["mesh_path"],
             pos=settings["pos"],
+            euler=settings.get("euler", (0.0, 0.0, 0.0)),
             scale=settings["scale"],
             fixed=True,
             collision=False,

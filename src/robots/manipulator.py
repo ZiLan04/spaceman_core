@@ -290,7 +290,10 @@ class Manipulator(Robot):
 
             if hasattr(backend, 'input_reference'):
                 control_output = backend.input_reference()
-                self._apply_control_output(control_output=control_output, link_name=self.params["base"])
+                self._apply_control_output(
+                    control_output=control_output,
+                    link_name=self.params.get("pid_apply_link", self.params["base"]),
+                )
 
     def set_pid_enabled(self, enabled: bool):
         self.pid_enabled = bool(enabled) and hasattr(self, "pid")

@@ -1,0 +1,35 @@
+{
+  "total_timesteps": 1000000,
+  "stage": "stage1",
+  "learning_rate": 0.0003,
+  "n_steps": 2048,
+  "batch_size": 256,
+  "n_epochs": 10,
+  "gamma": 0.99,
+  "gae_lambda": 0.95,
+  "clip_range": 0.2,
+  "ent_coef": 0.005,
+  "vf_coef": 0.5,
+  "max_grad_norm": 0.5,
+  "seed": 42,
+  "checkpoint_freq": 20000,
+  "target_asset": "wholesat",
+  "num_envs": 1,
+  "enable_visual_obs": true,
+  "image_shape": [
+    3,
+    84,
+    84
+  ],
+  "normalize_images": false,
+  "image_encoder_type": "cnn",
+  "state_feature_dim": 128,
+  "image_feature_dim": 256,
+  "fused_feature_dim": 256,
+  "env_spacing": [
+    10.0,
+    10.0
+  ],
+  "n_envs_per_row": null,
+  "center_envs_at_origin": true
+}

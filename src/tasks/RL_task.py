@@ -50,6 +50,8 @@ class RLTask(Task):
         env_spacing=None,
         n_envs_per_row=None,
         center_envs_at_origin: bool = None,
+        target_position_noise: bool = True,
+        target_position_noise_range=(0.03, 0.03, 0.02),
     ):
         super().__init__(
             task_name="RL_task",
@@ -62,9 +64,18 @@ class RLTask(Task):
         self.starlink_manipulator: Optional[SatelliteManipulator] = None
         self.target_object: Optional[Robot] = None
         self.target_asset_name = target_asset_name
+        self.target_position_noise = bool(target_position_noise)
+        self.target_position_noise_range = torch.tensor(
+            target_position_noise_range,
+            dtype=self.datatype,
+            device=self.device,
+        )
 
         self.target_link_name = ""
         self.target_grasp_offset_local = torch.tensor(
+            [0.0, 0.0, 0.0], dtype=self.datatype, device=self.device
+        )
+        self.grasp_marker_offset_local = torch.tensor(
             [0.0, 0.0, 0.0], dtype=self.datatype, device=self.device
         )
 
@@ -78,7 +89,7 @@ class RLTask(Task):
         self.max_steps = 300
         self.base_alignment_threshold = 0.18
         self.grasp_success_threshold = 0.06
-        self.base_force_scale_xy = 600.0
+        self.base_force_scale_xy = 100.0
         self.joint_action_scale = 0.5
         self.base_action_scale = 0.03
         self.gripper_close_value = 0.0
@@ -124,15 +135,17 @@ class RLTask(Task):
         self.last_done_mask = None
         self.last_truncated_mask = None
         self.grasp_point_marker = None
-        self.grasp_point_marker_size = (0.1, 0.1, 0.1)
+        self.grasp_point_marker_radius = 0.025
+        self.grasp_point_marker_height = 0.006
         self.debug_grasp_marker = True
         self.debug_grasp_marker_interval = 30
 
     def _create_grasp_point_marker(self):
         marker = self._scene.add_entity(
-            morph=gs.morphs.Box(
+            morph=gs.morphs.Cylinder(
                 pos=(-10.0, -10.0, -10.0),
-                size=self.grasp_point_marker_size,
+                radius=self.grasp_point_marker_radius,
+                height=self.grasp_point_marker_height,
                 fixed=True,
                 collision=False,
                 visualization=True,
@@ -147,11 +160,15 @@ class RLTask(Task):
         )
         return marker
 
-    def _sync_grasp_point_marker(self, grasp_point_pos: torch.Tensor):
+    def _sync_grasp_point_marker(
+        self,
+        grasp_point_pos: torch.Tensor,
+        grasp_point_quat: Optional[torch.Tensor] = None,
+    ):
         if self.grasp_point_marker is None:
             return
 
-        marker_pos = grasp_point_pos.detach().clone()
+        marker_pos = self._get_grasp_marker_pos(grasp_point_pos, grasp_point_quat)
         if marker_pos.dim() == 1:
             self.grasp_point_marker.set_pos(marker_pos, zero_velocity=True)
         else:
@@ -230,6 +247,17 @@ class RLTask(Task):
             target_rot, self.target_grasp_offset_local
         )
         return grasp_point_pos, target_quat
+
+    def _get_grasp_marker_pos(
+        self,
+        grasp_point_pos: torch.Tensor,
+        grasp_point_quat: Optional[torch.Tensor] = None,
+    ) -> torch.Tensor:
+        marker_pos = grasp_point_pos.detach().clone()
+        if grasp_point_quat is None:
+            return marker_pos + self.grasp_marker_offset_local
+        target_rot = as_rotation_matrix(grasp_point_quat, order="wxyz")
+        return marker_pos + torch.matmul(target_rot, self.grasp_marker_offset_local)
 
     def _get_base_pose(self) -> Tuple[torch.Tensor, torch.Tensor]:
         root_qpos = self.starlink_manipulator.robot.get_qpos(
@@ -323,7 +351,7 @@ class RLTask(Task):
     def _update_io_tensors(self):
         tcp_pos, tcp_quat = self._get_tcp_pose()
         grasp_point_pos, grasp_point_quat = self._get_target_grasp_pose()
-        self._sync_grasp_point_marker(grasp_point_pos)
+        self._sync_grasp_point_marker(grasp_point_pos, grasp_point_quat)
         self._log_grasp_marker_debug(grasp_point_pos)
         base_pos, base_quat = self._get_base_pose()
         joint_qpos = self.starlink_manipulator.robot.get_qpos(
@@ -457,30 +485,30 @@ class RLTask(Task):
         )
 
     def _sample_target_reset_noise(self, env_count: int):
-        target_pos_noise = torch.tensor(
-            np.stack(
-                [
-                    np.random.uniform(-0.03, 0.03, size=env_count),
-                    np.random.uniform(-0.03, 0.03, size=env_count),
-                    np.random.uniform(-0.02, 0.02, size=env_count),
-                ],
-                axis=-1,
-            ),
-            dtype=self.datatype,
-            device=self.device,
-        )
-        target_yaw_noise = torch.tensor(
-            np.random.uniform(-0.15, 0.15, size=env_count),
-            dtype=self.datatype,
-            device=self.device,
-        )
-        yaw_half = 0.5 * target_yaw_noise
+        if self.target_position_noise:
+            noise_range = self.target_position_noise_range.detach().cpu().numpy()
+            target_pos_noise = torch.tensor(
+                np.stack(
+                    [
+                        np.random.uniform(-noise_range[0], noise_range[0], size=env_count),
+                        np.random.uniform(-noise_range[1], noise_range[1], size=env_count),
+                        np.random.uniform(-noise_range[2], noise_range[2], size=env_count),
+                    ],
+                    axis=-1,
+                ),
+                dtype=self.datatype,
+                device=self.device,
+            )
+        else:
+            target_pos_noise = torch.zeros(
+                (env_count, 3), dtype=self.datatype, device=self.device
+            )
         yaw_quat = torch.stack(
             [
-                torch.cos(yaw_half),
-                torch.zeros_like(yaw_half),
-                torch.zeros_like(yaw_half),
-                torch.sin(yaw_half),
+                torch.ones(env_count, dtype=self.datatype, device=self.device),
+                torch.zeros(env_count, dtype=self.datatype, device=self.device),
+                torch.zeros(env_count, dtype=self.datatype, device=self.device),
+                torch.zeros(env_count, dtype=self.datatype, device=self.device),
             ],
             dim=-1,
         )
@@ -577,6 +605,13 @@ class RLTask(Task):
             )
             self.target_grasp_offset_local = torch.tensor(
                 self.target_object.params.get("grasp_offset_local", [0.0, 0.0, 0.0]),
+                dtype=self.datatype,
+                device=self.device,
+            )
+            self.grasp_marker_offset_local = torch.tensor(
+                self.target_object.params.get(
+                    "grasp_marker_offset_local", [0.0, 0.0, 0.0]
+                ),
                 dtype=self.datatype,
                 device=self.device,
             )

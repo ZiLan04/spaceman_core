@@ -1,0 +1,40 @@
+{
+  "total_timesteps": 40000000,
+  "stage": "stage2",
+  "learning_rate": 0.0001,
+  "n_steps": 2048,
+  "batch_size": 256,
+  "n_epochs": 10,
+  "gamma": 0.99,
+  "gae_lambda": 0.95,
+  "clip_range": 0.1,
+  "ent_coef": 0.001,
+  "vf_coef": 0.5,
+  "max_grad_norm": 0.5,
+  "target_kl": 0.05,
+  "seed": 42,
+  "checkpoint_freq": 20000,
+  "target_asset": "starlink",
+  "num_envs": 100,
+  "target_position_noise": false,
+  "enable_visual_obs": true,
+  "image_shape": [
+    3,
+    84,
+    84
+  ],
+  "normalize_images": false,
+  "image_encoder_type": "cnn",
+  "state_feature_dim": 128,
+  "image_feature_dim": 256,
+  "fused_feature_dim": 256,
+  "stage2_base_distance": 1.1,
+  "stage2_virtual_grasp_height": 0.08,
+  "stage2_enable_target_collision": false,
+  "env_spacing": [
+    10.0,
+    10.0
+  ],
+  "n_envs_per_row": null,
+  "center_envs_at_origin": true
+}

@@ -44,6 +44,7 @@ class Robot:
         self.rl_wrist_camera = None
         self.base_camera = None
         self.rl_base_camera = None
+        self._rl_sensors = []
         self.wrist_camera_enable_recording = False
         self.base_camera_enable_recording = False
         # Initialize the base's position and orientation
@@ -67,11 +68,21 @@ class Robot:
         elif not isinstance(sensors, list):
             sensors = [sensors]
 
+        rl_obs_config = self.wrist_camera_params.get("rl_obs", {})
+        rl_obs_enabled = bool(rl_obs_config.get("enabled", False))
+        if rl_obs_enabled:
+            try:
+                batched_wrist_cam = BatchedWristCamera(config=self.wrist_camera_params)
+                self._rl_sensors.append(batched_wrist_cam)
+                self.rl_wrist_camera = batched_wrist_cam
+                self.logger.info(
+                    f"Added batched RL wrist camera for robot: {self._robot_name}"
+                )
+            except Exception as e:
+                self.logger.error(f"Failed to add batched RL wrist camera: {e}")
+
         if self.wrist_camera_params["wrist_camera"]:
             try:
-                rl_obs_config = self.wrist_camera_params.get("rl_obs", {})
-                rl_obs_enabled = bool(rl_obs_config.get("enabled", False))
-
                 wrist_cam = WristCamera(config=self.wrist_camera_params)
                 sensors.append(wrist_cam)
                 self.logger.info(f"Added wrist camera for robot: {self._robot_name}")
@@ -90,25 +101,27 @@ class Robot:
                 else:
                     self.logger.warning("No camera parameters found for wrist camera")
 
-                if rl_obs_enabled:
-                    batched_wrist_cam = BatchedWristCamera(config=self.wrist_camera_params)
-                    sensors.append(batched_wrist_cam)
-                    self.rl_wrist_camera = batched_wrist_cam
-                    self.logger.info(
-                        f"Added batched RL wrist camera for robot: {self._robot_name}"
-                    )
-                    
             except ImportError as e:
                 self.logger.warning(f"Cannot import WristCamera: {e}")
             except Exception as e:
                 self.logger.error(f"Failed to add wrist camera: {e}")
 
         base_camera_config = self.wrist_camera_params.get("base_camera", {})
+        base_rl_obs_config = base_camera_config.get("rl_obs", {})
+        base_rl_obs_enabled = bool(base_rl_obs_config.get("enabled", False))
+        if base_rl_obs_enabled:
+            try:
+                batched_base_cam = BatchedMountedCamera(config=base_camera_config)
+                self._rl_sensors.append(batched_base_cam)
+                self.rl_base_camera = batched_base_cam
+                self.logger.info(
+                    f"Added batched RL base camera for robot: {self._robot_name}"
+                )
+            except Exception as e:
+                self.logger.error(f"Failed to add batched RL base camera: {e}")
+
         if base_camera_config.get("enabled", False):
             try:
-                rl_obs_config = base_camera_config.get("rl_obs", {})
-                rl_obs_enabled = bool(rl_obs_config.get("enabled", False))
-
                 base_cam = MountedCamera(config=base_camera_config)
                 sensors.append(base_cam)
                 camera_params = base_camera_config.get("camera", {})
@@ -128,14 +141,6 @@ class Robot:
                 else:
                     self.logger.warning("No camera parameters found for base camera")
                 self.logger.info(f"Added base camera for robot: {self._robot_name}")
-
-                if rl_obs_enabled:
-                    batched_base_cam = BatchedMountedCamera(config=base_camera_config)
-                    sensors.append(batched_base_cam)
-                    self.rl_base_camera = batched_base_cam
-                    self.logger.info(
-                        f"Added batched RL base camera for robot: {self._robot_name}"
-                    )
             except ImportError as e:
                 self.logger.warning(f"Cannot import MountedCamera: {e}")
             except Exception as e:
@@ -180,6 +185,8 @@ class Robot:
         self.logger.info(f"Adding {len(self._sensors)} sensors to robot")
 
         for sensor in self._sensors:
+            sensor.initialize(self)
+        for sensor in self._rl_sensors:
             sensor.initialize(self)
         self.logger.info("All sensors initialized")
 
@@ -326,6 +333,8 @@ class Robot:
         
         for sensor in self._sensors:
             sensor.stop()
+        for sensor in self._rl_sensors:
+            sensor.stop()
         
         for backend in self._backends:
             backend.stop()
@@ -367,7 +376,7 @@ class Robot:
         self.base_camera.stop_recording(save_to_filename=save_file, fps=60)
         self.logger.info(f"Base camera recording saved to: {save_file}")
 
-    def on_episode_end(self, episode_count: int = 1):
+    def on_episode_end(self, episode_count: int = 1, env_ids=None):
         if hasattr(self, "wrist_camera") and getattr(self, "wrist_camera_enable_recording", False):
             self._wrist_camera_recorded_episode_count += max(0, int(episode_count))
             if self._wrist_camera_recorded_episode_count >= self.wrist_camera_episodes_per_video:
@@ -382,8 +391,14 @@ class Robot:
                 self._base_camera_recorded_episode_count = 0
                 self.base_camera.start_recording()
 
+        for sensor in self._rl_sensors:
+            if hasattr(sensor, "on_episode_end"):
+                sensor.on_episode_end(episode_count, env_ids=env_ids)
+
     def reset(self):
         self.logger.info("Robot reset method called")
+        for sensor in self._rl_sensors:
+            sensor.reset()
         return
 
     def _get_links(self):
@@ -422,16 +437,27 @@ class Robot:
         torque_tensor = self._format_wrench_input(torque)
 
         links_idx = link_idx
-        if force_tensor is not None and force_tensor.dim() == 2 and force_tensor.shape[0] > 1:
-            links_idx = [link_idx] * force_tensor.shape[0]
-        elif torque_tensor is not None and torque_tensor.dim() == 2 and torque_tensor.shape[0] > 1:
-            links_idx = [link_idx] * torque_tensor.shape[0]
+        envs_idx = None
+        batch_size = 1
+        if force_tensor is not None and force_tensor.dim() == 2:
+            batch_size = max(batch_size, force_tensor.shape[0])
+        if torque_tensor is not None and torque_tensor.dim() == 2:
+            batch_size = max(batch_size, torque_tensor.shape[0])
+
+        if batch_size > 1:
+            links_idx = [link_idx]
+            envs_idx = torch.arange(batch_size, dtype=torch.int32, device=self.device)
+            if force_tensor is not None:
+                force_tensor = force_tensor.reshape(batch_size, 1, 3)
+            if torque_tensor is not None:
+                torque_tensor = torque_tensor.reshape(batch_size, 1, 3)
 
         # Get the handle of the rigidbody that we will apply the force to
         if force_tensor is not None:
             self._scene.sim.rigid_solver.apply_links_external_force(
                 force=force_tensor,
                 links_idx=links_idx,
+                envs_idx=envs_idx,
             )
             self.logger.debug(
                 f"Applied force with shape {tuple(force_tensor.shape)} to link '{link_name}' (ID: {link_idx})"
@@ -440,6 +466,7 @@ class Robot:
             self._scene.sim.rigid_solver.apply_links_external_torque(
                 torque=torque_tensor,
                 links_idx=links_idx,
+                envs_idx=envs_idx,
             )
             self.logger.debug(
                 f"Applied torque with shape {tuple(torque_tensor.shape)} to link '{link_name}' (ID: {link_idx})"

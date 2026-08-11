@@ -1,0 +1,279 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- This URDF was automatically created by SolidWorks to URDF Exporter! Originally created by Stephen Brawner (brawner@gmail.com) 
+     Commit Version: 1.6.0-4-g7f85cfe  Build Version: 1.6.7995.38578
+     For more information, please see http://wiki.ros.org/sw_urdf_exporter -->
+<robot
+  name="wholesat.SLDASM">
+  <link
+    name="base_link">
+    <inertial>
+      <origin
+        xyz="-0.096902 -0.00077243 -0.022893"
+        rpy="0 0 0" />
+      <mass
+        value="955.05" />
+      <inertia
+        ixx="464.86"
+        ixy="-7.6649"
+        ixz="-68.884"
+        iyy="1147.5"
+        iyz="-2.0382"
+        izz="1155.8" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="../meshes/base_link.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.64706 0.61961 0.58824 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="../meshes/base_link.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <link
+    name="left_pannel">
+    <inertial>
+      <origin
+        xyz="0.0013037 0.81981 0.53754"
+        rpy="0 0 0" />
+      <mass
+        value="17.189" />
+      <inertia
+        ixx="5.1788"
+        ixy="0.00015116"
+        ixz="2.0491E-06"
+        iyy="1.6128"
+        iyz="-2.9043E-06"
+        izz="3.5662" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="../meshes/left_pannel.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.66667 0.66667 0.66667 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="../meshes/left_pannel.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="left_pannel"
+    type="revolute">
+    <origin
+      xyz="-0.015195 -3.1285 -0.53909"
+      rpy="0 0 -3.1416" />
+    <parent
+      link="base_link" />
+    <child
+      link="left_pannel" />
+    <axis
+      xyz="0 0 1" />
+    <limit
+      lower="0"
+      upper="3.1416"
+      effort="10"
+      velocity="1" />
+  </joint>
+  <link
+    name="left_pannel_1">
+    <inertial>
+      <origin
+        xyz="0.0013049 0.81917 0.53751"
+        rpy="0 0 0" />
+      <mass
+        value="17.174" />
+      <inertia
+        ixx="5.1658"
+        ixy="0.00015115"
+        ixz="6.0883E-07"
+        iyy="1.6088"
+        iyz="-5.3885E-07"
+        izz="3.5572" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="../meshes/left_pannel_1.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.66667 0.66667 0.66667 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="../meshes/left_pannel_1.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="left_pannel_1"
+    type="revolute">
+    <origin
+      xyz="0 1.6372 0"
+      rpy="0 0 0" />
+    <parent
+      link="left_pannel" />
+    <child
+      link="left_pannel_1" />
+    <axis
+      xyz="0 0 1" />
+    <limit
+      lower="0"
+      upper="3.1416"
+      effort="10"
+      velocity="1" />
+  </joint>
+  <link
+    name="right_pannel">
+    <inertial>
+      <origin
+        xyz="0.0013037 0.81981 0.53754"
+        rpy="0 0 0" />
+      <mass
+        value="17.189" />
+      <inertia
+        ixx="5.1788"
+        ixy="0.00015116"
+        ixz="2.0491E-06"
+        iyy="1.6128"
+        iyz="-2.9043E-06"
+        izz="3.5662" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="../meshes/right_pannel.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.66667 0.66667 0.66667 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="../meshes/right_pannel.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="right_pannel"
+    type="revolute">
+    <origin
+      xyz="-0.015195 3.1285 0.53591"
+      rpy="3.1416 0 3.1416" />
+    <parent
+      link="base_link" />
+    <child
+      link="right_pannel" />
+    <axis
+      xyz="0 0 -1" />
+    <limit
+      lower="-3.1416"
+      upper="0"
+      effort="10"
+      velocity="1" />
+  </joint>
+  <link
+    name="right_pannel_2">
+    <inertial>
+      <origin
+        xyz="0.003404 0.30475 0.0099897"
+        rpy="0 0 0" />
+      <mass
+        value="11.595" />
+      <inertia
+        ixx="2.7536"
+        ixy="-0.00011189"
+        ixz="-8.2724E-05"
+        iyy="2.2955"
+        iyz="-4.1997E-05"
+        izz="0.45831" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="../meshes/right_pannel_2.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.66667 0.66667 0.66667 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="../meshes/right_pannel_2.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="right_pannel_2"
+    type="revolute">
+    <origin
+      xyz="-0.0025 0.8286 1.08"
+      rpy="1.5708 0 0" />
+    <parent
+      link="right_pannel" />
+    <child
+      link="right_pannel_2" />
+    <axis
+      xyz="0 0 -1" />
+    <limit
+      lower="-3.1416"
+      upper="0"
+      effort="10"
+      velocity="1" />
+  </joint>
+</robot>

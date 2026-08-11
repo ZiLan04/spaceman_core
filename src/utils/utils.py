@@ -167,14 +167,16 @@ def calculate_camera_pose(wrist_position, wrist_quaternion,
                           lookat_offset=[0.0, 0.0, 1.0],
                           up_offset=[1.0, 0.0, 0.0]):
     """
-    使用pos、lookat和up参数设置手腕相机位姿
+    使用pos、lookat和up参数设置手腕相机位姿。
+
+    这些offset都定义在挂载link的局部坐标系中，然后通过link姿态旋转到世界坐标。
     
     参数:
         wrist_position: torch.Tensor, 手腕位置 [x, y, z]
         wrist_quaternion: torch.Tensor, 手腕四元数 [qw, qx, qy, qz]
-        pos_offset: list or torch.Tensor, 相机位置偏移 [x, y, z]
-        lookat_offset: list or torch.Tensor, 观察点偏移 [x, y, z]
-        up_offset: list or torch.Tensor, 上方向偏移 [x, y, z]
+        pos_offset: list or torch.Tensor, 相机位置偏移 [local_x, local_y, local_z]
+        lookat_offset: list or torch.Tensor, 观察点偏移 [local_x, local_y, local_z]
+        up_offset: list or torch.Tensor, 上方向向量 [local_x, local_y, local_z]
     """
     # 确保所有张量在相同设备上
     device = wrist_position.device

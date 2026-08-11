@@ -20,6 +20,7 @@ SPACE_BACKGROUND_SETTINGS = {
     "texture_path": str(_ASSET_PATH / 'textures' / 'space_skybox_8k.png'),
     "scale": 150.0,
     "pos": (0.0, 0.0, 0.0),
+    "euler": (0.0, 0.0, 0.0),
 }
 
 EARTH_BACKGROUND_SETTINGS = {
@@ -28,6 +29,7 @@ EARTH_BACKGROUND_SETTINGS = {
     "texture_path": str(_ASSET_PATH / 'textures' / 'earth_2k.png'),
     "scale": 60.0,
     "pos": (0.0, 0.0, -70.0),
+    "euler": (0.0, 0.0, 0.0),
 }
 
 APP_SETTINGS = {
@@ -39,6 +41,7 @@ APP_SETTINGS = {
 
 LIGHT_SETTINGS = {
     "enabled": True,
+    "show_world_frame": True,
     "active_preset": "front_right",
     "ambient_light": (0.08, 0.08, 0.08),
     "background_color": (0.04, 0.08, 0.12),
@@ -140,7 +143,7 @@ def make_light_vis_options(preset_name: str | None = None):
         lights = ()
 
     return gs.options.VisOptions(
-        show_world_frame=True,
+        show_world_frame=bool(LIGHT_SETTINGS.get("show_world_frame", True)),
         visualize_mpm_boundary=False,
         shadow=bool(LIGHT_SETTINGS.get("shadow", True)),
         ambient_light=tuple(LIGHT_SETTINGS.get("ambient_light", (0.1, 0.1, 0.1))),
@@ -155,6 +158,12 @@ SCENE_SETTINGS = {
         dt=3e-3,
         substeps=10,
     ),
+    # BatchRenderer lets RL cameras render all parallel envs in one batched call.
+    # TPV/debug cameras should set camera.debug=True so they do not enter this
+    # renderer, because BatchRenderer requires all non-debug cameras to share
+    # the same resolution.
+    #"renderer": gs.renderers.BatchRenderer(use_rasterizer=True),
+    "renderer":None,
     "rigid_options": gs.options.RigidOptions(
         gravity=(0, 0, 0),
         enable_collision=True,
@@ -181,10 +190,11 @@ TPV_CAM_SETTINGS = {
         "lookat": (0, 0.5, 0.5),
         "fov": 40,
         "far": 200.0,
-        "GUI": True,
+        "GUI": False,
+        "debug": True,
     },
-    "enable_recording": True,  # 控制是否启用录制的flag
-    "episodes_per_video": 10,
+    "enable_recording": True,  # TPV debug recording renders every sim step; RL recording is configured per rl_obs.
+    "episodes_per_video": 1,
 }
 
 PARALLEL_ENV_SETTINGS = {
