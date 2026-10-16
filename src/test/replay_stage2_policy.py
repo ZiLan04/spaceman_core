@@ -1,4 +1,4 @@
-"""Replay a trained stage-2 PPO arm pre-grasp policy in one Genesis env."""
+"""Replay a trained stage-2 PPO arm grasp-pose policy in one Genesis env."""
 
 import argparse
 import csv
@@ -19,7 +19,7 @@ sys.path.append(str(project_src_path))
 
 # Keep the custom feature extractor importable when loading visual policies.
 import configs.asset_configs as asset_configs  # noqa: E402
-from configs.config_starlink import _STARLINK_PATHS, to_posix  # noqa: E402
+from configs.config_starlink import make_starlink_morph  # noqa: E402
 from configs.config_starlink_manipulator import FRANKA_S_Q_CAMERA  # noqa: E402
 from configs.configs import SCENE_SETTINGS, TPV_CAM_SETTINGS  # noqa: E402
 from RL.policies.multimodal_extractor import MultiModalExtractor  # noqa: F401,E402
@@ -39,9 +39,9 @@ DEFAULT_MODEL_PATH = (
     / "outputs"
     / "rl"
     / "ppo_satellite_stage2_arm"
-    / "run_20260724_214752"
+    / "run_20260828_200223"
     / "checkpoints"
-    / "ppo_satellite_stage2_arm_40000000_steps.zip"
+    / "ppo_satellite_stage2_arm_18000000_steps.zip"
 )
 
 
@@ -88,12 +88,12 @@ def build_arg_parser():
         description="Replay a stage-2 arm PPO policy with num_envs=1."
     )
     parser.add_argument("--model-path", type=Path, default=DEFAULT_MODEL_PATH)
-    parser.add_argument("--episodes", type=int, default=10)
+    parser.add_argument("--episodes", type=int, default=3)
     parser.add_argument(
         "--max-steps",
         type=int,
-        default=140,
-        help="Policy steps to run in one replay episode. Stage-2 training used 120.",
+        default=200,
+        help="Policy steps to run in one replay episode. Stage-2 training uses 200.",
     )
     parser.add_argument(
         "--stop-on-success",
@@ -114,16 +114,23 @@ def build_arg_parser():
         help="Uniform reset noise range for the first six arm joints, in radians.",
     )
     parser.add_argument(
-        "--success-position-threshold",
+        "--success-tcp-threshold",
         type=float,
-        default=0.3,
-        help="Relaxed replay success position threshold in meters.",
+        default=None,
+        help="Override the training TCP-to-grasp success threshold in meters.",
     )
-    parser.add_argument(
+    orientation_threshold_group = parser.add_mutually_exclusive_group()
+    orientation_threshold_group.add_argument(
+        "--success-orientation-angle-deg",
+        type=float,
+        default=None,
+        help="Override the full-quaternion angular success threshold in degrees.",
+    )
+    orientation_threshold_group.add_argument(
         "--success-quat-similarity-threshold",
         type=float,
-        default=0.5,
-        help="Relaxed replay success quaternion similarity threshold.",
+        default=None,
+        help="Legacy equivalent override for the full-quaternion angular threshold.",
     )
     parser.add_argument("--device", default="auto")
     parser.add_argument("--deterministic", action="store_true", default=True)
@@ -199,7 +206,6 @@ def build_arg_parser():
         help="Replay non-visual policy with arm joints only.",
     )
     parser.add_argument("--stage2-base-distance", type=float, default=None)
-    parser.add_argument("--stage2-virtual-grasp-height", type=float, default=None)
     parser.add_argument(
         "--stage2-enable-target-collision",
         action="store_true",
@@ -212,11 +218,89 @@ def build_arg_parser():
         action="store_false",
         help="Override replay to disable physical target collision.",
     )
+    parser.add_argument(
+        "--grasp-check",
+        dest="grasp_check",
+        action="store_true",
+        default=None,
+        help=(
+            "After the ideal pose / success is reached, hold the arm and close "
+            "the gripper, then verify whether the target is actually grasped "
+            "(contact forces, gripper blockage, target drift)."
+        ),
+    )
+    parser.add_argument(
+        "--no-grasp-check",
+        dest="grasp_check",
+        action="store_false",
+        help="Disable the post-success grasp verification phase.",
+    )
+    parser.add_argument(
+        "--grasp-close-value",
+        type=float,
+        default=0.0,
+        help="Gripper command used to close (1=open, 0=close).",
+    )
+    parser.add_argument(
+        "--grasp-close-steps",
+        type=int,
+        default=20,
+        help="Decision steps used to ramp the gripper from open to the close command.",
+    )
+    parser.add_argument(
+        "--grasp-verify-steps",
+        type=int,
+        default=120,
+        help="Decision steps to keep the gripper closed and monitor the grasp.",
+    )
+    parser.add_argument(
+        "--grasp-pull-steps",
+        type=int,
+        default=60,
+        help="Decision steps used to pull the base/TCP away from the target.",
+    )
+    parser.add_argument(
+        "--grasp-pull-distance",
+        type=float,
+        default=0.05,
+        help=(
+            "How far (m) to pull the base/TCP away from the target during the "
+            "hold test. Set 0 to skip the pull test."
+        ),
+    )
+    parser.add_argument(
+        "--grasp-settle-steps",
+        type=int,
+        default=40,
+        help="Decision steps to hold after the pull before judging the grasp.",
+    )
+    parser.add_argument(
+        "--grasp-target-drift-threshold",
+        type=float,
+        default=0.02,
+        help=(
+            "Target grasp-point drift (m) above this during closing is reported "
+            "as the target being knocked / pushed away."
+        ),
+    )
+    parser.add_argument(
+        "--grasp-contact-force-threshold",
+        type=float,
+        default=1e-3,
+        help="Finger contact force above this counts as a real contact.",
+    )
+    parser.add_argument(
+        "--grasp-log-every",
+        type=int,
+        default=5,
+        help="Log every N grasp-verification decision steps.",
+    )
     parser.set_defaults(
         center_envs_at_origin=None,
         target_position_noise=None,
         enable_target_relative_obs=None,
         stage2_enable_target_collision=None,
+        grasp_check=None,
     )
     return parser
 
@@ -224,6 +308,11 @@ def build_arg_parser():
 def config_value(config: dict, key: str, default):
     value = config.get(key, default)
     return default if value is None else value
+
+
+def resolve_grasp_check(args) -> bool:
+    """Grasp verification is enabled by default; --no-grasp-check disables it."""
+    return True if getattr(args, "grasp_check", None) is None else bool(args.grasp_check)
 
 
 def replay_visual_obs(args, config: dict) -> bool:
@@ -259,12 +348,7 @@ def configure_stage2_target_collision(target_asset: str, enable_collision: bool)
 
     def make_starlink_for_stage2_replay():
         return {
-            "morph": gs.morphs.URDF(
-                file=to_posix(_STARLINK_PATHS["urdf"]),
-                pos=(-2.0, 0.0, 0.5),
-                euler=(0.0, 0.0, 180.0),
-                scale=7e-1,
-                fixed=False,
+            "morph": make_starlink_morph(
                 collision=enable_collision,
                 visualization=True,
             ),
@@ -341,17 +425,27 @@ def make_replay_env(args, config: dict):
         if args.stage2_enable_target_collision is not None
         else bool(config_value(config, "stage2_enable_target_collision", False))
     )
+    grasp_check = resolve_grasp_check(args)
+    if grasp_check and not enable_collision:
+        if args.stage2_enable_target_collision is None:
+            enable_collision = True
+            print(
+                "[STAGE2_REPLAY] Grasp verification is enabled: forcing target "
+                "collision ON so the fingers can physically contact the target.",
+                flush=True,
+            )
+        else:
+            print(
+                "[STAGE2_REPLAY] WARNING: grasp verification is enabled but target "
+                "collision was explicitly disabled; the gripper cannot physically "
+                "grasp the target and the check will likely report NO_CONTACT.",
+                flush=True,
+            )
     stage2_base_distance = (
         args.stage2_base_distance
         if args.stage2_base_distance is not None
         else float(config_value(config, "stage2_base_distance", 1.1))
     )
-    virtual_grasp_height = (
-        args.stage2_virtual_grasp_height
-        if args.stage2_virtual_grasp_height is not None
-        else float(config_value(config, "stage2_virtual_grasp_height", 0.08))
-    )
-
     configure_stage2_target_collision(target_asset, bool(enable_collision))
     enable_visual_obs = replay_visual_obs(args, config)
     enable_target_relative_obs = replay_target_relative_obs(args, config, enable_visual_obs)
@@ -370,7 +464,6 @@ def make_replay_env(args, config: dict):
         enable_target_relative_obs=enable_target_relative_obs,
         target_position_noise=target_position_noise,
         stage2_base_distance=stage2_base_distance,
-        virtual_grasp_height=virtual_grasp_height,
     )
     if enable_visual_obs or bool(args.no_vecnormalize):
         return env
@@ -509,7 +602,32 @@ def _apply_stage2_replay_initial_dofs(task, env_ids=None):
             _normalize_stage2_replay_joint_reference(task)
     task.starlink_manipulator.update_state()
     if hasattr(task, "_update_io_tensors"):
+        task.last_action_tensor[env_ids] = 0.0
         task._update_io_tensors()
+        task.target_hold_count[env_ids] = 0
+        task.prev_in_hold_zone[env_ids] = False
+        task.ever_in_hold_zone[env_ids] = False
+        task.reached_approach_milestone[env_ids] = False
+        task.reached_prepose_milestone[env_ids] = False
+        task.reached_midpose_milestone[env_ids] = False
+        task.reached_nearpose_milestone[env_ids] = False
+        task.reached_precision_milestone[env_ids] = False
+        for episode_reward_sum in task.episode_reward_sums.values():
+            episode_reward_sum[env_ids] = 0.0
+        task.episode_min_tcp_to_grasp_error[env_ids] = float("inf")
+        task.episode_min_pose_orientation_angle_deg[env_ids] = float("inf")
+        task.episode_max_hold_count[env_ids] = 0
+        task.prev_tcp_to_grasp_error[env_ids] = task.tcp_to_grasp_error[env_ids]
+        task.prev_pose_orientation_angle[env_ids] = task.pose_orientation_angle[
+            env_ids
+        ]
+        task.prev_tcp_pos[env_ids] = task._get_tcp_pose()[0][env_ids].detach().clone()
+        task.prev_reference_link_pos[env_ids] = (
+            task._get_reference_yaw_link_pose()[0][env_ids].detach().clone()
+        )
+        task.tcp_speed[env_ids] = 0.0
+        task.reference_link_speed[env_ids] = 0.0
+        task.tool_speed[env_ids] = 0.0
 
 
 def patch_stage2_replay_reset_pose(task):
@@ -595,10 +713,6 @@ def trajectory_row(step_idx: int, reward: float, action, info: dict, task=None):
         getattr(task, "tcp_pose", None),
         default=np.full(7, np.nan),
     )
-    virtual_grasp_pose = first_env_array(
-        getattr(task, "virtual_grasp_pose", None),
-        default=np.full(7, np.nan),
-    )
     target_grasp_pose = first_env_array(
         getattr(task, "target_grasp_pose", None),
         default=np.full(7, np.nan),
@@ -616,10 +730,10 @@ def trajectory_row(step_idx: int, reward: float, action, info: dict, task=None):
         default=np.full(6, np.nan),
     )
 
-    tcp_to_virtual_grasp_error = scalar_info(
+    tcp_to_grasp_error = scalar_info(
         info,
-        "tcp_to_virtual_grasp_error",
-        task_scalar(task, "tcp_to_virtual_grasp_error"),
+        "tcp_to_grasp_error",
+        task_scalar(task, "tcp_to_grasp_error"),
     )
     pose_position_error = scalar_info(
         info,
@@ -631,10 +745,40 @@ def trajectory_row(step_idx: int, reward: float, action, info: dict, task=None):
         "pose_quat_similarity",
         task_scalar(task, "pose_quat_similarity"),
     )
+    orientation_angle = scalar_info(
+        info,
+        "pose_orientation_angle",
+        task_scalar(task, "pose_orientation_angle"),
+    )
+    speed_gate = scalar_info(
+        info,
+        "speed_reward_gate",
+        task_scalar(task, "speed_reward_gate"),
+    )
+    orientation_gate = scalar_info(
+        info,
+        "orientation_reward_gate",
+        task_scalar(task, "orientation_reward_gate"),
+    )
+    tool_speed = scalar_info(
+        info,
+        "tool_speed",
+        task_scalar(task, "tool_speed"),
+    )
+    tool_speed_limit = scalar_info(
+        info,
+        "tool_speed_limit",
+        task_scalar(task, "tool_speed_limit"),
+    )
     reference_speed = scalar_info(
         info,
         "reference_link_speed",
         task_scalar(task, "reference_link_speed"),
+    )
+    tcp_speed = scalar_info(
+        info,
+        "tcp_speed",
+        task_scalar(task, "tcp_speed"),
     )
 
     row = {
@@ -647,23 +791,94 @@ def trajectory_row(step_idx: int, reward: float, action, info: dict, task=None):
         "tcp_qx": float(tcp_pose[4]),
         "tcp_qy": float(tcp_pose[5]),
         "tcp_qz": float(tcp_pose[6]),
-        "virtual_grasp_x": float(virtual_grasp_pose[0]),
-        "virtual_grasp_y": float(virtual_grasp_pose[1]),
-        "virtual_grasp_z": float(virtual_grasp_pose[2]),
         "target_grasp_x": float(target_grasp_pose[0]),
         "target_grasp_y": float(target_grasp_pose[1]),
         "target_grasp_z": float(target_grasp_pose[2]),
         "reference_link_x": float(reference_yaw_link_pose[0]),
         "reference_link_y": float(reference_yaw_link_pose[1]),
         "reference_link_z": float(reference_yaw_link_pose[2]),
-        "tcp_to_virtual_grasp_error": float(tcp_to_virtual_grasp_error),
+        "tcp_to_grasp_error": float(tcp_to_grasp_error),
         "pose_position_error": float(pose_position_error),
         "pose_quat_similarity": float(quat_similarity),
+        "pose_orientation_angle_rad": float(orientation_angle),
+        "pose_orientation_angle_deg": float(np.degrees(orientation_angle)),
+        "orientation_reward_gate": float(orientation_gate),
+        "tcp_speed": float(tcp_speed),
         "reference_link_speed": float(reference_speed),
+        "speed_reward_gate": float(speed_gate),
+        "tool_speed": float(tool_speed),
+        "tool_speed_limit": float(tool_speed_limit),
         "base_drift_error": float(
             scalar_info(info, "base_drift_error", task_scalar(task, "base_drift_error"))
         ),
         "target_in_wrist_view": bool(info.get("target_in_wrist_view", False)),
+        "reached_approach_milestone": bool(
+            info.get("reached_approach_milestone", False)
+        ),
+        "reached_prepose_milestone": bool(
+            info.get("reached_prepose_milestone", False)
+        ),
+        "reached_midpose_milestone": bool(
+            info.get("reached_midpose_milestone", False)
+        ),
+        "reached_nearpose_milestone": bool(
+            info.get("reached_nearpose_milestone", False)
+        ),
+        "reached_precision_milestone": bool(
+            info.get("reached_precision_milestone", False)
+        ),
+        "reward_tcp": scalar_info(info, "reward_tcp", task_scalar(task, "reward_tcp")),
+        "reward_orientation": scalar_info(
+            info, "reward_orientation", task_scalar(task, "reward_orientation")
+        ),
+        "reward_pose_dense": scalar_info(
+            info, "reward_pose_dense", task_scalar(task, "reward_pose_dense")
+        ),
+        "reward_speed": scalar_info(info, "reward_speed", task_scalar(task, "reward_speed")),
+        "reward_action": scalar_info(info, "reward_action", task_scalar(task, "reward_action")),
+        "reward_link_position": scalar_info(
+            info, "reward_link_position", task_scalar(task, "reward_link_position")
+        ),
+        "reward_base": scalar_info(info, "reward_base", task_scalar(task, "reward_base")),
+        "reward_view": scalar_info(info, "reward_view", task_scalar(task, "reward_view")),
+        "reward_approach_milestone": scalar_info(
+            info,
+            "reward_approach_milestone",
+            task_scalar(task, "reward_approach_milestone"),
+        ),
+        "reward_prepose_milestone": scalar_info(
+            info,
+            "reward_prepose_milestone",
+            task_scalar(task, "reward_prepose_milestone"),
+        ),
+        "reward_midpose_milestone": scalar_info(
+            info,
+            "reward_midpose_milestone",
+            task_scalar(task, "reward_midpose_milestone"),
+        ),
+        "reward_nearpose_milestone": scalar_info(
+            info,
+            "reward_nearpose_milestone",
+            task_scalar(task, "reward_nearpose_milestone"),
+        ),
+        "reward_precision_milestone": scalar_info(
+            info,
+            "reward_precision_milestone",
+            task_scalar(task, "reward_precision_milestone"),
+        ),
+        "reward_hold_zone": scalar_info(
+            info, "reward_hold_zone", task_scalar(task, "reward_hold_zone")
+        ),
+        "reward_stable_hold": scalar_info(
+            info, "reward_stable_hold", task_scalar(task, "reward_stable_hold")
+        ),
+        "reward_hold_zone_leave": scalar_info(
+            info, "reward_hold_zone_leave", task_scalar(task, "reward_hold_zone_leave")
+        ),
+        "reward_success": scalar_info(
+            info, "reward_success", task_scalar(task, "reward_success")
+        ),
+        "reward_time": scalar_info(info, "reward_time", task_scalar(task, "reward_time")),
         "success": bool(info.get("success", False)),
     }
     for index in range(6):
@@ -677,16 +892,25 @@ def print_step(step_idx: int, reward: float, action, info: dict, task=None):
     action_values = np.asarray(action, dtype=np.float32).reshape(-1)[:6]
     pose_error = scalar_info(info, "pose_position_error")
     quat_similarity = scalar_info(info, "pose_quat_similarity")
+    orientation_angle = scalar_info(info, "pose_orientation_angle")
     reference_speed = scalar_info(info, "reference_link_speed")
-    tcp_error = scalar_info(info, "tcp_to_virtual_grasp_error")
+    tcp_error = scalar_info(info, "tcp_to_grasp_error")
+    tcp_speed = scalar_info(info, "tcp_speed")
+    tool_speed = scalar_info(info, "tool_speed")
+    tool_speed_limit = scalar_info(info, "tool_speed_limit")
+    speed_gate = scalar_info(info, "speed_reward_gate")
     base_drift = scalar_info(info, "base_drift_error")
     hold_count = scalar_info(info, "target_hold_count", task_scalar(task, "target_hold_count", 0.0))
     in_hold_zone = (
-        pose_error <= float(getattr(task, "pose_position_threshold", 0.055))
-        and quat_similarity >= float(getattr(task, "pose_quat_similarity_threshold", 0.95))
+        tcp_error <= float(getattr(task, "tcp_position_threshold", 0.025))
+        and orientation_angle
+        <= float(getattr(task, "pose_orientation_angle_threshold", np.radians(15.0)))
+        and bool(info.get("target_in_wrist_view", False))
     )
-    stable_hold = in_hold_zone and reference_speed <= float(
-        getattr(task, "hold_velocity_threshold", 0.06)
+    velocity_threshold = float(getattr(task, "hold_velocity_threshold", 0.04))
+    stable_hold = (
+        in_hold_zone
+        and tool_speed <= velocity_threshold
     )
     print(
         "[STAGE2_REPLAY] "
@@ -695,7 +919,11 @@ def print_step(step_idx: int, reward: float, action, info: dict, task=None):
         f"phase={info.get('phase', 'unknown')} "
         f"pose_err={pose_error:7.4f} "
         f"quat_sim={quat_similarity:6.3f} "
+        f"angle_err={np.degrees(orientation_angle):6.2f}deg "
+        f"tcp_speed={tcp_speed:7.4f} "
         f"ref_speed={reference_speed:7.4f} "
+        f"tool_speed={tool_speed:7.4f}/{tool_speed_limit:7.4f} "
+        f"speed_gate={speed_gate:5.2f} "
         f"tcp_err={tcp_error:7.4f} "
         f"base_drift={base_drift:7.4f} "
         f"hold={hold_count:.0f} "
@@ -708,6 +936,433 @@ def print_step(step_idx: int, reward: float, action, info: dict, task=None):
         + "]",
         flush=True,
     )
+
+
+GRASP_FINGER_LINK_NAMES = (
+    "starlink_space_manipulator_merged.SLDASM9_starlink_space_manipulator_Finger1_2_Link",
+    "starlink_space_manipulator_merged.SLDASM9_starlink_space_manipulator_Finger2_1_Link",
+)
+
+
+def _tensor_to_numpy(value):
+    if value is None:
+        return None
+    try:
+        return np.asarray(torch.as_tensor(value).detach().cpu(), dtype=np.float64)
+    except (TypeError, ValueError, RuntimeError):
+        return None
+
+
+def env0_vector(value, size: int) -> np.ndarray:
+    """Flatten a per-env tensor and return the first ``size`` values for env 0."""
+    array = _tensor_to_numpy(value)
+    if array is None:
+        return np.full(size, np.nan)
+    array = array.reshape(-1)
+    if array.size < size:
+        return np.full(size, np.nan)
+    return array[:size]
+
+
+def grasp_gripper_metrics(task):
+    """Return (per-finger qpos, mean finger qpos, normalized closure in [0, 1]).
+
+    Closure is normalized with the finger joint's upper limit (== fully closed),
+    falling back to the configured ``finger_close`` value. Note that in this URDF
+    the finger DOF limit is 0.04 rad while the config's ``finger_close`` is 0.4,
+    so using the config value directly would understate closure by ~10x.
+    """
+    manip = getattr(task, "starlink_manipulator", None)
+    finger_positions = np.full(2, np.nan)
+    if manip is None:
+        return finger_positions, float("nan"), float("nan")
+
+    try:
+        qpos = _tensor_to_numpy(manip.robot.get_qpos(qs_idx_local=manip.fingers_qs))
+        if qpos is not None:
+            qpos = qpos.reshape(-1)
+            for index in range(min(2, qpos.size)):
+                finger_positions[index] = float(qpos[index])
+    except Exception:
+        pass
+
+    valid = ~np.isnan(finger_positions)
+    finger_mean = float(np.mean(finger_positions[valid])) if np.any(valid) else float("nan")
+
+    close_reference = float("nan")
+    try:
+        limits = manip.robot.get_dofs_limit(dofs_idx_local=manip.fingers_dof)
+        upper = _tensor_to_numpy(limits[1])
+        if upper is not None and upper.size > 0:
+            close_reference = float(np.max(np.abs(upper)))
+    except Exception:
+        pass
+    if np.isnan(close_reference) or close_reference <= 1e-9:
+        try:
+            close_reference = float(_tensor_to_numpy(manip.finger_close).reshape(-1)[0])
+        except Exception:
+            close_reference = float("nan")
+
+    if np.isnan(finger_mean) or np.isnan(close_reference) or close_reference <= 1e-9:
+        closure = float("nan")
+    else:
+        closure = float(np.clip(finger_mean / close_reference, 0.0, 1.0))
+    return finger_positions, finger_mean, closure
+
+
+def grasp_contact_metrics(task) -> dict:
+    """Summarize manipulator<->target contacts, isolating the two finger links."""
+    result = {
+        "finger_contacts": 0,
+        "both_fingers": False,
+        "total_contacts": 0,
+        "finger_force": 0.0,
+        "contact_links": "",
+    }
+    manip = getattr(task, "starlink_manipulator", None)
+    if manip is None or getattr(task, "target_object", None) is None:
+        return result
+
+    try:
+        contacts = manip.robot.get_contacts(with_entity=task.target_object.robot)
+    except Exception:
+        return result
+    if not contacts:
+        return result
+
+    link_a = _tensor_to_numpy(contacts.get("link_a"))
+    if link_a is None or link_a.size == 0:
+        return result
+    link_a = link_a.reshape(-1)
+    link_b = _tensor_to_numpy(contacts.get("link_b"))
+    link_b = link_b.reshape(-1) if link_b is not None else None
+
+    force = contacts.get("force_a")
+    if force is None:
+        force = contacts.get("force_b")
+    force = _tensor_to_numpy(force)
+    if force is not None:
+        force = force.reshape(-1, 3)
+
+    try:
+        link_names = {
+            int(link.idx): getattr(link, "name", f"link_{int(link.idx)}")
+            for link in manip.robot.links
+        }
+    except Exception:
+        link_names = {}
+
+    finger_link_indices = set()
+    for name in GRASP_FINGER_LINK_NAMES:
+        try:
+            finger_link_indices.add(int(manip.robot.get_link(name).idx))
+        except Exception:
+            pass
+
+    contacted_fingers = set()
+    contact_partners = []
+    total_force = 0.0
+    for index in range(link_a.size):
+        a_index = int(link_a[index])
+        b_index = int(link_b[index]) if link_b is not None and link_b.size > index else -1
+        a_is_finger = a_index in finger_link_indices
+        b_is_finger = b_index in finger_link_indices
+        if not (a_is_finger or b_is_finger):
+            continue
+        result["finger_contacts"] += 1
+        if a_is_finger:
+            contacted_fingers.add(a_index)
+            contact_partners.append(link_names.get(b_index, str(b_index)))
+        if b_is_finger:
+            contacted_fingers.add(b_index)
+            contact_partners.append(link_names.get(a_index, str(a_index)))
+        if force is not None and force.shape[0] > index:
+            total_force += float(np.linalg.norm(force[index]))
+
+    result["both_fingers"] = len(contacted_fingers) >= 2
+    result["finger_force"] = total_force
+    result["total_contacts"] = int(link_a.size)
+    result["contact_links"] = ",".join(sorted(set(contact_partners)))
+    return result
+
+
+def run_grasp_verification(task, env, args, *, episode_idx: int, trajectory_dir=None):
+    """Close the gripper after the ideal pose and check whether the target is grasped.
+
+    The base is held with the stage-2 PID, the arm is frozen at its success pose,
+    and the gripper force is ramped to the close command. The phase reports finger
+    contact, gripper closure and target drift, then pulls the base away to test
+    whether the grasp actually holds.
+    """
+    num_envs = task.num_envs
+    device = task.device
+    dtype = task.datatype
+
+    close_value = float(np.clip(args.grasp_close_value, 0.0, 1.0))
+    open_value = float(task.gripper_open_value)
+    close_steps = max(1, int(args.grasp_close_steps))
+    verify_steps = max(0, int(args.grasp_verify_steps))
+    pull_steps = max(0, int(args.grasp_pull_steps))
+    settle_steps = max(0, int(args.grasp_settle_steps))
+    pull_distance = max(0.0, float(args.grasp_pull_distance))
+    drift_threshold = max(0.0, float(args.grasp_target_drift_threshold))
+    force_threshold = max(0.0, float(args.grasp_contact_force_threshold))
+    log_every = max(1, int(args.grasp_log_every))
+
+    hold_joint_target = task.arm_joint_positions.detach().clone()
+    base_hold_ref = task.stage2_base_hold_pos.detach().clone()
+    grasp_start = task.target_grasp_pose[:, :3].detach().clone()
+    tcp_start, _ = task._get_tcp_pose()
+    tcp_start = tcp_start.detach().clone()
+    rel_start = (tcp_start - grasp_start).detach().clone()
+
+    pull_dir_xy = (base_hold_ref[:, :2] - grasp_start[:, :2]).detach().clone()
+    pull_dir_norm = torch.norm(pull_dir_xy, dim=-1, keepdim=True)
+    if float(pull_dir_norm.min().item()) < 1e-6:
+        pull_dir_xy = torch.zeros_like(pull_dir_xy)
+    else:
+        pull_dir_xy = pull_dir_xy / pull_dir_norm
+
+    state = {"joint_target": hold_joint_target, "gripper_cmd": open_value}
+    original_apply_rl_action = task.apply_rl_action
+
+    def grasp_apply_rl_action(action):
+        # Bypass the policy: hold the arm at its success pose and drive the gripper.
+        task.last_action_tensor = torch.zeros_like(task.last_action_tensor)
+        task._set_base_hold_pid_target()
+        task.starlink_manipulator.control_joint_pos(state["joint_target"])
+        command = torch.full(
+            (num_envs,), float(state["gripper_cmd"]), dtype=dtype, device=device
+        )
+        task.last_gripper_command = command
+        task.starlink_manipulator.control_gripper(command)
+
+    task.apply_rl_action = grasp_apply_rl_action
+    zero_action = np.zeros((num_envs, 6), dtype=np.float32)
+
+    close_end = close_steps
+    verify_end = close_end + verify_steps
+    pull_end = verify_end + pull_steps
+    settle_end = pull_end + settle_steps
+    total_steps = max(1, settle_end)
+
+    def stage_name(step_index: int) -> str:
+        if step_index < close_end:
+            return "close"
+        if step_index < verify_end:
+            return "verify"
+        if step_index < pull_end:
+            return "pull"
+        return "settle"
+
+    rows = []
+    max_contact_force = 0.0
+    max_closure = 0.0
+    max_total_contacts = 0
+    ever_finger_contact = False
+    ever_both_fingers = False
+    drift_close = 0.0
+    drift_verify = 0.0
+    grasp_at_pull_start = None
+    grasp_at_end = None
+
+    print(
+        "[STAGE2_GRASP] Starting grasp verification: "
+        f"close_steps={close_steps}, verify_steps={verify_steps}, "
+        f"pull_steps={pull_steps} ({pull_distance:.3f}m), settle_steps={settle_steps}, "
+        f"close_value={close_value:.2f}",
+        flush=True,
+    )
+
+    try:
+        for step_index in range(total_steps):
+            stage = stage_name(step_index)
+
+            if step_index < close_end:
+                fraction = (step_index + 1) / float(close_steps)
+                state["gripper_cmd"] = open_value + (close_value - open_value) * fraction
+            else:
+                state["gripper_cmd"] = close_value
+
+            if pull_steps > 0 and step_index >= verify_end:
+                pull_fraction = min(
+                    1.0, (step_index - verify_end + 1) / float(pull_steps)
+                )
+                task.stage2_base_hold_pos[:, :2] = (
+                    base_hold_ref[:, :2] + pull_dir_xy * pull_distance * pull_fraction
+                )
+
+            _, rewards, _, _ = env.step(zero_action)
+
+            grasp_now = task.target_grasp_pose[:, :3]
+            tcp_now, _ = task._get_tcp_pose()
+            target_root_now = env0_vector(task.target_object.robot.get_pos(), 3)
+            base_now = env0_vector(task.stage2_base_hold_pos, 3)
+            fingers, finger_mean, closure = grasp_gripper_metrics(task)
+            contact = grasp_contact_metrics(task)
+            drift = float(torch.norm(grasp_now - grasp_start, dim=-1)[0].item())
+            rel_error = float(
+                torch.norm((tcp_now - grasp_now) - rel_start, dim=-1)[0].item()
+            )
+            tcp_to_grasp = float(torch.norm(tcp_now - grasp_now, dim=-1)[0].item())
+
+            if stage == "close":
+                drift_close = drift
+            elif stage == "verify":
+                drift_verify = drift
+            if stage == "pull" and grasp_at_pull_start is None:
+                grasp_at_pull_start = grasp_now.detach().clone()
+            grasp_at_end = grasp_now.detach().clone()
+
+            max_contact_force = max(max_contact_force, contact["finger_force"])
+            max_total_contacts = max(max_total_contacts, contact["total_contacts"])
+            if not np.isnan(closure):
+                max_closure = max(max_closure, closure)
+            ever_finger_contact = ever_finger_contact or contact["finger_contacts"] > 0
+            ever_both_fingers = ever_both_fingers or contact["both_fingers"]
+
+            rows.append(
+                {
+                    "episode": int(episode_idx + 1),
+                    "step": int(step_index + 1),
+                    "stage": stage,
+                    "gripper_cmd": float(state["gripper_cmd"]),
+                    "finger_mean": finger_mean,
+                    "gripper_closure": closure,
+                    "finger_qpos_1": float(fingers[0]),
+                    "finger_qpos_2": float(fingers[1]),
+                    "finger_contacts": int(contact["finger_contacts"]),
+                    "total_contacts": int(contact["total_contacts"]),
+                    "both_fingers": bool(contact["both_fingers"]),
+                    "finger_force": float(contact["finger_force"]),
+                    "contact_links": contact["contact_links"],
+                    "grasp_x": float(grasp_now[0, 0].item()),
+                    "grasp_y": float(grasp_now[0, 1].item()),
+                    "grasp_z": float(grasp_now[0, 2].item()),
+                    "target_root_x": float(target_root_now[0]),
+                    "target_root_y": float(target_root_now[1]),
+                    "target_root_z": float(target_root_now[2]),
+                    "base_hold_x": float(base_now[0]),
+                    "base_hold_y": float(base_now[1]),
+                    "target_drift": drift,
+                    "tcp_to_grasp_error": tcp_to_grasp,
+                    "rel_error": rel_error,
+                    "reward": float(np.asarray(rewards).reshape(-1)[0]),
+                }
+            )
+
+            if (
+                step_index == 0
+                or (step_index + 1) % log_every == 0
+                or step_index == total_steps - 1
+            ):
+                print(
+                    "[STAGE2_GRASP] "
+                    f"step={step_index + 1:04d} "
+                    f"stage={stage:6s} "
+                    f"cmd={state['gripper_cmd']:5.2f} "
+                    f"finger={finger_mean:7.4f} "
+                    f"closure={closure:5.2f} "
+                    f"contacts={contact['finger_contacts']} "
+                    f"/{contact['total_contacts']} "
+                    f"both={contact['both_fingers']} "
+                    f"force={contact['finger_force']:8.5f} "
+                    f"target_drift={drift:7.5f} "
+                    f"tcp_err={tcp_to_grasp:7.5f} "
+                    f"rel_err={rel_error:7.5f} "
+                    f"partners=[{contact['contact_links']}]",
+                    flush=True,
+                )
+    finally:
+        task.apply_rl_action = original_apply_rl_action
+        task.stage2_base_hold_pos[:, :] = base_hold_ref
+
+    pull_follow = 0.0
+    if pull_distance > 0.0 and grasp_at_pull_start is not None and grasp_at_end is not None:
+        target_delta = (grasp_at_end - grasp_at_pull_start).reshape(1, 3)
+        pull_follow = float(
+            torch.sum(target_delta[:, :2] * pull_dir_xy, dim=-1)[0].item()
+        )
+
+    final_drift = (
+        float(torch.norm(grasp_at_end - grasp_start, dim=-1)[0].item())
+        if grasp_at_end is not None
+        else float("nan")
+    )
+
+    if not ever_finger_contact:
+        verdict = "NO_CONTACT"
+    elif drift_verify >= drift_threshold:
+        verdict = "TARGET_KNOCKED_AWAY"
+    elif pull_distance > 0.0 and pull_follow < 0.5 * pull_distance:
+        verdict = "GRASP_SLIPPED"
+    else:
+        verdict = "GRASP_OK"
+
+    summary = {
+        "episode": int(episode_idx + 1),
+        "verdict": verdict,
+        "finger_contact": bool(ever_finger_contact),
+        "both_fingers": bool(ever_both_fingers),
+        "max_contact_force": float(max_contact_force),
+        "max_total_contacts": int(max_total_contacts),
+        "max_closure": float(max_closure) if not np.isnan(max_closure) else float("nan"),
+        "drift_after_close": float(drift_close),
+        "drift_after_verify": float(drift_verify),
+        "final_drift": float(final_drift),
+        "pull_distance": float(pull_distance),
+        "pull_follow": float(pull_follow),
+        "drift_threshold": float(drift_threshold),
+        "contact_force_threshold": float(force_threshold),
+    }
+
+    print(
+        "[STAGE2_GRASP] RESULT "
+        f"episode={episode_idx + 1} "
+        f"verdict={verdict} "
+        f"finger_contact={ever_finger_contact} "
+        f"both_fingers={ever_both_fingers} "
+        f"max_contact_force={max_contact_force:.5f} "
+        f"max_total_contacts={max_total_contacts} "
+        f"max_closure={max_closure:.3f} "
+        f"drift_after_close={drift_close:.5f} "
+        f"drift_after_verify={drift_verify:.5f} "
+        f"pull_follow={pull_follow:.5f}/{pull_distance:.5f} "
+        f"final_drift={final_drift:.5f} "
+        f"drift_threshold={drift_threshold:.5f}",
+        flush=True,
+    )
+    if verdict == "NO_CONTACT":
+        print(
+            "[STAGE2_GRASP] No finger contact was detected. Check that target "
+            "collision is enabled and that the TCP really reaches the grasp point.",
+            flush=True,
+        )
+    elif verdict == "TARGET_KNOCKED_AWAY":
+        print(
+            "[STAGE2_GRASP] Closing the gripper pushed the target away "
+            f"(drift_after_verify={drift_verify:.4f}m >= {drift_threshold:.4f}m).",
+            flush=True,
+        )
+    elif verdict == "GRASP_SLIPPED":
+        print(
+            "[STAGE2_GRASP] Fingers made contact but the target did not follow the "
+            f"pull (follow={pull_follow:.4f}m vs {pull_distance:.4f}m).",
+            flush=True,
+        )
+    elif verdict == "GRASP_OK":
+        print(
+            "[STAGE2_GRASP] Grasp looks physically consistent: contact detected, "
+            "the target was not knocked away and it followed the pull.",
+            flush=True,
+        )
+
+    if trajectory_dir is not None and rows:
+        grasp_path = trajectory_dir / f"episode_{episode_idx + 1:03d}_grasp.csv"
+        write_csv(grasp_path, rows)
+        print(f"[STAGE2_REPLAY] Saved grasp trajectory: {grasp_path}", flush=True)
+
+    return summary, rows
 
 
 def save_scene_video(task, args):
@@ -744,7 +1399,6 @@ def main():
             f"visual_obs={replay_visual_obs(args, config)}, "
             f"target_relative_obs={replay_target_relative_obs(args, config, replay_visual_obs(args, config))}, "
             f"base_distance={config_value(config, 'stage2_base_distance', 1.1)}, "
-            f"virtual_height={config_value(config, 'stage2_virtual_grasp_height', 0.08)}, "
             f"target_noise={config_value(config, 'target_position_noise', False)}",
             flush=True,
         )
@@ -752,22 +1406,58 @@ def main():
     configure_replay_runtime(args)
     env = make_replay_env(args, config)
     task = unwrap_stage2_task(env)
+    grasp_check = resolve_grasp_check(args)
     patch_stage2_replay_reset_pose(task)
     if task is not None:
         task.stage2_replay_arm_initial_noise = max(0.0, float(args.arm_initial_noise))
-        task.pose_position_threshold = max(0.0, float(args.success_position_threshold))
-        task.pose_quat_similarity_threshold = float(args.success_quat_similarity_threshold)
-        task.replay_success_hold_steps = int(getattr(task, "success_hold_steps", 6))
-        task.max_steps = max(1, int(args.max_steps))
+        if args.success_tcp_threshold is not None:
+            task.tcp_position_threshold = max(
+                0.0, float(args.success_tcp_threshold)
+            )
+        if args.success_orientation_angle_deg is not None:
+            task.pose_orientation_angle_threshold = np.radians(
+                max(0.0, float(args.success_orientation_angle_deg))
+            )
+        elif args.success_quat_similarity_threshold is not None:
+            similarity_threshold = np.clip(
+                float(args.success_quat_similarity_threshold), 0.0, 1.0
+            )
+            task.pose_orientation_angle_threshold = 2.0 * np.arccos(
+                similarity_threshold
+            )
+        task.pose_quat_similarity_threshold = np.cos(
+            0.5 * task.pose_orientation_angle_threshold
+        )
+        task.replay_success_hold_steps = int(getattr(task, "success_hold_steps", 10))
+        grasp_phase_steps = 0
+        if grasp_check:
+            grasp_phase_steps = (
+                max(1, int(args.grasp_close_steps))
+                + max(0, int(args.grasp_verify_steps))
+                + max(0, int(args.grasp_pull_steps))
+                + max(0, int(args.grasp_settle_steps))
+            )
+        task.max_steps = max(1, int(args.max_steps)) + grasp_phase_steps + 10
         print(
-            "[STAGE2_REPLAY] Relaxed success thresholds: "
-            f"position<={task.pose_position_threshold:.3f}m, "
-            f"quat_sim>={task.pose_quat_similarity_threshold:.3f}, "
-            f"speed<={task.hold_velocity_threshold:.3f}, "
+            "[STAGE2_REPLAY] Success thresholds: "
+            f"tcp<={task.tcp_position_threshold:.3f}m, "
+            f"orientation_angle<={np.degrees(task.pose_orientation_angle_threshold):.1f}deg, "
+            "target_in_wrist_view=True, "
+            f"tool_speed<={task.hold_velocity_threshold:.3f}m/s, "
             f"hold_steps={task.replay_success_hold_steps}",
             flush=True,
         )
-        if not args.stop_on_success:
+        if grasp_check:
+            # Keep the success termination from resetting the scene before we can
+            # close the gripper: we detect success ourselves and break the loop.
+            task.success_hold_steps = task.max_steps + 1
+            print(
+                "[STAGE2_REPLAY] Grasp verification enabled: policy phase stops at "
+                "success, then the gripper closes and the grasp is checked for "
+                f"{grasp_phase_steps} extra decision steps.",
+                flush=True,
+            )
+        elif not args.stop_on_success:
             task.success_hold_steps = task.max_steps + 1
     model = PPO.load(str(model_path), env=env, device=args.device)
     trajectory_dir = resolve_trajectory_dir(args)
@@ -825,7 +1515,7 @@ def main():
                 hold_count = int(scalar_info(info, "target_hold_count", 0.0))
                 max_stable_hold_count = max(max_stable_hold_count, hold_count)
                 replay_success_hold_steps = int(
-                    getattr(task, "replay_success_hold_steps", 6) if task is not None else 6
+                    getattr(task, "replay_success_hold_steps", 10) if task is not None else 10
                 )
                 if hold_count >= replay_success_hold_steps and first_stable_hold_step is None:
                     first_stable_hold_step = step_idx + 1
@@ -840,52 +1530,91 @@ def main():
 
                 if args.sleep > 0.0:
                     time.sleep(args.sleep)
+                if grasp_check and hold_count >= replay_success_hold_steps:
+                    print(
+                        "[STAGE2_REPLAY] Success hold reached at step "
+                        f"{step_idx + 1}; ending the policy phase to close the "
+                        "gripper and verify the grasp.",
+                        flush=True,
+                    )
+                    break
                 if done:
                     break
 
-            final_tcp_error = scalar_info(final_info, "tcp_to_virtual_grasp_error")
+            success_reached = first_stable_hold_step is not None
+            episode_success = bool(final_info.get("success", False)) or success_reached
+            final_tcp_error = scalar_info(final_info, "tcp_to_grasp_error")
             print(
                 "[STAGE2_REPLAY] Episode done: "
                 f"steps={step_idx + 1}, "
                 f"return={episode_return:.3f}, "
-                f"success={bool(final_info.get('success', False))}, "
+                f"success={episode_success}, "
                 f"first_stable_hold_step={first_stable_hold_step}, "
                 f"max_hold_count={max_stable_hold_count}, "
                 f"final_tcp_to_target_err={final_tcp_error:.5f}, "
                 f"final_pose_err={scalar_info(final_info, 'pose_position_error'):.5f}, "
                 f"final_quat_sim={scalar_info(final_info, 'pose_quat_similarity'):.5f}, "
-                f"final_ref_speed={scalar_info(final_info, 'reference_link_speed'):.5f}",
+                f"final_angle_err={np.degrees(scalar_info(final_info, 'pose_orientation_angle')):.2f}deg, "
+                f"final_tool_speed={scalar_info(final_info, 'tool_speed'):.5f}",
                 flush=True,
             )
+
+            grasp_summary = None
+            if grasp_check and task is not None and success_reached:
+                grasp_summary, _ = run_grasp_verification(
+                    task,
+                    env,
+                    args,
+                    episode_idx=episode_idx,
+                    trajectory_dir=trajectory_dir,
+                )
+            elif grasp_check:
+                print(
+                    "[STAGE2_REPLAY] Grasp verification skipped: success was not "
+                    "reached in this episode.",
+                    flush=True,
+                )
+
             if trajectory_rows:
                 initial_row = trajectory_rows[0]
                 final_row = trajectory_rows[-1]
-                summary_rows.append(
-                    {
-                        "episode": int(episode_idx + 1),
-                        "steps": int(step_idx + 1),
-                        "return": float(episode_return),
-                        "success": bool(final_info.get("success", False)),
-                        "first_stable_hold_step": (
-                            int(first_stable_hold_step)
-                            if first_stable_hold_step is not None
-                            else ""
-                        ),
-                        "max_hold_count": int(max_stable_hold_count),
-                        "initial_tcp_to_virtual_grasp_error": float(
-                            initial_row["tcp_to_virtual_grasp_error"]
-                        ),
-                        "final_tcp_to_virtual_grasp_error": float(
-                            final_row["tcp_to_virtual_grasp_error"]
-                        ),
-                        "final_pose_position_error": float(
-                            final_row["pose_position_error"]
-                        ),
-                        "final_pose_quat_similarity": float(
-                            final_row["pose_quat_similarity"]
-                        ),
-                    }
-                )
+                summary_row = {
+                    "episode": int(episode_idx + 1),
+                    "steps": int(step_idx + 1),
+                    "return": float(episode_return),
+                    "success": bool(episode_success),
+                    "first_stable_hold_step": (
+                        int(first_stable_hold_step)
+                        if first_stable_hold_step is not None
+                        else ""
+                    ),
+                    "max_hold_count": int(max_stable_hold_count),
+                    "initial_tcp_to_grasp_error": float(
+                        initial_row["tcp_to_grasp_error"]
+                    ),
+                    "final_tcp_to_grasp_error": float(
+                        final_row["tcp_to_grasp_error"]
+                    ),
+                    "final_pose_position_error": float(
+                        final_row["pose_position_error"]
+                    ),
+                    "final_pose_quat_similarity": float(
+                        final_row["pose_quat_similarity"]
+                    ),
+                    "final_pose_orientation_angle_deg": float(
+                        final_row["pose_orientation_angle_deg"]
+                    ),
+                    "final_tool_speed": float(final_row["tool_speed"]),
+                }
+                if grasp_summary is not None:
+                    summary_row.update(
+                        {
+                            f"grasp_{key}": value
+                            for key, value in grasp_summary.items()
+                            if key != "episode"
+                        }
+                    )
+                summary_rows.append(summary_row)
             if trajectory_dir is not None:
                 trajectory_path = trajectory_dir / f"episode_{episode_idx + 1:03d}.csv"
                 write_csv(trajectory_path, trajectory_rows)

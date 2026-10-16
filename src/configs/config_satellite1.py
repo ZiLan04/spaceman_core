@@ -64,8 +64,8 @@ def _make_satellite1():
         "morph": gs.morphs.URDF(
             file=to_posix(_SATELLITE1_PATHS['urdf']),
             pos=(-2.0, 0.0, 0.5),
-            euler=(0.0, 0.0, 180.0),
-            scale=5e-1,
+            euler=(0.0, 0.0, 90.0),
+            scale=3e-1,
             fixed=False,
         ),
         "material": gs.materials.Rigid(

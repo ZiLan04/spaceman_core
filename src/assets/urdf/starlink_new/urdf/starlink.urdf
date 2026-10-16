@@ -1,0 +1,260 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  starlink_new / starlink.urdf
+
+  由两部分合并而成：
+    1) 新的 base link  ——  来自 assets/urdf/cylinder/whole.urdf
+       原 starlink 的 base_star_link 上有一段"圆筒"被拆下来做了精细建模，剩余部分
+       保存在 cylinder/meshes/base_star_link_cut 下。whole.urdf 把这块重新拼成两个
+       link，并用一个 fixed joint 连接：
+         - base_star_body_link     ：body.stl + object.stl   （剩余主体）
+         - base_star_cylinder_link ：cylinder_1~8.stl       （精细化的圆筒）
+       这些 mesh 与原来的 base_star_link.STL 处于同一坐标系（原点一致），
+       所以两个 link 的 mesh <origin> 都是 0，两个 link 之间也用 origin=0 的 fixed joint 连接。
+
+    2) 原有的 panel  ——  来自 assets/urdf/starlink/urdf/starlink.urdf
+       - panel_Link（panel_Link.STL），mass / 惯量 / fixed joint 的 origin 均保持原值；
+       - 关节 "panel" 的 parent 由 base_star_link 改为 base_star_body_link，
+         因为 base 被拆成了两个 link，panel 仍挂在主体上，origin 不变。
+
+  颜色/材质与原 starlink 完全一致：
+    - base   ：starlink_base_star_link_material  rgba=0.937255 0.894118 0.690196 1  texture=../textures/1.png
+    - panel  ：starlink_panel_Link_material       rgba=0 0.172549 0.694118 1           texture=../textures/5.png
+
+  惯量说明：
+    - base_star_body_link 沿用原 base_star_link 的质心与惯量张量，mass 扣掉了圆筒的估算质量；
+    - base_star_cylinder_link 用圆筒的包围盒/薄壁圆筒公式估算了质心、质量与惯量
+      （圆筒相对整个 base 很小，约 1.5% 体积）。
+    两者相加 ≈ 原 base_star_link（mass 365.27）。若需要按 mesh 重算，可在 Genesis 中
+    使用 recompute_inertia=True。
+-->
+<robot name="starlink">
+
+  <!-- ================== 新 base：主体 link（body + object） ================== -->
+  <link name="base_star_body_link">
+    <inertial>
+      <origin xyz="0.064043 0.049818 0.075117" rpy="0 0 0"/>
+      <mass value="359.77"/>
+      <inertia ixx="166.05" ixy="0.9609" ixz="-0.9195"
+               iyy="43.737" iyz="0.18316" izz="207.92"/>
+    </inertial>
+
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="../meshes/body.stl" scale="1 1 1"/>
+      </geometry>
+      <material name="starlink_base_star_link_material">
+        <color rgba="0.937255 0.894118 0.690196 1"/>
+        <texture filename="../textures/1.png"/>
+      </material>
+    </visual>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="../meshes/object.stl" scale="1 1 1"/>
+      </geometry>
+      <material name="starlink_base_star_link_material">
+        <color rgba="0.937255 0.894118 0.690196 1"/>
+        <texture filename="../textures/1.png"/>
+      </material>
+    </visual>
+
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="../meshes/body.stl" scale="1 1 1"/>
+      </geometry>
+    </collision>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="../meshes/object.stl" scale="1 1 1"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <!-- ================== 新 base：圆筒 link（cylinder_1~8） ================== -->
+  <link name="base_star_cylinder_link">
+    <inertial>
+      <origin xyz="-0.5607 0.1215 0.1535" rpy="0 0 0"/>
+      <mass value="5.50"/>
+      <inertia ixx="0.0938" ixy="0.0" ixz="0.0"
+               iyy="0.0938" iyz="0.0" izz="0.0410"/>
+    </inertial>
+
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="../meshes/cylinder_1.stl" scale="1 1 1"/>
+      </geometry>
+      <material name="starlink_base_star_link_material">
+        <color rgba="0.937255 0.894118 0.690196 1"/>
+        <texture filename="../textures/1.png"/>
+      </material>
+    </visual>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="../meshes/cylinder_2.stl" scale="1 1 1"/>
+      </geometry>
+      <material name="starlink_base_star_link_material">
+        <color rgba="0.937255 0.894118 0.690196 1"/>
+        <texture filename="../textures/1.png"/>
+      </material>
+    </visual>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="../meshes/cylinder_3.stl" scale="1 1 1"/>
+      </geometry>
+      <material name="starlink_base_star_link_material">
+        <color rgba="0.937255 0.894118 0.690196 1"/>
+        <texture filename="../textures/1.png"/>
+      </material>
+    </visual>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="../meshes/cylinder_4.stl" scale="1 1 1"/>
+      </geometry>
+      <material name="starlink_base_star_link_material">
+        <color rgba="0.937255 0.894118 0.690196 1"/>
+        <texture filename="../textures/1.png"/>
+      </material>
+    </visual>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="../meshes/cylinder_5.stl" scale="1 1 1"/>
+      </geometry>
+      <material name="starlink_base_star_link_material">
+        <color rgba="0.937255 0.894118 0.690196 1"/>
+        <texture filename="../textures/1.png"/>
+      </material>
+    </visual>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="../meshes/cylinder_6.stl" scale="1 1 1"/>
+      </geometry>
+      <material name="starlink_base_star_link_material">
+        <color rgba="0.937255 0.894118 0.690196 1"/>
+        <texture filename="../textures/1.png"/>
+      </material>
+    </visual>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="../meshes/cylinder_7.stl" scale="1 1 1"/>
+      </geometry>
+      <material name="starlink_base_star_link_material">
+        <color rgba="0.937255 0.894118 0.690196 1"/>
+        <texture filename="../textures/1.png"/>
+      </material>
+    </visual>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="../meshes/cylinder_8.stl" scale="1 1 1"/>
+      </geometry>
+      <material name="starlink_base_star_link_material">
+        <color rgba="0.937255 0.894118 0.690196 1"/>
+        <texture filename="../textures/1.png"/>
+      </material>
+    </visual>
+
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="../meshes/cylinder_1.stl" scale="1 1 1"/>
+      </geometry>
+    </collision>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="../meshes/cylinder_2.stl" scale="1 1 1"/>
+      </geometry>
+    </collision>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="../meshes/cylinder_3.stl" scale="1 1 1"/>
+      </geometry>
+    </collision>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="../meshes/cylinder_4.stl" scale="1 1 1"/>
+      </geometry>
+    </collision>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="../meshes/cylinder_5.stl" scale="1 1 1"/>
+      </geometry>
+    </collision>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="../meshes/cylinder_6.stl" scale="1 1 1"/>
+      </geometry>
+    </collision>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="../meshes/cylinder_7.stl" scale="1 1 1"/>
+      </geometry>
+    </collision>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="../meshes/cylinder_8.stl" scale="1 1 1"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <!-- ===== 固定关节：把圆筒 link 拼回主体 link ===== -->
+  <joint name="base_body_to_cylinder" type="fixed">
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <parent link="base_star_body_link"/>
+    <child link="base_star_cylinder_link"/>
+  </joint>
+
+  <!-- ================== 原 panel link（配置与原 starlink 完全一致） ================== -->
+  <link name="panel_Link">
+    <inertial>
+      <origin xyz="0.18387 4.5116E-05 0.0089121" rpy="0 0 0"/>
+      <mass value="146.07"/>
+      <inertia ixx="45.09" ixy="7.5802E-12" ixz="-2.6455E-06"
+               iyy="9.2979" iyz="-4.89E-13" izz="54.377"/>
+    </inertial>
+
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="../meshes/panel_Link.STL"/>
+      </geometry>
+      <material name="starlink_panel_Link_material">
+        <color rgba="0 0.172549 0.694118 1"/>
+        <texture filename="../textures/5.png"/>
+      </material>
+    </visual>
+
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="../meshes/panel_Link.STL"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <!-- ===== panel 关节：origin 与原 starlink 相同，parent 换到新的主体 link ===== -->
+  <joint name="panel" type="fixed">
+    <origin xyz="3.1501 0.12613 0.143" rpy="0 0 0"/>
+    <parent link="base_star_body_link"/>
+    <child link="panel_Link"/>
+    <axis xyz="0 0 0"/>
+  </joint>
+
+</robot>

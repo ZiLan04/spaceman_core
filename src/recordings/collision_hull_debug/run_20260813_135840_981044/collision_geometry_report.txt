@@ -1,0 +1,19 @@
+Starlink Genesis collision geometry report
+URDF: /data/pengyuxin/spaceman_core/src/assets/urdf/panda_bullet/panda.urdf
+scale: 1.0
+generated collision geom count: 11
+displayed collision geom indices: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+
+geom 0: vertices=102 faces=200 convex=True bounds=[[-0.154079, -0.094614, -3.2e-05], [0.071567, 0.09467, 0.140003]]
+geom 1: vertices=152 faces=300 convex=True bounds=[[-0.054987, -0.129373, 0.140996], [0.055161, 0.055192, 0.387973]]
+geom 2: vertices=152 faces=300 convex=True bounds=[[-0.055153, -0.055097, 0.27778], [0.054985, 0.129489, 0.52701]]
+geom 3: vertices=152 faces=300 convex=True bounds=[[-0.054646, -0.054917, 0.527982], [0.137561, 0.111203, 0.704156]]
+geom 4: vertices=152 faces=300 convex=True bounds=[[-0.055107, -0.111052, 0.59385], [0.13764, 0.055207, 0.773009]]
+geom 5: vertices=152 faces=300 convex=True bounds=[[-0.055016, -0.055128, 0.768446], [0.055083, 0.129904, 1.085168]]
+geom 6: vertices=252 faces=500 convex=False bounds=[[-0.047922, -0.056396, 0.981791], [0.132309, 0.044242, 1.114648]]
+geom 7: vertices=102 faces=200 convex=True bounds=[[0.043965, -0.081187, 0.926163], [0.169306, 0.04403, 0.981009]]
+geom 8: vertices=102 faces=200 convex=True bounds=[[0.006229, -0.083234, 0.860038], [0.171271, 0.08186, 0.951925]]
+geom 9: vertices=18 faces=32 convex=True bounds=[[0.08181, -0.025958, 0.813751], [0.113996, 0.006241, 0.867468]]
+geom 10: vertices=18 faces=32 convex=True bounds=[[0.062004, -0.006241, 0.813751], [0.09419, 0.025958, 0.867468]]
+
+Hole-center containment test:

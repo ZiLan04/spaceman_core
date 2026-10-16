@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  base_star_link_cylinder_only.urdf
+
+  说明：把 D:\cylinder\meshes\base_star_link_cut 下的 cylinder_1~8 共 8 个 STL
+  全部放进同一个 link "base_star_link"。
+  这 8 个片段原本就处于同一坐标系（绝对坐标，来自 base_star_link 装配），
+  因此每个 <origin> 都保持 xyz=0 0 0、rpy=0 0 0，摆在一起即可还原原结构。
+
+  用法（在 Genesis 中查看自动凸分解效果）：
+      convexify=True
+      decompose_robot_error_threshold=0.0   # 强制 CoACD 拆成多个凸包
+      vis_mode="collision"                  # 渲染碰撞(凸分解)几何而不是视觉网格
+  参考脚本见同目录 view_convex_decomposition.py。
+-->
+<robot name="base_star_link_cylinder_only">
+
+  <link name="base_star_link">
+    <!-- 占位惯性：加载时设 recompute_inertia=True 让 Genesis 按 8 个 mesh 重算 -->
+    <inertial>
+      <mass value="1.0"/>
+      <inertia ixx="0.01" ixy="0.0" ixz="0.0" iyy="0.01" iyz="0.0" izz="0.01"/>
+    </inertial>
+
+    <!-- ============ 视觉几何（8 个 mesh，全部位于原点） ============ -->
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="D:/cylinder/meshes/base_star_link_cut/cylinder_1.stl" scale="1 1 1"/>
+      </geometry>
+    </visual>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="D:/cylinder/meshes/base_star_link_cut/cylinder_2.stl" scale="1 1 1"/>
+      </geometry>
+    </visual>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="D:/cylinder/meshes/base_star_link_cut/cylinder_3.stl" scale="1 1 1"/>
+      </geometry>
+    </visual>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="D:/cylinder/meshes/base_star_link_cut/cylinder_4.stl" scale="1 1 1"/>
+      </geometry>
+    </visual>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="D:/cylinder/meshes/base_star_link_cut/cylinder_5.stl" scale="1 1 1"/>
+      </geometry>
+    </visual>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="D:/cylinder/meshes/base_star_link_cut/cylinder_6.stl" scale="1 1 1"/>
+      </geometry>
+    </visual>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="D:/cylinder/meshes/base_star_link_cut/cylinder_7.stl" scale="1 1 1"/>
+      </geometry>
+    </visual>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="D:/cylinder/meshes/base_star_link_cut/cylinder_8.stl" scale="1 1 1"/>
+      </geometry>
+    </visual>
+
+    <!-- ============ 碰撞几何（8 个 mesh，Genesis 会自动凸分解） ============ -->
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="D:/cylinder/meshes/base_star_link_cut/cylinder_1.stl" scale="1 1 1"/>
+      </geometry>
+    </collision>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="D:/cylinder/meshes/base_star_link_cut/cylinder_2.stl" scale="1 1 1"/>
+      </geometry>
+    </collision>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="D:/cylinder/meshes/base_star_link_cut/cylinder_3.stl" scale="1 1 1"/>
+      </geometry>
+    </collision>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="D:/cylinder/meshes/base_star_link_cut/cylinder_4.stl" scale="1 1 1"/>
+      </geometry>
+    </collision>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="D:/cylinder/meshes/base_star_link_cut/cylinder_5.stl" scale="1 1 1"/>
+      </geometry>
+    </collision>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="D:/cylinder/meshes/base_star_link_cut/cylinder_6.stl" scale="1 1 1"/>
+      </geometry>
+    </collision>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="D:/cylinder/meshes/base_star_link_cut/cylinder_7.stl" scale="1 1 1"/>
+      </geometry>
+    </collision>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="D:/cylinder/meshes/base_star_link_cut/cylinder_8.stl" scale="1 1 1"/>
+      </geometry>
+    </collision>
+  </link>
+
+</robot>

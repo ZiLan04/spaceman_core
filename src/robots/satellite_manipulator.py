@@ -86,9 +86,7 @@ class SatelliteManipulator(Manipulator):
 
     def control_joint_pos(self, joint_position):
         """
-        Input: 
-        position: [x, y, z] (torch.tensor, list, tuple or numpy array)
-        quaternion: [qw, qx, qy, qz] (torch.tensor, list, tuple or numpy array)
+        Control all configured arm joints with position targets.
         """
         # Convert inputs to torch tensors with correct dtype and device if needed
         if not isinstance(joint_position, torch.Tensor):
@@ -96,6 +94,8 @@ class SatelliteManipulator(Manipulator):
         else:
             joint_position = joint_position.to(dtype=self.datatype, device=self.device)
         
+        expected_joint_count = len(self.motors_dof)
+
         # Ensure correct shape
         if joint_position.dim() == 0:
             joint_position = joint_position.unsqueeze(0)
@@ -104,15 +104,17 @@ class SatelliteManipulator(Manipulator):
             joint_position = joint_position.reshape(1, -1)
         elif joint_position.dim() > 2:
             error_msg = (
-                f"Joint_position should have shape [6] or [N, 6], got {joint_position.shape}"
+                "joint_position should have shape "
+                f"[{expected_joint_count}] or [N, {expected_joint_count}], "
+                f"got {joint_position.shape}"
             )
             self.logger.error(error_msg)
             raise ValueError(error_msg)
 
-        # Ensure joint position has shape [6] or [N, 6]
-        if joint_position.shape[-1] != 6:
+        if joint_position.shape[-1] != expected_joint_count:
             error_msg = (
-                f"Joint_position should have trailing dim 6, got {joint_position.shape}"
+                "joint_position should have trailing dimension "
+                f"{expected_joint_count}, got {joint_position.shape}"
             )
             self.logger.error(error_msg)
             raise ValueError(error_msg)

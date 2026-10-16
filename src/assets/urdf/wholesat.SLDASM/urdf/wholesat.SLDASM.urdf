@@ -29,7 +29,7 @@
           filename="../meshes/base_link.STL" />
       </geometry>
       <material
-        name="">
+        name="base_link">
         <color
           rgba="0.64706 0.61961 0.58824 1" />
       </material>
@@ -69,7 +69,7 @@
           filename="../meshes/left_pannel.STL" />
       </geometry>
       <material
-        name="">
+        name="left_pannel">
         <color
           rgba="0.66667 0.66667 0.66667 1" />
       </material>
@@ -127,7 +127,7 @@
           filename="../meshes/left_pannel_1.STL" />
       </geometry>
       <material
-        name="">
+        name="left_pannel_1">
         <color
           rgba="0.66667 0.66667 0.66667 1" />
       </material>
@@ -185,7 +185,7 @@
           filename="../meshes/right_pannel.STL" />
       </geometry>
       <material
-        name="">
+        name="right_pannel">
         <color
           rgba="0.66667 0.66667 0.66667 1" />
       </material>
@@ -243,7 +243,7 @@
           filename="../meshes/right_pannel_2.STL" />
       </geometry>
       <material
-        name="">
+        name="right_pannel_2">
         <color
           rgba="0.66667 0.66667 0.66667 1" />
       </material>

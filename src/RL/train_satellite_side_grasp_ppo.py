@@ -13,7 +13,7 @@ sys.path.append(str(project_src_path))
 
 from RL.policies.multimodal_extractor import MultiModalExtractor
 import configs.asset_configs as asset_configs
-from configs.config_starlink import _STARLINK_PATHS, to_posix
+from configs.config_starlink import make_starlink_morph
 from configs.config_starlink_manipulator import FRANKA_S_Q_CAMERA
 from configs.configs import SCENE_SETTINGS, TPV_CAM_SETTINGS
 from tasks.RL_task_parallel import PPO, gym, make_parallel_vec_env, spaces
@@ -44,7 +44,7 @@ def parse_args():
         choices=("stage1", "stage2", "full"),
         help=(
             "Training stage. Use 'stage1' for base alignment, 'stage2' for "
-            "base-held arm pre-grasp, or 'full' for side grasp."
+            "base-held arm grasp pose, or 'full' for side grasp."
         ),
     )
     parser.add_argument("--total-timesteps", type=int, default=1_000_000)
@@ -64,7 +64,12 @@ def parse_args():
         ),
     )
     parser.add_argument("--learning-rate", type=float, default=1e-4)
-    parser.add_argument("--n-steps", type=int, default=2048)
+    parser.add_argument(
+        "--n-steps",
+        type=int,
+        default=None,
+        help="PPO rollout length. Defaults to 512 for stage2 and 2048 otherwise.",
+    )
     parser.add_argument("--batch-size", type=int, default=256)
     parser.add_argument("--n-epochs", type=int, default=10)
     parser.add_argument("--gamma", type=float, default=0.99)
@@ -155,17 +160,11 @@ def parse_args():
         help="Stage-2 base initialization distance from the target grasp point in meters.",
     )
     parser.add_argument(
-        "--stage2-virtual-grasp-height",
-        type=float,
-        default=0.08,
-        help="Stage-2 virtual pre-grasp target height above the physical grasp point in meters.",
-    )
-    parser.add_argument(
         "--stage2-enable-target-collision",
         action="store_true",
         help=(
             "Enable physical target collision in stage-2. Disabled by default "
-            "because stage-2 trains against a virtual pre-grasp pose."
+            "so pose training is not disturbed by contact forces."
         ),
     )
     parser.add_argument(
@@ -219,10 +218,9 @@ def resolve_stage_settings(args):
             "make_env": make_stage2_vec_env,
             "default_save_dir": "src/outputs/rl/ppo_satellite_stage2_arm",
             "checkpoint_prefix": "ppo_satellite_stage2_arm",
-            "description": "stage-2 base-held arm pre-grasp",
+            "description": "stage-2 base-held arm grasp pose",
             "env_kwargs": {
                 "stage2_base_distance": args.stage2_base_distance,
-                "virtual_grasp_height": args.stage2_virtual_grasp_height,
                 "enable_target_relative_obs": args.enable_target_relative_obs,
             },
             "image_key": "wrist_image",
@@ -329,7 +327,6 @@ def save_run_config(run_dir: Path, args):
         "image_feature_dim": args.image_feature_dim,
         "fused_feature_dim": args.fused_feature_dim,
         "stage2_base_distance": args.stage2_base_distance,
-        "stage2_virtual_grasp_height": args.stage2_virtual_grasp_height,
         "stage2_enable_target_collision": args.stage2_enable_target_collision,
         "env_spacing": list(args.env_spacing),
         "n_envs_per_row": args.n_envs_per_row,
@@ -373,12 +370,7 @@ def configure_stage2_target_collision(args):
 
     def make_starlink_for_stage2_training():
         return {
-            "morph": gs.morphs.URDF(
-                file=to_posix(_STARLINK_PATHS["urdf"]),
-                pos=(-2.0, 0.0, 0.5),
-                euler=(0.0, 0.0, 180.0),
-                scale=7e-1,
-                fixed=False,
+            "morph": make_starlink_morph(
                 collision=enable_collision,
                 visualization=True,
             ),
@@ -402,44 +394,203 @@ def find_vecnormalize_stats(model_path: Path) -> Path | None:
     return None
 
 
-class Stage2MetricsCallback(BaseCallback if BaseCallback is not None else object):
-    """Record stage-2 task metrics to TensorBoard during PPO training."""
+class MetricsCallback(BaseCallback if BaseCallback is not None else object):
+    """Log only the most recently completed episode batch.
+
+    Subclasses declare which ``info`` keys to forward to TensorBoard via three
+    groups:
+
+    * ``TERMINAL_METRICS`` - values of the final step of the episode,
+    * ``EPISODE_REWARDS`` - per-component reward sums accumulated over the episode,
+    * ``EPISODE_SUMMARIES`` - per-episode extrema / milestone flags.
+
+    Each group is a sequence of ``(info_key, tag_prefix)`` pairs. Every entry is
+    logged as ``<tag_prefix>/mean``, ``<tag_prefix>/min`` and
+    ``<tag_prefix>/max`` over the envs that finished since the last log.
+    """
+
+    TERMINAL_METRICS: tuple = ()
+    EPISODE_REWARDS: tuple = ()
+    EPISODE_SUMMARIES: tuple = ()
 
     def __init__(self, log_freq: int = 1000):
         super().__init__()
         self.log_freq = max(1, int(log_freq))
+        self._latest_completed_infos = None
+        self._next_log_timestep = self.log_freq
+
+    @property
+    def metric_groups(self) -> tuple:
+        return (
+            self.TERMINAL_METRICS,
+            self.EPISODE_REWARDS,
+            self.EPISODE_SUMMARIES,
+        )
 
     def _on_step(self) -> bool:
-        if self.num_timesteps % self.log_freq != 0:
+        self._cache_completed_episode_infos()
+        if self.num_timesteps < self._next_log_timestep:
+            return True
+        intervals_passed = (
+            (self.num_timesteps - self._next_log_timestep) // self.log_freq
+        ) + 1
+        self._next_log_timestep += intervals_passed * self.log_freq
+        if self._latest_completed_infos is None:
             return True
 
-        for attr_name, tag_prefix in (
-            ("tcp_to_virtual_grasp_error", "stage2/tcp_to_virtual_grasp_error"),
-            ("pose_position_error", "stage2/pose_position_error"),
-            ("pose_quat_similarity", "stage2/pose_quat_similarity"),
-            ("tcp_speed", "stage2/tcp_speed"),
-            ("target_hold_count", "stage2/target_hold_count"),
-        ):
-            self._record_tensor_attr(attr_name, tag_prefix)
+        for metric_group in self.metric_groups:
+            for info_key, tag_prefix in metric_group:
+                self._record_cached_info(info_key, tag_prefix)
         return True
 
-    def _record_tensor_attr(self, attr_name: str, tag_prefix: str) -> None:
-        values = self.training_env.get_attr(attr_name)
+    def _cache_completed_episode_infos(self) -> None:
+        infos = self.locals.get("infos", [])
+        dones = self.locals.get("dones", [])
+        cache_keys = {
+            info_key
+            for metric_group in self.metric_groups
+            for info_key, _ in metric_group
+        }
+        completed_infos = []
+        for info, done in zip(infos, dones):
+            if bool(done):
+                completed_infos.append(
+                    {key: info[key] for key in cache_keys if key in info}
+                )
+        if not completed_infos:
+            return
+        self._latest_completed_infos = completed_infos
+
+    def _record_cached_info(self, info_key: str, tag_prefix: str) -> None:
+        values = [
+            info[info_key]
+            for info in self._latest_completed_infos
+            if info_key in info
+        ]
         if not values:
             return
 
-        tensor = torch.as_tensor(values[0]).detach().float()
-        if tensor.numel() == 0:
-            return
-
+        tensor = torch.as_tensor(values).detach().float()
         self.logger.record(f"{tag_prefix}/mean", float(tensor.mean().item()))
         self.logger.record(f"{tag_prefix}/min", float(tensor.min().item()))
         self.logger.record(f"{tag_prefix}/max", float(tensor.max().item()))
 
 
+class Stage1MetricsCallback(MetricsCallback):
+    """Log the most recently completed stage-1 (base alignment) episode batch."""
+
+    TERMINAL_METRICS = (
+        ("dock_pos_error", "stage1/dock_pos_err"),
+        ("base_alignment_error", "stage1/base_dist"),
+        ("dock_attitude_error", "stage1/attitude_err_rad"),
+        ("dock_attitude_error_deg", "stage1/angle_deg"),
+        ("base_linear_speed", "stage1/linear_speed"),
+        ("base_angular_speed", "stage1/angular_speed"),
+        ("base_goal_hold_count", "stage1/hold_count"),
+        ("camera_visible", "stage1/camera_visible"),
+        ("camera_center_error", "stage1/camera_center_error"),
+        ("ever_in_goal_band", "stage1/goal_band_hit"),
+        ("success", "stage1/success"),
+        ("failure", "stage1/failure"),
+    )
+    EPISODE_REWARDS = (
+        ("episode_reward_goal_progress", "stage1_reward/goal_progress"),
+        ("episode_reward_attitude_progress", "stage1_reward/attitude_progress"),
+        ("episode_reward_goal_error", "stage1_reward/goal_error"),
+        ("episode_reward_attitude_error", "stage1_reward/attitude_error"),
+        ("episode_reward_camera_out_of_view", "stage1_reward/camera_out_of_view"),
+        ("episode_reward_slow_zone_error", "stage1_reward/slow_zone_error"),
+        ("episode_reward_speed", "stage1_reward/speed"),
+        ("episode_reward_angular_speed", "stage1_reward/angular_speed"),
+        ("episode_reward_away_speed", "stage1_reward/away_speed"),
+        ("episode_reward_too_close", "stage1_reward/too_close"),
+        ("episode_reward_goal_band_entry", "stage1_reward/goal_band_entry"),
+        ("episode_reward_goal_band_leave", "stage1_reward/goal_band_leave"),
+        ("episode_reward_goal_band_hold", "stage1_reward/goal_band_hold"),
+        ("episode_reward_stable_hold", "stage1_reward/stable_hold"),
+        ("episode_reward_near_goal_speed", "stage1_reward/near_goal_speed"),
+        ("episode_reward_action", "stage1_reward/action"),
+        ("episode_reward_target_position", "stage1_reward/target_position"),
+        ("episode_reward_target_attitude", "stage1_reward/target_attitude"),
+        ("episode_reward_slow_zone_target", "stage1_reward/slow_zone_target"),
+        ("episode_reward_success", "stage1_reward/success"),
+        ("episode_reward_failure", "stage1_reward/failure"),
+        ("episode_reward_time", "stage1_reward/time"),
+    )
+    EPISODE_SUMMARIES = (
+        ("episode_min_dock_pos_error", "stage1_ep/min_dock_pos_err"),
+        ("episode_min_base_alignment_error", "stage1_ep/min_base_dist"),
+        ("episode_min_attitude_error_deg", "stage1_ep/min_angle_deg"),
+        ("episode_max_hold_count", "stage1_ep/max_hold"),
+        ("episode_camera_visible_fraction", "stage1_ep/camera_visible_fraction"),
+        ("episode_max_camera_center_error", "stage1_ep/max_camera_center_error"),
+        ("ever_in_goal_band", "stage1_ep/goal_band_hit"),
+        ("success", "stage1_ep/success"),
+        ("failure", "stage1_ep/failure"),
+    )
+
+
+class Stage2MetricsCallback(MetricsCallback):
+    """Log only the most recently completed stage-2 episode batch."""
+
+    TERMINAL_METRICS = (
+        ("tcp_to_grasp_error", "stage2/tcp_err"),
+        ("pose_position_error", "stage2/link_pos_err"),
+        ("pose_quat_similarity", "stage2/quat_sim"),
+        ("pose_orientation_angle_deg", "stage2/angle_deg"),
+        ("orientation_reward_gate", "stage2/orient_gate"),
+        ("speed_reward_gate", "stage2/speed_gate"),
+        ("tcp_speed", "stage2/tcp_speed"),
+        ("reference_link_speed", "stage2/link_speed"),
+        ("tool_speed", "stage2/tool_speed"),
+        ("tool_speed_limit", "stage2/speed_limit"),
+        ("target_in_wrist_view", "stage2/target_visible"),
+        ("target_hold_count", "stage2/hold_count"),
+        ("reached_approach_milestone", "stage2/approach_hit"),
+        ("reached_prepose_milestone", "stage2/prepose_hit"),
+        ("reached_midpose_milestone", "stage2/midpose_hit"),
+        ("reached_nearpose_milestone", "stage2/nearpose_hit"),
+        ("reached_precision_milestone", "stage2/precision_hit"),
+    )
+    EPISODE_REWARDS = (
+        ("episode_reward_tcp", "stage2_reward/tcp"),
+        ("episode_reward_orientation", "stage2_reward/orientation"),
+        ("episode_reward_pose_dense", "stage2_reward/pose_dense"),
+        ("episode_reward_speed", "stage2_reward/speed"),
+        ("episode_reward_action", "stage2_reward/action"),
+        ("episode_reward_link_position", "stage2_reward/link_pos"),
+        ("episode_reward_base", "stage2_reward/base"),
+        ("episode_reward_view", "stage2_reward/view"),
+        ("episode_reward_approach_milestone", "stage2_reward/approach"),
+        ("episode_reward_prepose_milestone", "stage2_reward/prepose"),
+        ("episode_reward_midpose_milestone", "stage2_reward/midpose"),
+        ("episode_reward_nearpose_milestone", "stage2_reward/nearpose"),
+        ("episode_reward_precision_milestone", "stage2_reward/precision"),
+        ("episode_reward_hold_zone", "stage2_reward/hold_zone"),
+        ("episode_reward_stable_hold", "stage2_reward/stable_hold"),
+        ("episode_reward_hold_zone_leave", "stage2_reward/leave"),
+        ("episode_reward_success", "stage2_reward/success"),
+        ("episode_reward_time", "stage2_reward/time"),
+    )
+    EPISODE_SUMMARIES = (
+        ("episode_min_tcp_to_grasp_error", "stage2_ep/min_tcp"),
+        ("episode_min_pose_orientation_angle_deg", "stage2_ep/min_angle_deg"),
+        ("episode_max_hold_count", "stage2_ep/max_hold"),
+        ("reached_approach_milestone", "stage2_ep/approach_hit"),
+        ("reached_prepose_milestone", "stage2_ep/prepose_hit"),
+        ("reached_midpose_milestone", "stage2_ep/midpose_hit"),
+        ("reached_nearpose_milestone", "stage2_ep/nearpose_hit"),
+        ("reached_precision_milestone", "stage2_ep/precision_hit"),
+        ("ever_in_hold_zone", "stage2_ep/hold_zone_hit"),
+        ("success", "stage2_ep/success"),
+    )
+
+
 def train():
     args = parse_args()
     normalize_oracle_observation_args(args)
+    if args.n_steps is None:
+        args.n_steps = 512 if args.stage == "stage2" else 2048
     ensure_dependencies()
     stage_settings = resolve_stage_settings(args)
     training_device = resolve_training_device(args.device)
@@ -500,7 +651,9 @@ def train():
         name_prefix=stage_settings["checkpoint_prefix"],
     )
     callbacks = [checkpoint_callback]
-    if args.stage == "stage2":
+    if args.stage == "stage1":
+        callbacks.append(Stage1MetricsCallback(log_freq=args.metric_log_freq))
+    elif args.stage == "stage2":
         callbacks.append(Stage2MetricsCallback(log_freq=args.metric_log_freq))
     training_callback = CallbackList(callbacks)
 

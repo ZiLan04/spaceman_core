@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  whole.urdf
+
+  说明：把 D:\cylinder\meshes\base_star_link_cut 下的网格拼成一个两 link 的模型：
+    - base_star_body_link   ：body.stl + option.stl
+    - base_star_cylinder_link：cylinder_1~8
+  所有 mesh 原本都处于同一坐标系（来自 base_star_link 装配），
+  因此各 link 内 mesh 的 <origin> 均为 0，两 link 之间用固定关节
+  （origin=0）连接即可还原整体。
+
+  在 Genesis 中查看凸分解效果时，加载参数同前：
+    convexify=True
+    decompose_robot_error_threshold=0.0   # 强制 CoACD 拆成多个凸包
+    vis_mode="collision"
+    recompute_inertia=True
+-->
+<robot name="whole">
+
+  <!-- ================= link 1：body + option ================= -->
+  <link name="base_star_body_link">
+    <inertial>
+      <mass value="1.0"/>
+      <inertia ixx="0.01" ixy="0.0" ixz="0.0" iyy="0.01" iyz="0.0" izz="0.01"/>
+    </inertial>
+
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="D:/cylinder/meshes/base_star_link_cut/body.stl" scale="1 1 1"/>
+      </geometry>
+    </visual>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="D:/cylinder/meshes/base_star_link_cut/object.stl" scale="1 1 1"/>
+      </geometry>
+    </visual>
+
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="D:/cylinder/meshes/base_star_link_cut/body.stl" scale="1 1 1"/>
+      </geometry>
+    </collision>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="D:/cylinder/meshes/base_star_link_cut/object.stl" scale="1 1 1"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <!-- ================= link 2：cylinder_1~8 ================= -->
+  <link name="base_star_cylinder_link">
+    <inertial>
+      <mass value="1.0"/>
+      <inertia ixx="0.01" ixy="0.0" ixz="0.0" iyy="0.01" iyz="0.0" izz="0.01"/>
+    </inertial>
+
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="D:/cylinder/meshes/base_star_link_cut/cylinder_1.stl" scale="1 1 1"/>
+      </geometry>
+    </visual>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="D:/cylinder/meshes/base_star_link_cut/cylinder_2.stl" scale="1 1 1"/>
+      </geometry>
+    </visual>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="D:/cylinder/meshes/base_star_link_cut/cylinder_3.stl" scale="1 1 1"/>
+      </geometry>
+    </visual>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="D:/cylinder/meshes/base_star_link_cut/cylinder_4.stl" scale="1 1 1"/>
+      </geometry>
+    </visual>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="D:/cylinder/meshes/base_star_link_cut/cylinder_5.stl" scale="1 1 1"/>
+      </geometry>
+    </visual>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="D:/cylinder/meshes/base_star_link_cut/cylinder_6.stl" scale="1 1 1"/>
+      </geometry>
+    </visual>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="D:/cylinder/meshes/base_star_link_cut/cylinder_7.stl" scale="1 1 1"/>
+      </geometry>
+    </visual>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="D:/cylinder/meshes/base_star_link_cut/cylinder_8.stl" scale="1 1 1"/>
+      </geometry>
+    </visual>
+
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="D:/cylinder/meshes/base_star_link_cut/cylinder_1.stl" scale="1 1 1"/>
+      </geometry>
+    </collision>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="D:/cylinder/meshes/base_star_link_cut/cylinder_2.stl" scale="1 1 1"/>
+      </geometry>
+    </collision>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="D:/cylinder/meshes/base_star_link_cut/cylinder_3.stl" scale="1 1 1"/>
+      </geometry>
+    </collision>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="D:/cylinder/meshes/base_star_link_cut/cylinder_4.stl" scale="1 1 1"/>
+      </geometry>
+    </collision>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="D:/cylinder/meshes/base_star_link_cut/cylinder_5.stl" scale="1 1 1"/>
+      </geometry>
+    </collision>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="D:/cylinder/meshes/base_star_link_cut/cylinder_6.stl" scale="1 1 1"/>
+      </geometry>
+    </collision>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="D:/cylinder/meshes/base_star_link_cut/cylinder_7.stl" scale="1 1 1"/>
+      </geometry>
+    </collision>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="D:/cylinder/meshes/base_star_link_cut/cylinder_8.stl" scale="1 1 1"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <!-- ================= 固定关节：连接两个 link ================= -->
+  <joint name="base_body_to_cylinder" type="fixed">
+    <parent link="base_star_body_link"/>
+    <child  link="base_star_cylinder_link"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+  </joint>
+
+</robot>

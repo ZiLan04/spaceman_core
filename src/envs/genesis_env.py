@@ -17,6 +17,7 @@ from configs.configs import (
     SCENE_SETTINGS,
     SPACE_BACKGROUND_SETTINGS,
     TPV_CAM_SETTINGS,
+    add_batch_renderer_lights,
     make_light_vis_options,
 )
 from sensors.timer import SimpleTimer
@@ -104,6 +105,15 @@ class GenesisSim:
             pass
 
         self.scene = gs.Scene(**SCENE_SETTINGS)
+        if isinstance(self.scene.renderer_options, gs.renderers.BatchRenderer):
+            batch_light_count = add_batch_renderer_lights(
+                self.scene,
+                self.light_preset,
+            )
+            print(
+                f"[DEBUG] Added {batch_light_count} BatchRenderer light(s) "
+                f"from preset '{self.light_preset}'."
+            )
         self.space_background = None
         self.earth_background = None
         self._add_space_background()

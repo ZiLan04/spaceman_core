@@ -26,14 +26,14 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://starlink/meshes/base_star_link.STL" />
+          filename="../meshes/base_star_link.STL" />
       </geometry>
       <material
-        name="">
+        name="starlink_base_star_link_material">
         <color
-          rgba="0.79216 0.81961 0.93333 1" />
+          rgba="0.937255 0.894118 0.690196 1" />
         <texture
-          filename="package://starlink/textures/1.png" />
+          filename="../textures/1.png" />
       </material>
     </visual>
     <collision>
@@ -42,7 +42,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://starlink/meshes/base_star_link.STL" />
+          filename="../meshes/base_star_link.STL" />
       </geometry>
     </collision>
   </link>
@@ -68,14 +68,14 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://starlink/meshes/panel_Link.STL" />
+          filename="../meshes/panel_Link.STL" />
       </geometry>
       <material
-        name="">
+        name="starlink_panel_Link_material">
         <color
-          rgba="0.79216 0.81961 0.93333 1" />
+          rgba="0 0.172549 0.694118 1" />
         <texture
-          filename="package://starlink/textures/5.png" />
+          filename="../textures/5.png" />
       </material>
     </visual>
     <collision>
@@ -84,7 +84,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://starlink/meshes/panel_Link.STL" />
+          filename="../meshes/panel_Link.STL" />
       </geometry>
     </collision>
   </link>

@@ -164,15 +164,21 @@ def build_arg_parser():
         help="Do not load VecNormalize stats for non-visual replay.",
     )
     parser.add_argument(
-        "--base-xy-noise",
-        type=parse_vec2,
-        default=(0.05, 0.05),
-        help="Uniform replay reset noise range in meters for manipulator base x,y.",
+        "--base-pos-noise",
+        type=parse_vec3,
+        default=(0.05, 0.05, 0.05),
+        help="Uniform replay reset noise range in meters for manipulator base x,y,z.",
     )
     parser.add_argument(
-        "--no-base-xy-noise",
+        "--no-base-pos-noise",
         action="store_true",
-        help="Disable manipulator base x,y reset perturbation.",
+        help="Disable manipulator base x,y,z reset perturbation.",
+    )
+    parser.add_argument(
+        "--base-rpy-noise",
+        type=parse_vec3,
+        default=(0.0, 0.0, 0.0),
+        help="Uniform replay reset noise range in radians for base roll,pitch,yaw.",
     )
     parser.add_argument(
         "--stage1-base-goal-distance",
@@ -350,24 +356,46 @@ def apply_replay_goal_distance_override(task, args):
     )
 
 
-def apply_replay_base_xy_noise(task, args):
-    if task is None or bool(args.no_base_xy_noise):
-        return np.zeros(2, dtype=np.float32)
+def apply_replay_base_pose_noise(task, args):
+    """Perturb the base 6-DoF pose at replay reset and rebuild dependent buffers."""
+    zero_pos = np.zeros(3, dtype=np.float32)
+    zero_rpy = np.zeros(3, dtype=np.float32)
+    if task is None or bool(args.no_base_pos_noise):
+        return zero_pos, zero_rpy
 
-    noise_range = np.asarray(args.base_xy_noise, dtype=np.float32)
-    if noise_range.shape != (2,):
-        raise ValueError(f"--base-xy-noise should contain two values, got {args.base_xy_noise}")
+    noise_range = np.asarray(args.base_pos_noise, dtype=np.float32)
+    if noise_range.shape != (3,):
+        raise ValueError(
+            f"--base-pos-noise should contain three values, got {args.base_pos_noise}"
+        )
     if np.any(noise_range < 0.0):
-        raise ValueError(f"--base-xy-noise values should be non-negative, got {args.base_xy_noise}")
-    if not np.any(noise_range > 0.0):
-        return np.zeros(2, dtype=np.float32)
+        raise ValueError(
+            f"--base-pos-noise values should be non-negative, got {args.base_pos_noise}"
+        )
+    rpy_range = np.asarray(args.base_rpy_noise, dtype=np.float32)
+    if rpy_range.shape != (3,):
+        raise ValueError(
+            f"--base-rpy-noise should contain three values, got {args.base_rpy_noise}"
+        )
+    if np.any(rpy_range < 0.0):
+        raise ValueError(
+            f"--base-rpy-noise values should be non-negative, got {args.base_rpy_noise}"
+        )
+    if not np.any(noise_range > 0.0) and not np.any(rpy_range > 0.0):
+        return zero_pos, zero_rpy
 
-    noise_xy_np = np.random.uniform(-noise_range, noise_range).astype(np.float32)
-    noise_xy = torch.as_tensor(noise_xy_np, dtype=task.datatype, device=task.device)
+    noise_pos_np = np.random.uniform(-noise_range, noise_range).astype(np.float32)
+    noise_rpy_np = np.random.uniform(-rpy_range, rpy_range).astype(np.float32)
+    noise_pos = torch.as_tensor(noise_pos_np, dtype=task.datatype, device=task.device)
+    noise_rpy = torch.as_tensor(noise_rpy_np, dtype=task.datatype, device=task.device)
+
     base_pos, base_quat = task._get_base_pose()
-    perturbed_base_pos = base_pos.detach().clone()
-    perturbed_base_pos[:, :2] = perturbed_base_pos[:, :2] + noise_xy.unsqueeze(0)
-    root_qpos = torch.cat([perturbed_base_pos, base_quat.detach().clone()], dim=-1)
+    perturbed_base_pos = base_pos.detach().clone() + noise_pos.unsqueeze(0)
+    delta_quat = task._rotation_vector_to_quaternion_wxyz(noise_rpy.unsqueeze(0))
+    perturbed_base_quat = task._quaternion_multiply_wxyz(
+        base_quat.detach().clone(), delta_quat.expand_as(base_quat)
+    )
+    root_qpos = torch.cat([perturbed_base_pos, perturbed_base_quat], dim=-1)
 
     root_qpos_to_set = root_qpos if task.num_envs > 1 else root_qpos[0]
     task.starlink_manipulator.robot.set_qpos(
@@ -386,24 +414,40 @@ def apply_replay_base_xy_noise(task, args):
 
     task.episode_start_base_pos = task._get_base_pose()[0].detach().clone()
     task.episode_start_base_quat = task._get_base_pose()[1].detach().clone()
+    nominal_bearing = task._get_target_grasp_pose()[0] - task.episode_start_base_pos
+    task.base_to_target_dir_nominal = nominal_bearing / torch.clamp(
+        torch.norm(nominal_bearing, dim=-1, keepdim=True), min=1e-8
+    )
+    task.prev_base_pos = task.episode_start_base_pos.detach().clone()
+    task.prev_base_quat = task.episode_start_base_quat.detach().clone()
+    task._update_io_tensors()
     if task.base_goal_hold_count is not None:
         task.base_goal_hold_count[:] = 0
     if task.prev_base_goal_error is not None:
         task.prev_base_goal_error = task.dock_pos_error.detach().clone()
+    if task.prev_base_attitude_error is not None:
+        task.prev_base_attitude_error = task.dock_attitude_error.detach().clone()
     if task.prev_in_goal_band is not None:
-        task.prev_in_goal_band = (task.dock_pos_error <= task.base_goal_band).detach().clone()
+        task.prev_in_goal_band = (
+            (task.dock_pos_error <= task.base_goal_band)
+            & (task.dock_attitude_error <= task.base_attitude_band)
+        ).detach().clone()
     if task.last_action_tensor is not None:
         task.last_action_tensor[:] = 0.0
     if task.base_target_offset_command is not None:
         task.base_target_offset_command[:] = 0.0
     if task.base_target_position_command is not None:
-        task.base_target_position_command = task.base_planar_position.detach().clone()
+        task.base_target_position_command = task.base_position.detach().clone()
     if task.prev_base_target_position_command is not None:
-        task.prev_base_target_position_command = task.base_planar_position.detach().clone()
+        task.prev_base_target_position_command = task.base_position.detach().clone()
+    if task.base_target_quat_command is not None:
+        task.base_target_quat_command = task._get_base_pose()[1].detach().clone()
+    if task.prev_base_target_quat_command is not None:
+        task.prev_base_target_quat_command = task._get_base_pose()[1].detach().clone()
     if task.last_step_reward is not None:
         task.last_step_reward[:] = 0.0
 
-    return noise_xy_np
+    return noise_pos_np, noise_rpy_np
 
 
 def scalar_info(info: dict, key: str, default=np.nan):
@@ -441,7 +485,9 @@ def first_env_array(value, default=None):
 
 
 def trajectory_row(step_idx: int, reward: float, action, info: dict, task=None):
-    action_xy = np.asarray(action, dtype=np.float64).reshape(-1)[:2]
+    action_6d = np.asarray(action, dtype=np.float64).reshape(-1)
+    if action_6d.size < 6:
+        action_6d = np.pad(action_6d, (0, 6 - action_6d.size), constant_values=np.nan)
     terminal_obs = info.get("terminal_observation") if isinstance(info, dict) else None
     terminal_state = None
     if isinstance(terminal_obs, dict) and "state" in terminal_obs:
@@ -455,16 +501,17 @@ def trajectory_row(step_idx: int, reward: float, action, info: dict, task=None):
     desired_base = first_env_array(
         getattr(
             task,
-            "reward_desired_base_planar_position",
-            getattr(task, "desired_base_planar_position", None),
+            "reward_desired_base_position",
+            getattr(task, "desired_base_position", None),
         ),
-        default=np.array([np.nan, np.nan]),
+        default=np.array([np.nan, np.nan, np.nan]),
     )
     desired_x = scalar_info(info, "desired_base_x", float(desired_base[0]))
     desired_y = scalar_info(info, "desired_base_y", float(desired_base[1]))
+    desired_z = scalar_info(info, "desired_base_z", float(desired_base[2]))
     policy_desired_base = first_env_array(
-        getattr(task, "desired_base_planar_position", None),
-        default=np.array([np.nan, np.nan]),
+        getattr(task, "desired_base_position", None),
+        default=np.array([np.nan, np.nan, np.nan]),
     )
     policy_desired_x = scalar_info(
         info,
@@ -476,21 +523,36 @@ def trajectory_row(step_idx: int, reward: float, action, info: dict, task=None):
         "policy_desired_base_y",
         float(policy_desired_base[1]),
     )
+    policy_desired_z = scalar_info(
+        info,
+        "policy_desired_base_z",
+        float(policy_desired_base[2]),
+    )
 
     dock_error = scalar_info(
         info,
         "dock_pos_error",
         task_scalar(task, "dock_pos_error"),
     )
+    attitude_error = scalar_info(
+        info,
+        "dock_attitude_error",
+        task_scalar(task, "dock_attitude_error"),
+    )
     target_distance = scalar_info(
         info,
         "base_alignment_error",
         task_scalar(task, "base_alignment_error"),
     )
-    base_speed = scalar_info(
+    base_linear_speed = scalar_info(
         info,
-        "base_planar_speed",
-        task_scalar(task, "base_planar_speed"),
+        "base_linear_speed",
+        task_scalar(task, "base_linear_speed"),
+    )
+    base_angular_speed = scalar_info(
+        info,
+        "base_angular_speed",
+        task_scalar(task, "base_angular_speed"),
     )
 
     return {
@@ -505,13 +567,21 @@ def trajectory_row(step_idx: int, reward: float, action, info: dict, task=None):
         "base_qz": float(base_pose[6]),
         "desired_base_x": float(desired_x),
         "desired_base_y": float(desired_y),
+        "desired_base_z": float(desired_z),
         "policy_desired_base_x": float(policy_desired_x),
         "policy_desired_base_y": float(policy_desired_y),
+        "policy_desired_base_z": float(policy_desired_z),
         "dock_pos_error": float(dock_error),
+        "dock_attitude_error": float(attitude_error),
         "target_distance": float(target_distance),
-        "base_planar_speed": float(base_speed),
-        "action_x": float(action_xy[0]) if action_xy.size > 0 else np.nan,
-        "action_y": float(action_xy[1]) if action_xy.size > 1 else np.nan,
+        "base_linear_speed": float(base_linear_speed),
+        "base_angular_speed": float(base_angular_speed),
+        "action_dx": float(action_6d[0]),
+        "action_dy": float(action_6d[1]),
+        "action_dz": float(action_6d[2]),
+        "action_droll": float(action_6d[3]),
+        "action_dpitch": float(action_6d[4]),
+        "action_dyaw": float(action_6d[5]),
         "success": bool(info.get("success", False)) if isinstance(info, dict) else False,
         "failure": bool(info.get("failure", False)) if isinstance(info, dict) else False,
     }
@@ -536,14 +606,21 @@ def write_csv(path: Path, rows):
 
 
 def print_step(step_idx: int, reward: float, action, info: dict, task=None):
-    action_xy = np.asarray(action, dtype=np.float32).reshape(-1)[:2]
+    action_6d = np.asarray(action, dtype=np.float32).reshape(-1)
+    if action_6d.size < 6:
+        action_6d = np.pad(action_6d, (0, 6 - action_6d.size), constant_values=np.nan)
     dock_error = scalar_info(info, "dock_pos_error")
+    attitude_error = scalar_info(info, "dock_attitude_error")
     target_distance = scalar_info(info, "base_alignment_error")
-    base_speed = scalar_info(info, "base_planar_speed")
+    base_speed = scalar_info(info, "base_linear_speed")
+    base_angular_speed = scalar_info(info, "base_angular_speed")
     hold_count = task_scalar(task, "base_goal_hold_count", 0.0)
-    roll_pitch_error = scalar_info(info, "base_roll_pitch_error")
-    yaw_error = scalar_info(info, "base_yaw_error")
-    stable_stop = dock_error <= 0.08 and base_speed <= 0.025
+    stable_stop = (
+        dock_error <= 0.08
+        and attitude_error <= 0.12
+        and base_speed <= 0.025
+        and base_angular_speed <= 0.05
+    )
     switch_hold_steps = int(
         getattr(task, "replay_switch_hold_steps", getattr(task, "success_hold_steps", 12))
         if task is not None
@@ -556,15 +633,16 @@ def print_step(step_idx: int, reward: float, action, info: dict, task=None):
         f"reward={reward:8.3f} "
         f"target_dist={target_distance:7.4f} "
         f"dock_error={dock_error:7.4f} "
+        f"attitude_error={attitude_error:7.4f} "
         f"base_speed={base_speed:7.4f} "
+        f"base_ang_speed={base_angular_speed:7.4f} "
         f"hold={hold_count:.0f} "
         f"stable_stop={stable_stop} "
         f"switch_ready={switch_ready} "
-        f"roll_pitch={roll_pitch_error:6.3f} "
-        f"yaw={yaw_error:6.3f} "
         f"success={bool(info.get('success', False))} "
         f"failure={bool(info.get('failure', False))} "
-        f"action=[{action_xy[0]: .4f}, {action_xy[1]: .4f}]",
+        f"action_dxyz=[{action_6d[0]: .4f}, {action_6d[1]: .4f}, {action_6d[2]: .4f}] "
+        f"action_drpy=[{action_6d[3]: .4f}, {action_6d[4]: .4f}, {action_6d[5]: .4f}]",
         flush=True,
     )
 
@@ -638,7 +716,7 @@ def main():
     try:
         for episode_idx in range(max(1, int(args.episodes))):
             obs = env.reset()
-            base_xy_noise = apply_replay_base_xy_noise(task, args)
+            base_pos_noise, base_rpy_noise = apply_replay_base_pose_noise(task, args)
             obs = current_replay_obs(env)
             episode_return = 0.0
             final_info = {}
@@ -648,14 +726,17 @@ def main():
                 trajectory_row(
                     step_idx=0,
                     reward=0.0,
-                    action=np.zeros(2, dtype=np.float32),
+                    action=np.zeros(6, dtype=np.float32),
                     info={},
                     task=task,
                 )
             ]
             print(
                 f"[STAGE1_REPLAY] Episode {episode_idx + 1} / {args.episodes} "
-                f"base_xy_noise=[{base_xy_noise[0]: .4f}, {base_xy_noise[1]: .4f}]",
+                f"base_pos_noise=[{base_pos_noise[0]: .4f}, {base_pos_noise[1]: .4f}, "
+                f"{base_pos_noise[2]: .4f}] "
+                f"base_rpy_noise=[{base_rpy_noise[0]: .4f}, {base_rpy_noise[1]: .4f}, "
+                f"{base_rpy_noise[2]: .4f}]",
                 flush=True,
             )
 
@@ -691,7 +772,9 @@ def main():
                 )
                 switch_ready = (
                     scalar_info(info, "dock_pos_error") <= 0.08
-                    and scalar_info(info, "base_planar_speed") <= 0.025
+                    and scalar_info(info, "dock_attitude_error") <= 0.12
+                    and scalar_info(info, "base_linear_speed") <= 0.025
+                    and scalar_info(info, "base_angular_speed") <= 0.05
                     and hold_count >= switch_hold_steps
                 )
                 if switch_ready and first_switch_ready_step is None:
@@ -709,8 +792,12 @@ def main():
                     "episode": episode_idx + 1,
                     "steps": step_idx + 1,
                     "return": episode_return,
-                    "base_xy_noise_x": float(base_xy_noise[0]),
-                    "base_xy_noise_y": float(base_xy_noise[1]),
+                    "base_pos_noise_x": float(base_pos_noise[0]),
+                    "base_pos_noise_y": float(base_pos_noise[1]),
+                    "base_pos_noise_z": float(base_pos_noise[2]),
+                    "base_rpy_noise_roll": float(base_rpy_noise[0]),
+                    "base_rpy_noise_pitch": float(base_rpy_noise[1]),
+                    "base_rpy_noise_yaw": float(base_rpy_noise[2]),
                     "initial_base_x": initial_row["base_x"],
                     "initial_base_y": initial_row["base_y"],
                     "initial_base_z": initial_row["base_z"],
@@ -719,10 +806,15 @@ def main():
                     "final_base_z": final_row["base_z"],
                     "desired_base_x": final_row["desired_base_x"],
                     "desired_base_y": final_row["desired_base_y"],
+                    "desired_base_z": final_row["desired_base_z"],
                     "policy_desired_base_x": final_row["policy_desired_base_x"],
                     "policy_desired_base_y": final_row["policy_desired_base_y"],
+                    "policy_desired_base_z": final_row["policy_desired_base_z"],
                     "final_dock_pos_error": final_row["dock_pos_error"],
+                    "final_dock_attitude_error": final_row["dock_attitude_error"],
                     "final_target_distance": final_row["target_distance"],
+                    "final_base_linear_speed": final_row["base_linear_speed"],
+                    "final_base_angular_speed": final_row["base_angular_speed"],
                     "success": bool(final_info.get("success", False)),
                     "failure": bool(final_info.get("failure", False)),
                     "first_switch_ready_step": first_switch_ready_step,

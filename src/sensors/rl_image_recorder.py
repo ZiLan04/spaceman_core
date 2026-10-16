@@ -40,6 +40,10 @@ class RLImageRecorder:
         self._segment_index = 0
         self._warned_missing_cv2 = False
 
+    @property
+    def buffered_frame_count(self) -> int:
+        return len(self._frames)
+
     def record_batch(self, rgb_batch: torch.Tensor):
         if not self.enabled:
             return

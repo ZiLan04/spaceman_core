@@ -1,10 +1,11 @@
 # 输入：机械臂关节角，腕部相机图像
 # 输出：机械臂关节角
 
-"""Stage-2 batched RL task: hold the base and move the arm to pre-grasp pose.
+"""Stage-2 batched RL task: hold the base and move the arm to grasp pose.
 
-The stage-2 policy only sees arm joint positions plus the wrist camera image.
-It commands six normalized joint increments. Target grasp pose information is
+The stage-2 policy sees arm joint positions, joint velocities, the previous
+action, and the wrist camera image. It commands six normalized joint
+increments. Target grasp pose information is
 used only inside reward/success computation.
 """
 
@@ -35,7 +36,7 @@ from utils.utils import as_rotation_matrix, calculate_camera_pose  # noqa: E402
 
 
 class ParallelStage2ArmTask(ParallelRLTask):
-    """Batched stage-2 task for arm-only visual servo pre-grasp training."""
+    """Batched stage-2 task for arm-only visual servo grasp-pose training."""
 
     def __init__(
         self,
@@ -51,7 +52,6 @@ class ParallelStage2ArmTask(ParallelRLTask):
         target_position_noise: bool = False,
         target_position_noise_range=(0.03, 0.03, 0.02),
         stage2_base_distance: float = 1.1,
-        virtual_grasp_height: float = 0.08,
     ):
         super().__init__(
             target_asset_name=target_asset_name,
@@ -72,7 +72,7 @@ class ParallelStage2ArmTask(ParallelRLTask):
 
         self.arm_control_decimation = 4
         self.control_dt = self.control_dt * self.arm_control_decimation
-        self.max_steps = 120
+        self.max_steps = 200
         self.joint_action_low = torch.full(
             (6,), -1.0, dtype=self.datatype, device=self.device
         )
@@ -85,13 +85,16 @@ class ParallelStage2ArmTask(ParallelRLTask):
         self.joint_target_high = torch.full(
             (6,), math.pi, dtype=self.datatype, device=self.device
         )
-        self.joint_delta_scale = 0.035
+        self.joint_delta_scale = torch.tensor(
+            [0.040, 0.040, 0.040, 0.050, 0.060, 0.050],
+            dtype=self.datatype,
+            device=self.device,
+        )
 
         self.stage2_base_distance = float(stage2_base_distance)
         self.target_dock_dir_local = torch.tensor(
             [-1.0, 0.0, 0.0], dtype=self.datatype, device=self.device
         )
-        self.virtual_grasp_height = float(virtual_grasp_height)
         self.stage2_base_hold_pos = None
         self.stage2_base_hold_quat = None
 
@@ -113,30 +116,72 @@ class ParallelStage2ArmTask(ParallelRLTask):
             dtype=self.datatype,
             device=self.device,
         )
+        self.reference_target_offset_local = None
+        self.reference_target_quat_local = None
+        self.desired_reference_link_pose = None
 
-        self.pose_position_threshold = 0.055
-        self.pose_quat_similarity_threshold = 0.95
-        self.hold_velocity_threshold = 0.06
-        self.success_hold_steps = 6
+        self.tcp_position_threshold = 0.025
+        self.pose_orientation_angle_threshold = math.radians(15.0)
+        self.pose_quat_similarity_threshold = math.cos(
+            0.5 * self.pose_orientation_angle_threshold
+        )
+        self.hold_velocity_threshold = 0.04
+        self.success_hold_steps = 10
 
-        self.pose_progress_reward_scale = 15.0
-        self.pose_position_penalty_scale = 8.0
-        self.pose_orientation_reward_scale = 4.0
-        self.pose_orientation_penalty_scale = 4.0
-        self.joint_action_penalty_scale = 2e-2
-        self.hold_zone_action_penalty_scale = 1e-1
+        self.tcp_progress_reward_scale = 40.0
+        self.tcp_position_penalty_scale = 0.5
+        self.orientation_progress_reward_scale = 20.0
+        self.pose_position_penalty_scale = 0.0
+        self.pose_orientation_penalty_scale = 0.35
+        self.orientation_gate_start_distance = 0.65
+        self.orientation_gate_full_distance = 0.25
+        self.orientation_gate_min = 0.50
+        self.pose_dense_reward_scale = 4.0
+        self.pose_dense_distance_width = 0.10
+        self.pose_dense_orientation_width = 0.45
+        self.speed_gate_start_distance = 0.15
+        self.speed_gate_full_distance = 0.05
+        self.speed_penalty_linear_scale = 4.0
+        self.speed_penalty_scale = 8.0
+        self.speed_limit_distance_scale = 2.0
+        self.speed_limit_max = 0.30
+        self.joint_action_penalty_scale = 3e-3
+        self.near_target_action_penalty_scale = 2.7e-2
         self.base_drift_penalty_scale = 8.0
-        self.target_out_of_view_penalty = 0.0
+        self.target_out_of_view_penalty = 2.0
         self.target_view_edge_margin = 0.03
         self.hold_zone_bonus = 8.0
         self.stable_hold_bonus = 20.0
-        self.hold_zone_leave_penalty = 80.0
+        self.hold_zone_leave_penalty = 20.0
         self.success_bonus = 250.0
+        self.approach_milestone_distance = 0.15
+        self.prepose_milestone_distance = 0.10
+        self.prepose_milestone_angle = math.radians(45.0)
+        self.midpose_milestone_distance = 0.075
+        self.midpose_milestone_angle = math.radians(35.0)
+        self.nearpose_milestone_distance = 0.05
+        self.nearpose_milestone_angle = math.radians(25.0)
+        self.precision_milestone_distance = 0.035
+        self.precision_milestone_angle = math.radians(20.0)
+        self.approach_milestone_bonus = 5.0
+        self.prepose_milestone_bonus = 15.0
+        self.midpose_milestone_bonus = 20.0
+        self.nearpose_milestone_bonus = 30.0
+        self.precision_milestone_bonus = 40.0
 
         self.target_hold_count = None
         self.prev_in_hold_zone = None
         self.ever_in_hold_zone = None
-        self.prev_pose_position_error = None
+        self.reached_approach_milestone = None
+        self.reached_prepose_milestone = None
+        self.reached_midpose_milestone = None
+        self.reached_nearpose_milestone = None
+        self.reached_precision_milestone = None
+        self.episode_min_tcp_to_grasp_error = None
+        self.episode_min_pose_orientation_angle_deg = None
+        self.episode_max_hold_count = None
+        self.prev_tcp_to_grasp_error = None
+        self.prev_pose_orientation_angle = None
         self.prev_tcp_pos = None
         self.prev_reference_link_pos = None
         self.tcp_speed = None
@@ -144,20 +189,76 @@ class ParallelStage2ArmTask(ParallelRLTask):
         self.base_drift_error = None
         self.pose_quat_similarity = None
         self.pose_orientation_error = None
+        self.pose_orientation_angle = None
+        self.pose_orientation_angle_deg = None
+        self.orientation_reward_gate = None
+        self.speed_reward_gate = None
+        self.tool_speed = None
+        self.tool_speed_limit = None
         self.pose_position_error = None
         self.reference_yaw_link_pose = None
-        self.tcp_to_virtual_grasp_error = None
+        self.tcp_to_grasp_error = None
         self.target_in_wrist_view = None
         self.target_wrist_camera_uv = None
         self.target_wrist_camera_depth = None
-        self.virtual_grasp_pose = None
         self.reference_target_pose_link = None
+        zero_reward = torch.zeros(
+            self.num_envs, dtype=self.datatype, device=self.device
+        )
+        self.reward_tcp = zero_reward
+        self.reward_orientation = zero_reward
+        self.reward_pose_dense = zero_reward
+        self.reward_speed = zero_reward
+        self.reward_action = zero_reward
+        self.reward_link_position = zero_reward
+        self.reward_base = zero_reward
+        self.reward_view = zero_reward
+        self.reward_approach_milestone = zero_reward
+        self.reward_prepose_milestone = zero_reward
+        self.reward_midpose_milestone = zero_reward
+        self.reward_nearpose_milestone = zero_reward
+        self.reward_precision_milestone = zero_reward
+        self.reward_hold_zone = zero_reward
+        self.reward_stable_hold = zero_reward
+        self.reward_hold_zone_leave = zero_reward
+        self.reward_success = zero_reward
+        self.reward_time = zero_reward
+        self.episode_reward_sums = {
+            reward_attr: torch.zeros_like(zero_reward)
+            for reward_attr in self._stage2_reward_attr_names()
+        }
+        self.last_action_tensor = torch.zeros(
+            (self.num_envs, 6), dtype=self.datatype, device=self.device
+        )
         self.last_step_reward = torch.zeros(
             self.num_envs, dtype=self.datatype, device=self.device
         )
 
     def _zero_stage2_image_observation(self) -> torch.Tensor:
         return self._zero_image_observation()
+
+    @staticmethod
+    def _stage2_reward_attr_names() -> tuple[str, ...]:
+        return (
+            "reward_tcp",
+            "reward_orientation",
+            "reward_pose_dense",
+            "reward_speed",
+            "reward_action",
+            "reward_link_position",
+            "reward_base",
+            "reward_view",
+            "reward_approach_milestone",
+            "reward_prepose_milestone",
+            "reward_midpose_milestone",
+            "reward_nearpose_milestone",
+            "reward_precision_milestone",
+            "reward_hold_zone",
+            "reward_stable_hold",
+            "reward_hold_zone_leave",
+            "reward_success",
+            "reward_time",
+        )
 
     def _capture_wrist_image_observation(self) -> Optional[torch.Tensor]:
         if not self.enable_visual_obs:
@@ -213,15 +314,105 @@ class ParallelStage2ArmTask(ParallelRLTask):
         )
         return link_pos, link_quat
 
-    def _compute_reference_pose_metrics(
-        self, link_pos: torch.Tensor, link_quat: torch.Tensor
+    def _initialize_reference_target_transform(
+        self, grasp_pos: torch.Tensor, grasp_quat: torch.Tensor
+    ) -> None:
+        grasp_rot = as_rotation_matrix(grasp_quat, order="wxyz")
+        nominal_target_pos = self.reference_yaw_link_xyz.view(1, 3).expand_as(grasp_pos)
+        nominal_target_quat = self.reference_yaw_link_quat.view(1, 4).expand_as(
+            grasp_quat
+        )
+        self.reference_target_offset_local = torch.matmul(
+            grasp_rot.transpose(-1, -2),
+            (nominal_target_pos - grasp_pos).unsqueeze(-1),
+        ).squeeze(-1)
+        grasp_quat_inv = grasp_quat.detach().clone()
+        grasp_quat_inv[:, 1:] = -grasp_quat_inv[:, 1:]
+        self.reference_target_quat_local = self._quaternion_multiply_wxyz(
+            grasp_quat_inv, nominal_target_quat
+        ).detach()
+
+    def _compute_desired_reference_pose(
+        self, grasp_pos: torch.Tensor, grasp_quat: torch.Tensor
     ):
-        target_pos = self.reference_yaw_link_xyz.view(1, 3).expand_as(link_pos)
-        target_quat = self.reference_yaw_link_quat.view(1, 4).expand_as(link_quat)
+        if (
+            self.reference_target_offset_local is None
+            or self.reference_target_quat_local is None
+        ):
+            target_pos = self.reference_yaw_link_xyz.view(1, 3).expand_as(grasp_pos)
+            target_quat = self.reference_yaw_link_quat.view(1, 4).expand_as(grasp_quat)
+            return target_pos, target_quat
+
+        grasp_rot = as_rotation_matrix(grasp_quat, order="wxyz")
+        target_pos = grasp_pos + torch.matmul(
+            grasp_rot, self.reference_target_offset_local.unsqueeze(-1)
+        ).squeeze(-1)
+        target_quat = self._quaternion_multiply_wxyz(
+            grasp_quat, self.reference_target_quat_local
+        )
+        return target_pos, target_quat
+
+    def _compute_reference_pose_metrics(
+        self,
+        link_pos: torch.Tensor,
+        link_quat: torch.Tensor,
+        target_pos: torch.Tensor,
+        target_quat: torch.Tensor,
+    ):
         position_error = torch.norm(link_pos - target_pos, dim=-1)
+        link_quat = link_quat / torch.clamp(
+            torch.norm(link_quat, dim=-1, keepdim=True), min=1e-8
+        )
+        target_quat = target_quat / torch.clamp(
+            torch.norm(target_quat, dim=-1, keepdim=True), min=1e-8
+        )
         quat_similarity = torch.abs(torch.sum(link_quat * target_quat, dim=-1))
-        orientation_error = 1.0 - torch.clamp(quat_similarity, max=1.0)
-        return position_error, quat_similarity, orientation_error
+        quat_similarity = torch.clamp(quat_similarity, min=0.0, max=1.0)
+        orientation_angle = 2.0 * torch.acos(quat_similarity)
+        return position_error, quat_similarity, orientation_angle
+
+    def _compute_orientation_reward_gate(
+        self, position_error: torch.Tensor
+    ) -> torch.Tensor:
+        gate_range = max(
+            self.orientation_gate_start_distance
+            - self.orientation_gate_full_distance,
+            1e-6,
+        )
+        gate_progress = torch.clamp(
+            (self.orientation_gate_start_distance - position_error) / gate_range,
+            min=0.0,
+            max=1.0,
+        )
+        return self.orientation_gate_min + (
+            1.0 - self.orientation_gate_min
+        ) * gate_progress
+
+    def _compute_speed_reward_gate(self, position_error: torch.Tensor) -> torch.Tensor:
+        gate_range = max(
+            self.speed_gate_start_distance - self.speed_gate_full_distance,
+            1e-6,
+        )
+        return torch.clamp(
+            (self.speed_gate_start_distance - position_error) / gate_range,
+            min=0.0,
+            max=1.0,
+        )
+
+    def _compute_tool_speed_limit(self, position_error: torch.Tensor) -> torch.Tensor:
+        speed_limit = (
+            self.hold_velocity_threshold
+            + self.speed_limit_distance_scale
+            * torch.clamp(
+                position_error - self.tcp_position_threshold,
+                min=0.0,
+            )
+        )
+        return torch.clamp(
+            speed_limit,
+            min=self.hold_velocity_threshold,
+            max=self.speed_limit_max,
+        )
 
     def _update_tcp_motion_metrics(self, tcp_pos: torch.Tensor):
         if self.prev_tcp_pos is None:
@@ -247,16 +438,33 @@ class ParallelStage2ArmTask(ParallelRLTask):
         ) / max(self.control_dt, 1e-6)
         self.prev_reference_link_pos = link_pos.detach().clone()
 
+    def _stage2_hold_zone_mask(self) -> torch.Tensor:
+        if (
+            self.tcp_to_grasp_error is None
+            or self.pose_orientation_angle is None
+            or self.target_in_wrist_view is None
+        ):
+            return torch.zeros(self.num_envs, dtype=torch.bool, device=self.device)
+        return (
+            (self.tcp_to_grasp_error <= self.tcp_position_threshold)
+            & (self.pose_orientation_angle <= self.pose_orientation_angle_threshold)
+            & self.target_in_wrist_view
+        )
+
+    def _stage2_stable_hold_mask(self) -> torch.Tensor:
+        if self.tool_speed is None:
+            return torch.zeros(self.num_envs, dtype=torch.bool, device=self.device)
+        return (
+            self._stage2_hold_zone_mask()
+            & (self.tool_speed <= self.hold_velocity_threshold)
+        )
+
     def _update_stage2_hold_count(self):
         if self.target_hold_count is None:
             self.target_hold_count = torch.zeros(
                 self.num_envs, dtype=torch.int32, device=self.device
             )
-        stable_mask = (
-            (self.pose_position_error <= self.pose_position_threshold)
-            & (self.pose_quat_similarity >= self.pose_quat_similarity_threshold)
-            & (self.reference_link_speed <= self.hold_velocity_threshold)
-        )
+        stable_mask = self._stage2_stable_hold_mask()
         self.target_hold_count = torch.where(
             stable_mask,
             self.target_hold_count + 1,
@@ -379,15 +587,18 @@ class ParallelStage2ArmTask(ParallelRLTask):
         joint_qpos = _as_batched_tensor(
             joint_qpos, device=self.device, dtype=self.datatype, expected_last_dim=6
         )
-
-        virtual_grasp_pos = grasp_point_pos.detach().clone()
-        virtual_grasp_pos[:, 2] += self.virtual_grasp_height
-        self.virtual_grasp_pose = torch.cat([virtual_grasp_pos, grasp_point_quat], dim=-1)
-        reference_target_pos = self.reference_yaw_link_xyz.view(1, 3).expand_as(
-            reference_link_pos
+        joint_qvel = self.starlink_manipulator.robot.get_dofs_velocity(
+            dofs_idx_local=self.starlink_manipulator.motors_dof
         )
-        reference_target_quat = self.reference_yaw_link_quat.view(1, 4).expand_as(
-            reference_link_quat
+        joint_qvel = _as_batched_tensor(
+            joint_qvel, device=self.device, dtype=self.datatype, expected_last_dim=6
+        )
+
+        reference_target_pos, reference_target_quat = (
+            self._compute_desired_reference_pose(grasp_point_pos, grasp_point_quat)
+        )
+        self.desired_reference_link_pose = torch.cat(
+            [reference_target_pos, reference_target_quat], dim=-1
         )
         self.reference_target_pose_link = self._compute_target_pose_in_frame(
             reference_target_pos,
@@ -409,8 +620,16 @@ class ParallelStage2ArmTask(ParallelRLTask):
             dtype=self.datatype, device=self.device
         )
         self.arm_joint_positions = joint_qpos.reshape(self.num_envs, -1)
+        self.arm_joint_velocities = joint_qvel.reshape(self.num_envs, -1)
         self.base_planar_position = base_pos[:, :2].to(dtype=self.datatype, device=self.device)
-        state_tensors = [self.arm_joint_positions]
+        previous_action = self.last_action_tensor
+        if previous_action is None:
+            previous_action = torch.zeros_like(self.arm_joint_positions)
+        state_tensors = [
+            self.arm_joint_positions,
+            self.arm_joint_velocities,
+            previous_action,
+        ]
         if self.enable_target_relative_obs:
             state_tensors.append(self.reference_target_pose_link)
         self.state_observation = torch.cat(state_tensors, dim=-1)
@@ -433,13 +652,27 @@ class ParallelStage2ArmTask(ParallelRLTask):
         self.base_alignment_error = torch.norm(
             grasp_point_pos[:, :2] - self.base_planar_position, dim=-1
         )
-        self.tcp_to_virtual_grasp_error = torch.norm(virtual_grasp_pos - tcp_pos, dim=-1)
-        self.tcp_to_grasp_error = self.tcp_to_virtual_grasp_error
+        self.tcp_to_grasp_error = torch.norm(grasp_point_pos - tcp_pos, dim=-1)
         (
             self.pose_position_error,
             self.pose_quat_similarity,
-            self.pose_orientation_error,
-        ) = self._compute_reference_pose_metrics(reference_link_pos, reference_link_quat)
+            self.pose_orientation_angle,
+        ) = self._compute_reference_pose_metrics(
+            reference_link_pos,
+            reference_link_quat,
+            reference_target_pos,
+            reference_target_quat,
+        )
+        self.orientation_reward_gate = self._compute_orientation_reward_gate(
+            self.tcp_to_grasp_error
+        )
+        self.speed_reward_gate = self._compute_speed_reward_gate(
+            self.tcp_to_grasp_error
+        )
+        self.pose_orientation_error = self.pose_orientation_angle
+        self.pose_orientation_angle_deg = torch.rad2deg(
+            self.pose_orientation_angle
+        )
         self.quat_similarity = self.pose_quat_similarity
         self.down_alignment = self.pose_quat_similarity
         self.approach_alignment = self.pose_quat_similarity
@@ -450,6 +683,10 @@ class ParallelStage2ArmTask(ParallelRLTask):
         ) = self._compute_target_wrist_camera_visibility(grasp_marker_pos)
         self._update_tcp_motion_metrics(tcp_pos)
         self._update_reference_link_motion_metrics(reference_link_pos)
+        self.tool_speed = torch.maximum(self.tcp_speed, self.reference_link_speed)
+        self.tool_speed_limit = self._compute_tool_speed_limit(
+            self.tcp_to_grasp_error
+        )
 
         if self.stage2_base_hold_pos is not None:
             self.base_drift_error = torch.norm(
@@ -462,9 +699,7 @@ class ParallelStage2ArmTask(ParallelRLTask):
 
         self._update_stage2_hold_count()
         success_mask_np = self.is_success().detach().cpu().numpy()
-        near_mask_np = (
-            self.pose_position_error <= self.pose_position_threshold
-        ).detach().cpu().numpy()
+        near_mask_np = self._stage2_hold_zone_mask().detach().cpu().numpy()
         self.phase = np.where(near_mask_np, "pose_hold", "arm_approach").astype(object)
         self.phase = np.where(success_mask_np, "stage2_success", self.phase).astype(object)
 
@@ -472,6 +707,7 @@ class ParallelStage2ArmTask(ParallelRLTask):
         result = super().initialize()
         if result:
             grasp_pos, grasp_quat = self._get_target_grasp_pose()
+            self._initialize_reference_target_transform(grasp_pos, grasp_quat)
             self.stage2_base_hold_pos, self.stage2_base_hold_quat = (
                 self._compute_stage2_base_hold_pose(grasp_pos, grasp_quat)
             )
@@ -493,7 +729,42 @@ class ParallelStage2ArmTask(ParallelRLTask):
             self.ever_in_hold_zone = torch.zeros(
                 self.num_envs, dtype=torch.bool, device=self.device
             )
-            self.prev_pose_position_error = None
+            self.reached_approach_milestone = torch.zeros(
+                self.num_envs, dtype=torch.bool, device=self.device
+            )
+            self.reached_prepose_milestone = torch.zeros(
+                self.num_envs, dtype=torch.bool, device=self.device
+            )
+            self.reached_midpose_milestone = torch.zeros(
+                self.num_envs, dtype=torch.bool, device=self.device
+            )
+            self.reached_nearpose_milestone = torch.zeros(
+                self.num_envs, dtype=torch.bool, device=self.device
+            )
+            self.reached_precision_milestone = torch.zeros(
+                self.num_envs, dtype=torch.bool, device=self.device
+            )
+            self.episode_min_tcp_to_grasp_error = torch.full(
+                (self.num_envs,),
+                float("inf"),
+                dtype=self.datatype,
+                device=self.device,
+            )
+            self.episode_min_pose_orientation_angle_deg = torch.full(
+                (self.num_envs,),
+                float("inf"),
+                dtype=self.datatype,
+                device=self.device,
+            )
+            self.episode_max_hold_count = torch.zeros(
+                self.num_envs, dtype=torch.int32, device=self.device
+            )
+            self.prev_tcp_to_grasp_error = torch.zeros(
+                self.num_envs, dtype=self.datatype, device=self.device
+            )
+            self.prev_pose_orientation_angle = torch.zeros(
+                self.num_envs, dtype=self.datatype, device=self.device
+            )
             self.prev_tcp_pos = None
             self.prev_reference_link_pos = None
             self.last_action_tensor = torch.zeros(
@@ -540,38 +811,160 @@ class ParallelStage2ArmTask(ParallelRLTask):
         if self.pose_position_error is None:
             return torch.zeros(self.num_envs, dtype=self.datatype, device=self.device)
 
-        if self.prev_pose_position_error is None:
-            pose_progress = torch.zeros_like(self.pose_position_error)
-        else:
-            pose_progress = (
-                self.prev_pose_position_error - self.pose_position_error
-            )
-        self.prev_pose_position_error = self.pose_position_error.detach().clone()
-
-        reward = self.pose_progress_reward_scale * pose_progress
-        reward = reward - self.pose_position_penalty_scale * self.pose_position_error
-        reward = reward + self.pose_orientation_reward_scale * torch.clamp(
-            self.pose_quat_similarity, min=0.0
+        self.episode_min_tcp_to_grasp_error = torch.minimum(
+            self.episode_min_tcp_to_grasp_error,
+            self.tcp_to_grasp_error,
         )
-        reward = reward - self.pose_orientation_penalty_scale * self.pose_orientation_error
-        reward = reward - self.base_drift_penalty_scale * self.base_drift_error
-        if self.target_in_wrist_view is not None:
-            reward = reward - torch.where(
-                self.target_in_wrist_view,
-                torch.zeros_like(reward),
-                torch.full_like(reward, self.target_out_of_view_penalty),
+        self.episode_min_pose_orientation_angle_deg = torch.minimum(
+            self.episode_min_pose_orientation_angle_deg,
+            self.pose_orientation_angle_deg,
+        )
+        self.episode_max_hold_count = torch.maximum(
+            self.episode_max_hold_count,
+            self.target_hold_count,
+        )
+
+        if self.prev_tcp_to_grasp_error is None:
+            tcp_progress = torch.zeros_like(self.tcp_to_grasp_error)
+        else:
+            tcp_progress = (
+                self.prev_tcp_to_grasp_error - self.tcp_to_grasp_error
             )
+        self.prev_tcp_to_grasp_error = self.tcp_to_grasp_error.detach().clone()
+
+        if self.prev_pose_orientation_angle is None:
+            orientation_progress = torch.zeros_like(self.pose_orientation_angle)
+        else:
+            orientation_progress = (
+                self.prev_pose_orientation_angle - self.pose_orientation_angle
+            )
+        self.prev_pose_orientation_angle = self.pose_orientation_angle.detach().clone()
+        self.reward_tcp = (
+            self.tcp_progress_reward_scale * tcp_progress
+            - self.tcp_position_penalty_scale * self.tcp_to_grasp_error
+        )
+        self.reward_orientation = self.orientation_reward_gate * (
+            self.orientation_progress_reward_scale * orientation_progress
+            - self.pose_orientation_penalty_scale * self.pose_orientation_angle
+        )
+        self.reward_pose_dense = self.pose_dense_reward_scale * torch.exp(
+            -torch.square(
+                self.tcp_to_grasp_error / self.pose_dense_distance_width
+            )
+            -torch.square(
+                self.pose_orientation_angle / self.pose_dense_orientation_width
+            )
+        )
+        speed_excess = torch.clamp(
+            self.tool_speed - self.tool_speed_limit,
+            min=0.0,
+        )
+        self.reward_speed = -self.speed_reward_gate * (
+            self.speed_penalty_linear_scale * speed_excess
+            + self.speed_penalty_scale * speed_excess.square()
+        )
+        self.reward_link_position = (
+            -self.pose_position_penalty_scale * self.pose_position_error
+        )
+        self.reward_base = -self.base_drift_penalty_scale * self.base_drift_error
+        if self.target_in_wrist_view is not None:
+            self.reward_view = -torch.where(
+                self.target_in_wrist_view,
+                torch.zeros_like(self.tcp_to_grasp_error),
+                torch.full_like(
+                    self.tcp_to_grasp_error, self.target_out_of_view_penalty
+                ),
+            )
+        else:
+            self.reward_view = torch.zeros_like(self.tcp_to_grasp_error)
 
         if self.last_action_tensor is not None:
-            action_magnitude = torch.sum(self.last_action_tensor * self.last_action_tensor, dim=-1)
-            reward = reward - self.joint_action_penalty_scale * action_magnitude
+            action_magnitude = torch.sum(
+                self.last_action_tensor * self.last_action_tensor, dim=-1
+            )
+            action_penalty_scale = (
+                self.joint_action_penalty_scale
+                + self.near_target_action_penalty_scale * self.speed_reward_gate
+            )
+            self.reward_action = -action_penalty_scale * action_magnitude
+        else:
+            self.reward_action = torch.zeros_like(self.tcp_to_grasp_error)
 
-        in_hold_zone = (
-            (self.pose_position_error <= self.pose_position_threshold)
-            & (self.pose_quat_similarity >= self.pose_quat_similarity_threshold)
+        reward = (
+            self.reward_tcp
+            + self.reward_orientation
+            + self.reward_pose_dense
+            + self.reward_speed
+            + self.reward_action
+            + self.reward_link_position
+            + self.reward_base
+            + self.reward_view
         )
-        stable_hold = in_hold_zone & (
-            self.reference_link_speed <= self.hold_velocity_threshold
+
+        in_hold_zone = self._stage2_hold_zone_mask()
+        stable_hold = self._stage2_stable_hold_mask()
+        approach_milestone = (
+            self.tcp_to_grasp_error <= self.approach_milestone_distance
+        )
+        prepose_milestone = (
+            (self.tcp_to_grasp_error <= self.prepose_milestone_distance)
+            & (self.pose_orientation_angle <= self.prepose_milestone_angle)
+            & self.target_in_wrist_view
+        )
+        midpose_milestone = (
+            (self.tcp_to_grasp_error <= self.midpose_milestone_distance)
+            & (self.pose_orientation_angle <= self.midpose_milestone_angle)
+            & self.target_in_wrist_view
+        )
+        nearpose_milestone = (
+            (self.tcp_to_grasp_error <= self.nearpose_milestone_distance)
+            & (self.pose_orientation_angle <= self.nearpose_milestone_angle)
+            & self.target_in_wrist_view
+        )
+        precision_milestone = (
+            (self.tcp_to_grasp_error <= self.precision_milestone_distance)
+            & (self.pose_orientation_angle <= self.precision_milestone_angle)
+            & self.target_in_wrist_view
+        )
+        self.reward_approach_milestone = torch.where(
+            approach_milestone & (~self.reached_approach_milestone),
+            torch.full_like(reward, self.approach_milestone_bonus),
+            torch.zeros_like(reward),
+        )
+        self.reward_prepose_milestone = torch.where(
+            prepose_milestone & (~self.reached_prepose_milestone),
+            torch.full_like(reward, self.prepose_milestone_bonus),
+            torch.zeros_like(reward),
+        )
+        self.reward_midpose_milestone = torch.where(
+            midpose_milestone & (~self.reached_midpose_milestone),
+            torch.full_like(reward, self.midpose_milestone_bonus),
+            torch.zeros_like(reward),
+        )
+        self.reward_nearpose_milestone = torch.where(
+            nearpose_milestone & (~self.reached_nearpose_milestone),
+            torch.full_like(reward, self.nearpose_milestone_bonus),
+            torch.zeros_like(reward),
+        )
+        self.reward_precision_milestone = torch.where(
+            precision_milestone & (~self.reached_precision_milestone),
+            torch.full_like(reward, self.precision_milestone_bonus),
+            torch.zeros_like(reward),
+        )
+        self.reached_approach_milestone = (
+            self.reached_approach_milestone | approach_milestone.detach()
+        )
+        self.reached_prepose_milestone = (
+            self.reached_prepose_milestone | prepose_milestone.detach()
+        )
+        self.reached_midpose_milestone = (
+            self.reached_midpose_milestone | midpose_milestone.detach()
+        )
+        self.reached_nearpose_milestone = (
+            self.reached_nearpose_milestone | nearpose_milestone.detach()
+        )
+        self.reached_precision_milestone = (
+            self.reached_precision_milestone | precision_milestone.detach()
         )
         if self.ever_in_hold_zone is None:
             self.ever_in_hold_zone = torch.zeros(
@@ -581,39 +974,43 @@ class ParallelStage2ArmTask(ParallelRLTask):
             self.prev_in_hold_zone = torch.zeros(
                 self.num_envs, dtype=torch.bool, device=self.device
             )
-        left_hold_zone = self.ever_in_hold_zone & (~in_hold_zone)
+        left_hold_zone = self.prev_in_hold_zone & (~in_hold_zone)
         self.ever_in_hold_zone = self.ever_in_hold_zone | in_hold_zone.detach()
-        reward = reward + torch.where(
+        self.reward_hold_zone = torch.where(
             in_hold_zone,
             torch.full_like(reward, self.hold_zone_bonus),
             torch.zeros_like(reward),
         )
-        reward = reward + torch.where(
+        self.reward_stable_hold = torch.where(
             stable_hold,
             torch.full_like(reward, self.stable_hold_bonus),
             torch.zeros_like(reward),
         )
-        reward = reward - torch.where(
+        self.reward_hold_zone_leave = -torch.where(
             left_hold_zone,
             torch.full_like(reward, self.hold_zone_leave_penalty),
             torch.zeros_like(reward),
         )
-        if self.last_action_tensor is not None:
-            reward = reward - torch.where(
-                in_hold_zone,
-                self.hold_zone_action_penalty_scale * action_magnitude,
-                torch.zeros_like(reward),
-            )
-        reward = reward + torch.where(
+        self.reward_success = torch.where(
             self.is_success(),
             torch.full_like(reward, self.success_bonus),
             torch.zeros_like(reward),
         )
-        reward = reward - torch.where(
-            self.is_success(),
-            torch.zeros_like(reward),
-            torch.full_like(reward, self.time_penalty),
+        self.reward_time = torch.full_like(reward, -self.time_penalty)
+        reward = reward + (
+            self.reward_approach_milestone
+            + self.reward_prepose_milestone
+            + self.reward_midpose_milestone
+            + self.reward_nearpose_milestone
+            + self.reward_precision_milestone
+            + self.reward_hold_zone
+            + self.reward_stable_hold
+            + self.reward_hold_zone_leave
+            + self.reward_success
+            + self.reward_time
         )
+        for reward_attr in self._stage2_reward_attr_names():
+            self.episode_reward_sums[reward_attr] += getattr(self, reward_attr)
         self.prev_in_hold_zone = in_hold_zone.detach().clone()
         return reward.to(dtype=self.datatype, device=self.device)
 
@@ -663,18 +1060,9 @@ class ParallelStage2ArmTask(ParallelRLTask):
             return False
 
     def is_success(self):
-        if (
-            self.pose_position_error is None
-            or self.pose_quat_similarity is None
-            or self.reference_link_speed is None
-            or self.target_hold_count is None
-        ):
+        if self.target_hold_count is None:
             return torch.zeros(self.num_envs, dtype=torch.bool, device=self.device)
-        stable_hold_mask = (
-            (self.pose_position_error <= self.pose_position_threshold)
-            & (self.pose_quat_similarity >= self.pose_quat_similarity_threshold)
-            & (self.reference_link_speed <= self.hold_velocity_threshold)
-        )
+        stable_hold_mask = self._stage2_stable_hold_mask()
         return stable_hold_mask & (self.target_hold_count >= self.success_hold_steps)
 
     def reset_done_envs(self, env_ids=None) -> bool:
@@ -709,6 +1097,8 @@ class ParallelStage2ArmTask(ParallelRLTask):
                         device=self.device,
                     )
                 )
+                if self.last_action_tensor is not None:
+                    self.last_action_tensor[env_ids] = 0.0
                 self._update_io_tensors()
                 if self.target_hold_count is not None:
                     self.target_hold_count[env_ids] = 0
@@ -716,8 +1106,32 @@ class ParallelStage2ArmTask(ParallelRLTask):
                     self.prev_in_hold_zone[env_ids] = False
                 if self.ever_in_hold_zone is not None:
                     self.ever_in_hold_zone[env_ids] = False
-                if self.prev_pose_position_error is not None:
-                    self.prev_pose_position_error[env_ids] = self.pose_position_error[env_ids]
+                if self.reached_approach_milestone is not None:
+                    self.reached_approach_milestone[env_ids] = False
+                if self.reached_prepose_milestone is not None:
+                    self.reached_prepose_milestone[env_ids] = False
+                if self.reached_midpose_milestone is not None:
+                    self.reached_midpose_milestone[env_ids] = False
+                if self.reached_nearpose_milestone is not None:
+                    self.reached_nearpose_milestone[env_ids] = False
+                if self.reached_precision_milestone is not None:
+                    self.reached_precision_milestone[env_ids] = False
+                if self.episode_min_tcp_to_grasp_error is not None:
+                    self.episode_min_tcp_to_grasp_error[env_ids] = float("inf")
+                if self.episode_min_pose_orientation_angle_deg is not None:
+                    self.episode_min_pose_orientation_angle_deg[env_ids] = float(
+                        "inf"
+                    )
+                if self.episode_max_hold_count is not None:
+                    self.episode_max_hold_count[env_ids] = 0
+                if self.prev_tcp_to_grasp_error is not None:
+                    self.prev_tcp_to_grasp_error[env_ids] = self.tcp_to_grasp_error[
+                        env_ids
+                    ]
+                if self.prev_pose_orientation_angle is not None:
+                    self.prev_pose_orientation_angle[env_ids] = (
+                        self.pose_orientation_angle[env_ids]
+                    )
                 if self.prev_tcp_pos is not None:
                     self.prev_tcp_pos[env_ids] = self._get_tcp_pose()[0][env_ids].detach().clone()
                 if self.tcp_speed is not None:
@@ -728,10 +1142,13 @@ class ParallelStage2ArmTask(ParallelRLTask):
                     )
                 if self.reference_link_speed is not None:
                     self.reference_link_speed[env_ids] = 0.0
-                if self.last_action_tensor is not None:
-                    self.last_action_tensor[env_ids] = 0.0
+                if self.tool_speed is not None:
+                    self.tool_speed[env_ids] = 0.0
                 if self.last_step_reward is not None:
                     self.last_step_reward[env_ids] = 0.0
+                for reward_attr in self._stage2_reward_attr_names():
+                    getattr(self, reward_attr)[env_ids] = 0.0
+                    self.episode_reward_sums[reward_attr][env_ids] = 0.0
         return result
 
     def get_info(self) -> List[Dict[str, Any]]:
@@ -749,16 +1166,68 @@ class ParallelStage2ArmTask(ParallelRLTask):
                     "pose_orientation_error": float(
                         self.pose_orientation_error[env_idx].item()
                     ),
+                    "pose_orientation_angle": float(
+                        self.pose_orientation_angle[env_idx].item()
+                    ),
+                    "pose_orientation_angle_deg": float(
+                        self.pose_orientation_angle_deg[env_idx].item()
+                    ),
+                    "orientation_reward_gate": float(
+                        self.orientation_reward_gate[env_idx].item()
+                    ),
+                    "desired_reference_link_xyz": (
+                        self.desired_reference_link_pose[env_idx, :3]
+                        .detach()
+                        .cpu()
+                        .tolist()
+                    ),
+                    "desired_reference_link_quat_wxyz": (
+                        self.desired_reference_link_pose[env_idx, 3:]
+                        .detach()
+                        .cpu()
+                        .tolist()
+                    ),
                     "reference_link_speed": float(
                         self.reference_link_speed[env_idx].item()
                     ),
-                    "tcp_to_virtual_grasp_error": float(
-                        self.tcp_to_virtual_grasp_error[env_idx].item()
+                    "speed_reward_gate": float(
+                        self.speed_reward_gate[env_idx].item()
+                    ),
+                    "tool_speed": float(self.tool_speed[env_idx].item()),
+                    "tool_speed_limit": float(
+                        self.tool_speed_limit[env_idx].item()
+                    ),
+                    "tcp_to_grasp_error": float(
+                        self.tcp_to_grasp_error[env_idx].item()
                     ),
                     "base_drift_error": float(self.base_drift_error[env_idx].item()),
                     "tcp_speed": float(self.tcp_speed[env_idx].item()),
                     "target_hold_count": int(self.target_hold_count[env_idx].item()),
                     "ever_in_hold_zone": bool(self.ever_in_hold_zone[env_idx].item()),
+                    "reached_approach_milestone": bool(
+                        self.reached_approach_milestone[env_idx].item()
+                    ),
+                    "reached_prepose_milestone": bool(
+                        self.reached_prepose_milestone[env_idx].item()
+                    ),
+                    "reached_midpose_milestone": bool(
+                        self.reached_midpose_milestone[env_idx].item()
+                    ),
+                    "reached_nearpose_milestone": bool(
+                        self.reached_nearpose_milestone[env_idx].item()
+                    ),
+                    "reached_precision_milestone": bool(
+                        self.reached_precision_milestone[env_idx].item()
+                    ),
+                    "episode_min_tcp_to_grasp_error": float(
+                        self.episode_min_tcp_to_grasp_error[env_idx].item()
+                    ),
+                    "episode_min_pose_orientation_angle_deg": float(
+                        self.episode_min_pose_orientation_angle_deg[env_idx].item()
+                    ),
+                    "episode_max_hold_count": int(
+                        self.episode_max_hold_count[env_idx].item()
+                    ),
                     "target_in_wrist_view": bool(
                         self.target_in_wrist_view[env_idx].item()
                     ),
@@ -771,7 +1240,55 @@ class ParallelStage2ArmTask(ParallelRLTask):
                     "target_wrist_depth": float(
                         self.target_wrist_camera_depth[env_idx].item()
                     ),
+                    "reward_tcp": float(self.reward_tcp[env_idx].item()),
+                    "reward_orientation": float(
+                        self.reward_orientation[env_idx].item()
+                    ),
+                    "reward_pose_dense": float(
+                        self.reward_pose_dense[env_idx].item()
+                    ),
+                    "reward_speed": float(self.reward_speed[env_idx].item()),
+                    "reward_action": float(self.reward_action[env_idx].item()),
+                    "reward_link_position": float(
+                        self.reward_link_position[env_idx].item()
+                    ),
+                    "reward_base": float(self.reward_base[env_idx].item()),
+                    "reward_view": float(self.reward_view[env_idx].item()),
+                    "reward_approach_milestone": float(
+                        self.reward_approach_milestone[env_idx].item()
+                    ),
+                    "reward_prepose_milestone": float(
+                        self.reward_prepose_milestone[env_idx].item()
+                    ),
+                    "reward_midpose_milestone": float(
+                        self.reward_midpose_milestone[env_idx].item()
+                    ),
+                    "reward_nearpose_milestone": float(
+                        self.reward_nearpose_milestone[env_idx].item()
+                    ),
+                    "reward_precision_milestone": float(
+                        self.reward_precision_milestone[env_idx].item()
+                    ),
+                    "reward_hold_zone": float(
+                        self.reward_hold_zone[env_idx].item()
+                    ),
+                    "reward_stable_hold": float(
+                        self.reward_stable_hold[env_idx].item()
+                    ),
+                    "reward_hold_zone_leave": float(
+                        self.reward_hold_zone_leave[env_idx].item()
+                    ),
+                    "reward_success": float(self.reward_success[env_idx].item()),
+                    "reward_time": float(self.reward_time[env_idx].item()),
                     "success": bool(self.success[env_idx].item()),
+                }
+            )
+            infos[-1].update(
+                {
+                    f"episode_{reward_attr}": float(
+                        self.episode_reward_sums[reward_attr][env_idx].item()
+                    )
+                    for reward_attr in self._stage2_reward_attr_names()
                 }
             )
         return infos
@@ -796,7 +1313,6 @@ if gym is not None and spaces is not None:
             target_position_noise: bool = False,
             target_position_noise_range=(0.03, 0.03, 0.02),
             stage2_base_distance: float = 1.1,
-            virtual_grasp_height: float = 0.08,
         ):
             super().__init__()
             self.task = ParallelStage2ArmTask(
@@ -812,10 +1328,9 @@ if gym is not None and spaces is not None:
                 target_position_noise=target_position_noise,
                 target_position_noise_range=target_position_noise_range,
                 stage2_base_distance=stage2_base_distance,
-                virtual_grasp_height=virtual_grasp_height,
             )
             self.num_envs = self.task.num_envs
-            self.state_dim = 6 + (7 if self.task.enable_target_relative_obs else 0)
+            self.state_dim = 18 + (7 if self.task.enable_target_relative_obs else 0)
 
             if self.task.enable_visual_obs:
                 image_low = 0.0 if self.task.normalize_images else 0
@@ -936,7 +1451,6 @@ if VecEnv is not None and VecEnvStepReturn is not None:
             target_position_noise: bool = False,
             target_position_noise_range=(0.03, 0.03, 0.02),
             stage2_base_distance: float = 1.1,
-            virtual_grasp_height: float = 0.08,
         ):
             self.env = ParallelStage2ArmEnv(
                 target_asset_name=target_asset_name,
@@ -951,7 +1465,6 @@ if VecEnv is not None and VecEnvStepReturn is not None:
                 target_position_noise=target_position_noise,
                 target_position_noise_range=target_position_noise_range,
                 stage2_base_distance=stage2_base_distance,
-                virtual_grasp_height=virtual_grasp_height,
             )
             super().__init__(
                 num_envs=self.env.num_envs,
@@ -1034,7 +1547,6 @@ def build_stage2_env(
     target_position_noise: bool = False,
     target_position_noise_range=(0.03, 0.03, 0.02),
     stage2_base_distance: float = 1.1,
-    virtual_grasp_height: float = 0.08,
 ):
     if gym is None or spaces is None:
         raise ImportError("gymnasium is not installed. Please install gymnasium first.")
@@ -1051,7 +1563,6 @@ def build_stage2_env(
         target_position_noise=target_position_noise,
         target_position_noise_range=target_position_noise_range,
         stage2_base_distance=stage2_base_distance,
-        virtual_grasp_height=virtual_grasp_height,
     )
 
 
@@ -1068,7 +1579,6 @@ def make_stage2_vec_env(
     target_position_noise: bool = False,
     target_position_noise_range=(0.03, 0.03, 0.02),
     stage2_base_distance: float = 1.1,
-    virtual_grasp_height: float = 0.08,
 ):
     if VecEnv is None or VecMonitor is None:
         raise ImportError("stable_baselines3 vectorized env utilities are not installed.")
@@ -1085,7 +1595,6 @@ def make_stage2_vec_env(
         target_position_noise=target_position_noise,
         target_position_noise_range=target_position_noise_range,
         stage2_base_distance=stage2_base_distance,
-        virtual_grasp_height=virtual_grasp_height,
     )
     return VecMonitor(vec_env)
 

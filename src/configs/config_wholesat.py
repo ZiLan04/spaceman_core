@@ -63,7 +63,7 @@ def _make_wholesat():
         "morph": gs.morphs.URDF(
             file=to_posix(_WHOLESAT_PATHS['urdf']),
             pos=(-2.0, 0.0, 0.5),
-            euler=(0.0, 0.0, 180.0),
+            euler=(0.0, 0.0, 0.0),
             scale=5e-1,
             fixed=False,
         ),

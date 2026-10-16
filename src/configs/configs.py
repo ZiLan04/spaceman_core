@@ -7,6 +7,7 @@ including scene setup, camera settings, and general application parameters.
 """
 
 import genesis as gs
+import numpy as np
 
 from pathlib import Path
 _current_file_path = Path(__file__).resolve().parent
@@ -106,7 +107,7 @@ LIGHT_SETTINGS = {
                 gs.options.vis.DirectionalLight(
                     dir=(-0.7, 0.5, -0.5),
                     color=(1.0, 1.0, 1.0),
-                    intensity=5.5,
+                    intensity=4.5,
                 ),
             ),
         },
@@ -124,20 +125,38 @@ LIGHT_SETTINGS = {
                 ),
             ),
         },
+        "strong_light": {
+            "lights": (
+                gs.options.vis.DirectionalLight(
+                    dir=(0.0, 0.0, -1.0),
+                    color=(1.0, 1.0, 1.0),
+                    intensity=50.0,
+                ),
+            ),
+        },
+        "backlight": {
+            # A zero-light baseline for testing complete loss of illumination.
+            "ambient_light": (0.0, 0.0, 0.0),
+            "lights": (),
+        },
     },
 }
 
 
-def make_light_vis_options(preset_name: str | None = None):
+def _resolve_light_preset(preset_name: str | None = None):
     active_preset = preset_name or LIGHT_SETTINGS.get("active_preset", "front")
     presets = LIGHT_SETTINGS.get("presets", {})
     if active_preset not in presets:
         raise KeyError(
-            f"Unknown rasterizer light preset '{active_preset}'. "
+            f"Unknown light preset '{active_preset}'. "
             f"Available presets: {sorted(presets.keys())}"
         )
+    return active_preset, presets[active_preset]
 
-    preset = presets[active_preset]
+
+def make_light_vis_options(preset_name: str | None = None):
+    _, preset = _resolve_light_preset(preset_name)
+
     lights = preset.get("lights", ())
     if not LIGHT_SETTINGS.get("enabled", True):
         lights = ()
@@ -146,12 +165,46 @@ def make_light_vis_options(preset_name: str | None = None):
         show_world_frame=bool(LIGHT_SETTINGS.get("show_world_frame", True)),
         visualize_mpm_boundary=False,
         shadow=bool(LIGHT_SETTINGS.get("shadow", True)),
-        ambient_light=tuple(LIGHT_SETTINGS.get("ambient_light", (0.1, 0.1, 0.1))),
+        ambient_light=tuple(
+            preset.get(
+                "ambient_light",
+                LIGHT_SETTINGS.get("ambient_light", (0.1, 0.1, 0.1)),
+            )
+        ),
         background_color=tuple(
             LIGHT_SETTINGS.get("background_color", (0.04, 0.08, 0.12))
         ),
         lights=lights,
     )
+
+
+def add_batch_renderer_lights(scene, preset_name: str | None = None) -> int:
+    """Register the selected preset with Genesis' BatchRenderer."""
+    _, preset = _resolve_light_preset(preset_name)
+    if not LIGHT_SETTINGS.get("enabled", True):
+        return 0
+
+    lights = preset.get("lights", ())
+    for light in lights:
+        if not isinstance(light, gs.options.vis.DirectionalLight):
+            raise TypeError(
+                "BatchRenderer light presets currently support only "
+                f"DirectionalLight, got {type(light).__name__}."
+            )
+
+        # Genesis 0.4.3 normalizes dir before creating the Madrona renderer;
+        # use an ndarray to avoid tuple/float division in that implementation.
+        scene.add_light(
+            pos=np.zeros(3, dtype=np.float32),
+            dir=np.asarray(light.dir, dtype=np.float32),
+            color=tuple(light.color),
+            intensity=float(light.intensity),
+            directional=True,
+            castshadow=bool(LIGHT_SETTINGS.get("shadow", True)),
+            cutoff=45.0,
+            attenuation=0.0,
+        )
+    return len(lights)
 
 SCENE_SETTINGS = {
     "sim_options": gs.options.SimOptions(
@@ -213,5 +266,6 @@ __all__ = [
     'SCENE_SETTINGS', 
     'SPACE_BACKGROUND_SETTINGS',
     'TPV_CAM_SETTINGS',
+    'add_batch_renderer_lights',
     'make_light_vis_options',
 ]

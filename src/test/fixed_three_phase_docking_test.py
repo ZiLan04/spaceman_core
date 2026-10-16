@@ -20,7 +20,7 @@ current_file_path = Path(__file__).resolve().parent
 sys.path.append(str(current_file_path.parent))
 
 import configs.asset_configs as asset_configs  # noqa: E402
-from configs.config_starlink import _STARLINK_PATHS, to_posix  # noqa: E402
+from configs.config_starlink import make_starlink_morph  # noqa: E402
 from configs.config_starlink_manipulator import FRANKA_S_Q_CAMERA  # noqa: E402
 from configs.configs import SCENE_SETTINGS, TPV_CAM_SETTINGS  # noqa: E402
 from tasks.RL_task_parallel import ParallelRLTask, TaskStatus  # noqa: E402
@@ -71,8 +71,10 @@ def configure_cameras(
     wrist_camera_res=None,
     wrist_camera_fov: float = 70.0,
 ):
-    if not record_scene_video and not show_wrist_camera and not record_wrist_camera:
-        SCENE_SETTINGS["renderer"] = None
+    # This fixed test disables batched visual observations. Its TPV and wrist
+    # cameras are debug cameras, which BatchRenderer excludes and therefore
+    # reports as an empty camera set during scene.build().
+    SCENE_SETTINGS["renderer"] = None
     SCENE_SETTINGS["show_viewer"] = bool(show_viewer)
     TPV_CAM_SETTINGS["enable_recording"] = bool(record_scene_video)
 
@@ -99,12 +101,7 @@ def configure_cameras(
 def configure_target_collision(enable_collision: bool):
     def make_starlink_for_fixed_test():
         return {
-            "morph": gs.morphs.URDF(
-                file=to_posix(_STARLINK_PATHS["urdf"]),
-                pos=(-2.0, 0.0, 0.5),
-                euler=(0.0, 0.0, 180.0),
-                scale=7e-1,
-                fixed=False,
+            "morph": make_starlink_morph(
                 collision=bool(enable_collision),
                 visualization=True,
             ),
@@ -765,7 +762,7 @@ def build_arg_parser():
     parser.add_argument(
         "--enable-target-collision",
         action="store_true",
-        help="Enable physical target collision. Disabled by default because this test uses a virtual grasp.",
+        help="Enable physical target collision during the grasp-pose test.",
     )
     parser.add_argument("--base-distance", type=float, default=1.1)
     parser.add_argument("--base-distance-tol", type=float, default=0.05)
@@ -778,12 +775,6 @@ def build_arg_parser():
     parser.add_argument("--base-brake-accel", type=float, default=0.1)
     parser.add_argument("--base-speed-deadband", type=float, default=0.015)
     parser.add_argument("--tcp-tol", type=float, default=0.055)
-    parser.add_argument(
-        "--virtual-grasp-height",
-        type=float,
-        default=0.08,
-        help="Stop phase2 this far above the physical grasp point and treat it as grasped.",
-    )
     parser.add_argument("--pregrasp-height", type=float, default=0.25)
     parser.add_argument("--pregrasp-tol", type=float, default=0.08)
     parser.add_argument("--grasp-clearance", type=float, default=0.06)
@@ -994,7 +985,6 @@ def main():
     print(f"  phase2_end_yaw_joint_index: {args.phase2_end_yaw_joint_index}")
     print(f"  phase2_end_yaw_max_offset: {args.phase2_end_yaw_max_offset}")
     print(f"  grasp_clearance: {args.grasp_clearance}")
-    print(f"  virtual_grasp_height: {args.virtual_grasp_height}")
     print(f"  target_dock_z_offset: {args.target_dock_z_offset}")
     print(f"  phase3_lift_max_steps: {args.phase3_lift_max_steps}")
     print(f"  phase3_lift_tol: {args.phase3_lift_tol}")
@@ -1152,7 +1142,6 @@ def main():
     ee_down_rot_mask = axis_rot_mask(args.ee_down_axis_local)
     physical_grasp_pos, _ = get_target_grasp_pose(task)
     phase2_grasp_pos = physical_grasp_pos.detach().clone()
-    phase2_grasp_pos[:, 2] += float(args.virtual_grasp_height)
     phase2_pregrasp_pos = phase2_grasp_pos.detach().clone()
     phase2_pregrasp_pos[:, 2] += float(args.pregrasp_height)
     phase2_done = False
@@ -1229,7 +1218,7 @@ def main():
                 f"rot_mask={rot_mask}",
                 f"target_xyz={as_list(tcp_target_pos[env_idx])}",
                 f"tcp_xyz={as_list(tcp_pos[env_idx])}",
-                f"virtual_grasp_xyz={as_list(phase2_grasp_pos[env_idx])}",
+                f"grasp_xyz={as_list(phase2_grasp_pos[env_idx])}",
                 f"physical_grasp_xyz={as_list(physical_grasp_pos[env_idx])}",
                 f"current_grasp_xyz={as_list(grasp_pos[env_idx])}",
                 f"current_target_shift={float(current_target_shift[env_idx].item()):.5f}",
@@ -1297,7 +1286,7 @@ def main():
         args.ee_down_axis_local,
         task,
     )
-    reference_tcp_to_virtual_grasp = torch.norm(reference_tcp_pos - phase2_grasp_pos, dim=-1)
+    reference_tcp_to_grasp = torch.norm(reference_tcp_pos - phase2_grasp_pos, dim=-1)
     reference_tcp_to_physical_grasp = torch.norm(reference_tcp_pos - reference_grasp_pos, dim=-1)
     wrist_camera_config = FRANKA_S_Q_CAMERA
     base_camera_config = FRANKA_S_Q_CAMERA.get("base_camera", {})
@@ -1316,10 +1305,10 @@ def main():
     print(f"  target_grasp_quat_wxyz_current: {as_list(reference_grasp_quat[env_idx], digits=8)}")
     print(f"  grasp_marker_offset_local: {as_list(task.grasp_marker_offset_local, digits=8)}")
     print(f"  grasp_marker_xyz_current: {as_list(reference_marker_pos[env_idx], digits=8)}")
-    print(f"  virtual_grasp_xyz_reference: {as_list(phase2_grasp_pos[env_idx], digits=8)}")
+    print(f"  grasp_xyz_reference: {as_list(phase2_grasp_pos[env_idx], digits=8)}")
     print(
         "  tcp_error_reference:",
-        f"to_virtual={float(reference_tcp_to_virtual_grasp[env_idx].item()):.8f}",
+        f"to_grasp={float(reference_tcp_to_grasp[env_idx].item()):.8f}",
         f"to_physical={float(reference_tcp_to_physical_grasp[env_idx].item()):.8f}",
     )
     print(f"  ee_down_axis_local: {args.ee_down_axis_local}")

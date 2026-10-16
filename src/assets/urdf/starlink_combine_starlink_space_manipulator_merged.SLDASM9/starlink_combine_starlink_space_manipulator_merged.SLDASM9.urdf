@@ -11,8 +11,8 @@
       <geometry>
         <mesh filename="./meshes/base_star_link.STL"/>
       </geometry>
-      <material name="">
-        <color rgba="0.79216 0.81961 0.93333 1"/>
+      <material name="starlink_base_star_link_material">
+        <color rgba="0.937255 0.894118 0.690196 1"/>
         <texture filename="./textures/1.png"/>
       </material>
     </visual>
@@ -34,8 +34,8 @@
       <geometry>
         <mesh filename="./meshes/panel_Link.STL"/>
       </geometry>
-      <material name="">
-        <color rgba="0.79216 0.81961 0.93333 1"/>
+      <material name="starlink_panel_Link_material">
+        <color rgba="0 0.172549 0.694118 1"/>
         <texture filename="./textures/5.png"/>
       </material>
     </visual>
@@ -63,7 +63,7 @@
       <geometry>
         <mesh filename="./meshes/starlink_space_manipulator_base_link.STL" scale="0.6 0.6 0.6"/>
       </geometry>
-      <material name="">
+      <material name="starlink_space_manipulator_base_link_material">
         <color rgba="0.792156862745098 0.819607843137255 0.933333333333333 1"/>
       </material>
     </visual>
@@ -85,7 +85,7 @@
       <geometry>
         <mesh filename="./meshes/starlink_space_manipulator_Shoulder_link_1.STL" scale="0.6 0.6 0.6"/>
       </geometry>
-      <material name="">
+      <material name="starlink_space_manipulator_Shoulder_link_1_material">
         <color rgba="0.792156862745098 0.819607843137255 0.933333333333333 1"/>
       </material>
     </visual>
@@ -114,7 +114,7 @@
       <geometry>
         <mesh filename="./meshes/starlink_space_manipulator_Upper_arm_Link_1.STL" scale="0.6 0.6 0.6"/>
       </geometry>
-      <material name="">
+      <material name="starlink_space_manipulator_Upper_arm_Link_1_material">
         <color rgba="0.792156862745098 0.819607843137255 0.933333333333333 1"/>
       </material>
     </visual>
@@ -143,7 +143,7 @@
       <geometry>
         <mesh filename="./meshes/starlink_space_manipulator_Mid_arm_Link_1.STL" scale="0.6 0.6 0.6"/>
       </geometry>
-      <material name="">
+      <material name="starlink_space_manipulator_Mid_arm_Link_1_material">
         <color rgba="1 1 1 1"/>
       </material>
     </visual>
@@ -172,7 +172,7 @@
       <geometry>
         <mesh filename="./meshes/starlink_space_manipulator_Upper_wrist_Link_1.STL" scale="0.6 0.6 0.6"/>
       </geometry>
-      <material name="">
+      <material name="starlink_space_manipulator_Upper_wrist_Link_1_material">
         <color rgba="0.792156862745098 0.819607843137255 0.933333333333333 1"/>
       </material>
     </visual>
@@ -201,7 +201,7 @@
       <geometry>
         <mesh filename="./meshes/starlink_space_manipulator_Upper_wrist_Link_2.STL" scale="0.6 0.6 0.6"/>
       </geometry>
-      <material name="">
+      <material name="starlink_space_manipulator_Upper_wrist_Link_2_material">
         <color rgba="1 1 1 1"/>
       </material>
     </visual>
@@ -230,7 +230,7 @@
       <geometry>
         <mesh filename="./meshes/starlink__space_manipulator_2F-Body_Link.STL" scale="0.6 0.6 0.6"/>
       </geometry>
-      <material name="">
+      <material name="starlink_space_manipulator_2F_Body_Link_material">
         <color rgba="0.792156862745098 0.819607843137255 0.933333333333333 1"/>
       </material>
     </visual>
@@ -259,7 +259,7 @@
       <geometry>
         <mesh filename="./meshes/starlink_space_manipulator_Finger1_2_Link.STL" scale="0.6 0.6 0.6"/>
       </geometry>
-      <material name="">
+      <material name="starlink_space_manipulator_Finger1_2_Link_material">
         <color rgba="1 1 1 1"/>
       </material>
     </visual>
@@ -288,7 +288,7 @@
       <geometry>
         <mesh filename="./meshes/starlink_space_manipulator_Finger2_1_Link.STL" scale="0.6 0.6 0.6"/>
       </geometry>
-      <material name="">
+      <material name="starlink_space_manipulator_Finger2_1_Link_material">
         <color rgba="1 1 1 1"/>
       </material>
     </visual>

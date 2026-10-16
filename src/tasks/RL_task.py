@@ -81,7 +81,7 @@ class RLTask(Task):
 
         # TCP uses the gripper grasp center instead of the arm-hand connection link.
         self.tcp_offset_local = torch.tensor(
-            [0.002085, -0.065496, 0.0004827],
+            [0.002085, -0.2, 0.0004827],
             dtype=self.datatype,
             device=self.device,
         )

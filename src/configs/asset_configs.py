@@ -4,6 +4,7 @@ from configs.config_wholesat import *
 from configs.config_franka import *
 from configs.config_starlink import *
 from configs.config_starlink_manipulator import *
+from configs.config_satellite_panda import *
 
 _ASSET_FACTORIES = {
     "franka": _make_franka_urdf,
@@ -14,6 +15,7 @@ _ASSET_FACTORIES = {
     "satellite_part": _make_satellite_part,
     "franka_mjcf": _make_franka_mjcf,
     "franka_merge":_make_starlink_manipulator,
+    "satellite_panda": _make_satellite_panda,
 }
 
 _ASSET_CONFIG_FACTORIES = {
@@ -24,6 +26,7 @@ _ASSET_CONFIG_FACTORIES = {
     "starlink": STARLINK_PARAMS,
     "franka": FRANKA_PARAMS,
     "franka_merge": FRANKA_S_Q_PARAMS,
+    "satellite_panda": SATELLITE_PANDA_PARAMS,
 }
 
 _ASSET_PID_FACTORIES = {
@@ -34,6 +37,7 @@ _ASSET_PID_FACTORIES = {
     "starlink": STARLINK_PID,
     "franka": FRANKA_PID,
     "franka_merge": FRANKA_S_Q_PID,
+    "satellite_panda": SATELLITE_PANDA_PID,
 }
 
 _ASSET_WristCamera_FACTORIES = {
@@ -44,6 +48,7 @@ _ASSET_WristCamera_FACTORIES = {
     "starlink": STARLINK_CAMERA,
     "franka": FRANKA_CAMERA,
     "franka_merge": FRANKA_S_Q_CAMERA,
+    "satellite_panda": SATELLITE_PANDA_CAMERA,
 }
 
 def get_asset(name: str) -> dict:

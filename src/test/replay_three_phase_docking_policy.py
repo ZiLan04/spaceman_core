@@ -82,7 +82,7 @@ def build_arg_parser():
     parser.add_argument("--stage2-model-path", type=Path, default=stage2_replay.DEFAULT_MODEL_PATH)
     parser.add_argument("--episodes", type=int, default=1)
     parser.add_argument("--stage1-max-steps", type=int, default=220)
-    parser.add_argument("--stage2-max-steps", type=int, default=140)
+    parser.add_argument("--stage2-max-steps", type=int, default=200)
     parser.add_argument("--interphase-max-steps", type=int, default=1200)
     parser.add_argument("--interphase-base-distance", type=float, default=None)
     parser.add_argument("--interphase-pos-threshold", type=float, default=0.08)
@@ -133,15 +133,6 @@ def build_arg_parser():
         action="store_true",
         help="Keep the full downward gripper orientation during the post-grasp docking pull.",
     )
-    parser.add_argument(
-        "--phase3-grasp-z-offset",
-        type=float,
-        default=0.1,
-        help=(
-            "World-z clearance added to the physical target grasp point for phase3 virtual grasp. "
-            "Use a larger value if the gripper visually intersects the cylinder."
-        ),
-    )
     parser.add_argument("--phase3-end-yaw-joint-index", type=int, default=5)
     parser.add_argument(
         "--phase3-free-end-yaw",
@@ -149,8 +140,12 @@ def build_arg_parser():
         help="Allow the final yaw joint to move during fixed phase3.",
     )
     parser.add_argument("--arm-initial-noise", type=float, default=0.03)
-    parser.add_argument("--success-position-threshold", type=float, default=0.35)
-    parser.add_argument("--success-quat-similarity-threshold", type=float, default=0.5)
+    parser.add_argument(
+        "--success-orientation-angle-deg",
+        type=float,
+        default=15.0,
+        help="Stage-2 full-quaternion angular success threshold in degrees.",
+    )
     parser.add_argument("--ee-down-axis-local", type=parse_vec3, default=None)
     parser.add_argument("--phase3-free-orientation", action="store_true", default=False)
     parser.add_argument(
@@ -205,8 +200,9 @@ def build_arg_parser():
         action="store_true",
         help="Do not load VecNormalize stats for non-visual replay.",
     )
-    parser.add_argument("--base-xy-noise", type=parse_vec2, default=(0.05, 0.05))
-    parser.add_argument("--no-base-xy-noise", action="store_true")
+    parser.add_argument("--base-pos-noise", type=parse_vec3, default=(0.05, 0.05, 0.05))
+    parser.add_argument("--no-base-pos-noise", action="store_true")
+    parser.add_argument("--base-rpy-noise", type=parse_vec3, default=(0.0, 0.0, 0.0))
     parser.add_argument(
         "--enable-target-relative-obs",
         dest="enable_target_relative_obs",
@@ -221,7 +217,6 @@ def build_arg_parser():
         help="Replay non-visual stage-2 policy with arm joints only.",
     )
     parser.add_argument("--stage2-base-distance", type=float, default=None)
-    parser.add_argument("--stage2-virtual-grasp-height", type=float, default=None)
     parser.add_argument("--stage2-enable-target-collision", action="store_true", default=None)
     parser.add_argument(
         "--stage2-disable-target-collision",
@@ -486,7 +481,7 @@ def load_task_state_npz(path: Path) -> dict:
 
 def run_stage1(args, model, env, task):
     obs = env.reset()
-    base_xy_noise = stage1_replay.apply_replay_base_xy_noise(task, args)
+    base_pos_noise, base_rpy_noise = stage1_replay.apply_replay_base_pose_noise(task, args)
     gym_env = stage1_replay.unwrap_stage1_gym_env(env)
     if gym_env is not None:
         obs = gym_env._get_obs()
@@ -497,7 +492,10 @@ def run_stage1(args, model, env, task):
     first_switch_ready_step = None
     print(
         "[THREE_PHASE_REPLAY] stage1 start "
-        f"base_xy_noise=[{base_xy_noise[0]: .4f}, {base_xy_noise[1]: .4f}]",
+        f"base_pos_noise=[{base_pos_noise[0]: .4f}, {base_pos_noise[1]: .4f}, "
+        f"{base_pos_noise[2]: .4f}] "
+        f"base_rpy_noise=[{base_rpy_noise[0]: .4f}, {base_rpy_noise[1]: .4f}, "
+        f"{base_rpy_noise[2]: .4f}]",
         flush=True,
     )
     for step_idx in range(max(1, int(args.stage1_max_steps))):
@@ -524,7 +522,9 @@ def run_stage1(args, model, env, task):
         switch_hold_steps = int(getattr(task, "replay_switch_hold_steps", 12))
         switch_ready = (
             scalar_info(info, "dock_pos_error") <= 0.08
-            and scalar_info(info, "base_planar_speed") <= 0.025
+            and scalar_info(info, "dock_attitude_error") <= 0.12
+            and scalar_info(info, "base_linear_speed") <= 0.025
+            and scalar_info(info, "base_angular_speed") <= 0.05
             and hold_count >= switch_hold_steps
         )
         if switch_ready and first_switch_ready_step is None:
@@ -640,6 +640,7 @@ def apply_stage1_state_to_stage2(task, state):
         zero_velocity=True,
     )
     task.starlink_manipulator.update_state()
+    task.last_action_tensor.zero_()
     task._update_io_tensors()
     if task.target_hold_count is not None:
         task.target_hold_count[:] = 0
@@ -647,9 +648,25 @@ def apply_stage1_state_to_stage2(task, state):
         task.prev_in_hold_zone[:] = False
     if task.ever_in_hold_zone is not None:
         task.ever_in_hold_zone[:] = False
-    task.prev_pose_position_error = None
-    task.prev_tcp_pos = None
-    task.prev_reference_link_pos = None
+    task.reached_approach_milestone[:] = False
+    task.reached_prepose_milestone[:] = False
+    task.reached_midpose_milestone[:] = False
+    task.reached_nearpose_milestone[:] = False
+    task.reached_precision_milestone[:] = False
+    for episode_reward_sum in task.episode_reward_sums.values():
+        episode_reward_sum.zero_()
+    task.episode_min_tcp_to_grasp_error[:] = float("inf")
+    task.episode_min_pose_orientation_angle_deg[:] = float("inf")
+    task.episode_max_hold_count[:] = 0
+    task.prev_tcp_to_grasp_error = task.tcp_to_grasp_error.detach().clone()
+    task.prev_pose_orientation_angle = task.pose_orientation_angle.detach().clone()
+    task.prev_tcp_pos = task._get_tcp_pose()[0].detach().clone()
+    task.prev_reference_link_pos = (
+        task._get_reference_yaw_link_pose()[0].detach().clone()
+    )
+    task.tcp_speed.zero_()
+    task.reference_link_speed.zero_()
+    task.tool_speed.zero_()
     return locked_target_pose
 
 
@@ -791,10 +808,25 @@ def run_interphase_base_pid(args, task, locked_target_pose):
     task.initial_base_quat = task.stage2_base_hold_quat.detach().clone()
     if task.target_hold_count is not None:
         task.target_hold_count[:] = 0
-    task.prev_pose_position_error = None
+    task.reached_approach_milestone[:] = False
+    task.reached_prepose_milestone[:] = False
+    task.reached_midpose_milestone[:] = False
+    task.reached_nearpose_milestone[:] = False
+    task.reached_precision_milestone[:] = False
+    for episode_reward_sum in task.episode_reward_sums.values():
+        episode_reward_sum.zero_()
+    task.episode_min_tcp_to_grasp_error[:] = float("inf")
+    task.episode_min_pose_orientation_angle_deg[:] = float("inf")
+    task.episode_max_hold_count[:] = 0
     task.prev_tcp_pos = None
     task.prev_reference_link_pos = None
+    task.last_action_tensor.zero_()
     task._update_io_tensors()
+    task.prev_tcp_to_grasp_error = task.tcp_to_grasp_error.detach().clone()
+    task.prev_pose_orientation_angle = task.pose_orientation_angle.detach().clone()
+    task.tcp_speed.zero_()
+    task.reference_link_speed.zero_()
+    task.tool_speed.zero_()
     root_pos, _ = task._get_base_pose()
     final_error = torch.norm(root_pos[:, :2] - hold_root_pos[:, :2], dim=-1)
     print(
@@ -842,7 +874,7 @@ def run_stage2(args, model, env, task, stage1_state):
 
         hold_count = int(scalar_info(info, "target_hold_count", 0.0))
         max_hold_count = max(max_hold_count, hold_count)
-        replay_success_hold_steps = int(getattr(task, "replay_success_hold_steps", 6))
+        replay_success_hold_steps = int(getattr(task, "replay_success_hold_steps", 10))
         if hold_count >= replay_success_hold_steps and first_stable_hold_step is None:
             first_stable_hold_step = step_idx + 1
 
@@ -866,7 +898,8 @@ def run_stage2(args, model, env, task, stage1_state):
         f"first_stable_hold_step={first_stable_hold_step} "
         f"max_hold_count={max_hold_count} "
         f"final_pose_err={scalar_info(final_info, 'pose_position_error'):.5f} "
-        f"final_quat_sim={scalar_info(final_info, 'pose_quat_similarity'):.5f}",
+        f"final_quat_sim={scalar_info(final_info, 'pose_quat_similarity'):.5f} "
+        f"final_angle_err={np.degrees(scalar_info(final_info, 'pose_orientation_angle')):.2f}deg",
         flush=True,
     )
     return success, locked_target_pose
@@ -893,11 +926,6 @@ def run_fixed_phase3(args, task, locked_target_pose):
         ee_down_axis = as_list(task.tcp_offset_local, digits=6)
     ee_down_quat = make_downward_ee_quat(task, ee_down_axis)
     rot_mask = None if args.phase3_free_orientation else axis_rot_mask(ee_down_axis)
-    grasp_z_offset = (
-        float(args.phase3_grasp_z_offset)
-        if args.phase3_grasp_z_offset is not None
-        else float(getattr(task, "virtual_grasp_height", 0.08))
-    )
     end_yaw_joint_index = int(args.phase3_end_yaw_joint_index)
     phase3_joint_reference = get_arm_joint_qpos(task)
     if end_yaw_joint_index < 0:
@@ -913,7 +941,7 @@ def run_fixed_phase3(args, task, locked_target_pose):
         f"tol={args.phase3_tcp_tol} hold_steps={args.phase3_hold_steps} "
         f"orient_distance={args.phase3_orient_distance} "
         f"down_alignment_threshold={args.phase3_down_alignment_threshold} "
-        f"rot_mask={rot_mask} grasp_z_offset={grasp_z_offset:.5f} "
+        f"rot_mask={rot_mask} "
         f"max_joint_delta={args.phase3_max_joint_delta} "
         f"end_yaw_locked={not args.phase3_free_end_yaw} "
         f"end_yaw_index={end_yaw_joint_index}",
@@ -925,7 +953,6 @@ def run_fixed_phase3(args, task, locked_target_pose):
         set_base_root_pid_target(task, hold_root_pos, hold_root_quat)
         physical_grasp_pos, _ = get_target_grasp_pose(task)
         grasp_target_pos = physical_grasp_pos.detach().clone()
-        grasp_target_pos[:, 2] += grasp_z_offset
         tcp_pos_before, _ = get_tcp_pose(task)
         tcp_error_before = torch.norm(tcp_pos_before - grasp_target_pos, dim=-1)
         lock_phase3_orientation = (
@@ -956,7 +983,6 @@ def run_fixed_phase3(args, task, locked_target_pose):
         tcp_pos, tcp_quat = get_tcp_pose(task)
         physical_grasp_pos, _ = get_target_grasp_pose(task)
         grasp_target_pos = physical_grasp_pos.detach().clone()
-        grasp_target_pos[:, 2] += grasp_z_offset
         tcp_error = torch.norm(tcp_pos - grasp_target_pos, dim=-1)
         physical_tcp_error = torch.norm(tcp_pos - physical_grasp_pos, dim=-1)
         down_axis_world, down_alignment = compute_down_axis_alignment(
@@ -1024,7 +1050,6 @@ def run_fixed_phase3(args, task, locked_target_pose):
     tcp_pos, _ = get_tcp_pose(task)
     physical_grasp_pos, _ = get_target_grasp_pose(task)
     grasp_target_pos = physical_grasp_pos.detach().clone()
-    grasp_target_pos[:, 2] += grasp_z_offset
     gripper_qpos = get_gripper_qpos(task)
     print(
         "[THREE_PHASE_REPLAY] phase3 grasp closed "
@@ -1347,14 +1372,14 @@ def main():
                     stage2_task.stage2_replay_arm_initial_noise = max(
                         0.0, float(args.arm_initial_noise)
                     )
-                    stage2_task.pose_position_threshold = max(
-                        0.0, float(args.success_position_threshold)
+                    stage2_task.pose_orientation_angle_threshold = np.radians(
+                        max(0.0, float(args.success_orientation_angle_deg))
                     )
-                    stage2_task.pose_quat_similarity_threshold = float(
-                        args.success_quat_similarity_threshold
+                    stage2_task.pose_quat_similarity_threshold = np.cos(
+                        0.5 * stage2_task.pose_orientation_angle_threshold
                     )
                     stage2_task.replay_success_hold_steps = int(
-                        getattr(stage2_task, "success_hold_steps", 6)
+                        getattr(stage2_task, "success_hold_steps", 10)
                     )
                     stage2_task.max_steps = max(1, int(args.stage2_max_steps))
                 stage2_model = PPO.load(str(stage2_model_path), env=stage2_env, device=args.device)

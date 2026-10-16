@@ -1,0 +1,15 @@
+Starlink Genesis collision geometry report
+URDF: /data/pengyuxin/spaceman_core/src/assets/urdf/starlink/urdf/starlink.urdf
+scale: 0.7
+generated collision geom count: 4
+displayed collision geom indices: [0, 1, 2, 3]
+
+geom 0: vertices=139 faces=274 convex=True bounds=[[0.605598, -0.616795, 0.045862], [3.852806, 0.798448, 0.154822]]
+geom 1: vertices=97 faces=190 convex=True bounds=[[-0.497059, -0.847206, -0.045336], [0.605001, -0.122256, 0.303199]]
+geom 2: vertices=78 faces=152 convex=True bounds=[[-0.487367, 0.393356, -0.045007], [0.587211, 0.958654, 0.303242]]
+geom 3: vertices=90 faces=176 convex=True bounds=[[-0.497059, -0.122256, -0.065376], [0.60549, 0.393356, 0.283626]]
+
+Hole-center containment test:
+hole 0: point=[0.503873, -0.747564, 0.231] inside_collision_geoms=[1]
+hole 1: point=[-0.396789, 0.081176, 0.231] inside_collision_geoms=[3]
+hole 2: point=[0.492596, 0.855423, 0.231] inside_collision_geoms=[2]
