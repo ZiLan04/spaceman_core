@@ -572,7 +572,7 @@ if __name__ == "__main__":
     asset_path = root_path / 'src' / 'assets'
 
     urdf1_path = asset_path / 'urdf' / '卫星1号urdf.SLDASM' / 'urdf' / '卫星1号urdf.SLDASM.urdf'
-    urdf2_path = asset_path / 'urdf' / 'starlink_space_manipulator_merged.SLDASM9' / 'starlink_space_manipulator_merged.SLDASM9.urdf'
+    urdf2_path = asset_path / 'urdf' / 'arms' / 'starlink_sldasm9' / 'arm.urdf'
 
     # Create merger instance
     urdf_merger = URDFMerger(urdf1_path, urdf2_path)
@@ -595,4 +595,3 @@ if __name__ == "__main__":
         logger.info(f"Merge completed successfully: {merged_urdf_path}")
     else:
         logger.error("Merge failed")
-

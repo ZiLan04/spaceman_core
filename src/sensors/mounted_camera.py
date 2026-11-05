@@ -5,6 +5,7 @@ This reuses the existing pose-offset camera convention so cameras can be
 attached to arbitrary robot links, such as a satellite base link.
 """
 
+from copy import deepcopy
 import sys
 from pathlib import Path
 
@@ -35,7 +36,12 @@ DEFAULT_MOUNTED_CAM_SETTINGS = {
 
 class MountedCamera(Backend):
     def __init__(self, config=None):
-        self.config = config if config is not None else DEFAULT_MOUNTED_CAM_SETTINGS
+        self.config = deepcopy(
+            config if config is not None else DEFAULT_MOUNTED_CAM_SETTINGS
+        )
+        self.config["camera"]["res"] = tuple(
+            int(value) for value in self.config["camera"]["res"]
+        )
         self._scene = GenesisSim().scene
         self.device = GenesisSim().device
         self.datatype = torch.float32

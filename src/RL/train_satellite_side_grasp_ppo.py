@@ -13,8 +13,10 @@ sys.path.append(str(project_src_path))
 
 from RL.policies.multimodal_extractor import MultiModalExtractor
 import configs.asset_configs as asset_configs
-from configs.config_starlink import make_starlink_morph
-from configs.config_starlink_manipulator import FRANKA_S_Q_CAMERA
+from configs.registry import make_starlink_morph
+from configs.registry import get_legacy_camera
+from configs.scene_registry import resolve_scene_assets
+FRANKA_S_Q_CAMERA = get_legacy_camera("franka_merge")
 from configs.configs import SCENE_SETTINGS, TPV_CAM_SETTINGS
 from tasks.RL_task_parallel import PPO, gym, make_parallel_vec_env, spaces
 from tasks.RL_task_parallel_stage1 import make_stage1_vec_env
@@ -93,12 +95,34 @@ def parse_args():
         default="auto",
         help="Training device for PPO. Use 'auto', 'cuda', 'cuda:0', or 'cpu'.",
     )
-    parser.add_argument("--target-asset", type=str, default="starlink")
+    parser.add_argument(
+        "--scene",
+        dest="scene_id",
+        type=str,
+        default="starlink_franka_capture",
+        help="Registered scene ID controlling asset selection and randomization.",
+    )
+    parser.add_argument(
+        "--target-satellite",
+        "--target-asset",
+        dest="target_satellite_id",
+        type=str,
+        default=None,
+        help="Override the scene's target satellite ID.",
+    )
+    parser.add_argument(
+        "--satellite-manipulator",
+        dest="satellite_manipulator_id",
+        type=str,
+        default=None,
+        help="Override the scene's satellite_manipulator ID.",
+    )
     parser.add_argument("--num-envs", type=int, default=2)
     parser.add_argument(
         "--target-position-noise",
-        action="store_true",
-        help="Enable reset-time target position noise. Target orientation noise is always disabled.",
+        action=argparse.BooleanOptionalAction,
+        default=None,
+        help="Override the scene's reset-time target position noise setting.",
     )
     parser.add_argument(
         "--enable-visual-obs",
@@ -313,7 +337,9 @@ def save_run_config(run_dir: Path, args):
         "seed": args.seed,
         "checkpoint_freq": args.checkpoint_freq,
         "metric_log_freq": args.metric_log_freq,
-        "target_asset": args.target_asset,
+        "scene_id": args.scene_id,
+        "target_satellite_id": args.target_satellite_id,
+        "satellite_manipulator_id": args.satellite_manipulator_id,
         "num_envs": args.num_envs,
         "target_position_noise": args.target_position_noise,
         "enable_visual_obs": args.enable_visual_obs,
@@ -358,10 +384,11 @@ def configure_headless_training(enable_visual_obs: bool):
 def configure_stage2_target_collision(args):
     if args.stage != "stage2":
         return
-    if args.target_asset != "starlink":
+    if args.target_satellite_id != "starlink":
         print(
-            "Stage-2 target collision override is only implemented for target_asset='starlink'; "
-            f"got {args.target_asset!r}.",
+            "Stage-2 target collision override is only implemented for "
+            "target_satellite_id='starlink'; "
+            f"got {args.target_satellite_id!r}.",
             flush=True,
         )
         return
@@ -589,6 +616,16 @@ class Stage2MetricsCallback(MetricsCallback):
 def train():
     args = parse_args()
     normalize_oracle_observation_args(args)
+    scene_spec, args.satellite_manipulator_id, args.target_satellite_id = (
+        resolve_scene_assets(
+            args.scene_id,
+            seed=args.seed,
+            satellite_manipulator_id=args.satellite_manipulator_id,
+            target_satellite_id=args.target_satellite_id,
+        )
+    )
+    if args.target_position_noise is None:
+        args.target_position_noise = scene_spec.target_position_noise
     if args.n_steps is None:
         args.n_steps = 512 if args.stage == "stage2" else 2048
     ensure_dependencies()
@@ -605,7 +642,10 @@ def train():
 
     env = stage_settings["make_env"](
         num_envs=args.num_envs,
-        target_asset=args.target_asset,
+        scene_id=args.scene_id,
+        scene_selection_seed=args.seed,
+        target_satellite_id=args.target_satellite_id,
+        satellite_manipulator_id=args.satellite_manipulator_id,
         env_spacing=tuple(args.env_spacing),
         n_envs_per_row=args.n_envs_per_row,
         center_envs_at_origin=args.center_envs_at_origin,

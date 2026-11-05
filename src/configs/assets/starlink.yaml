@@ -1,0 +1,60 @@
+id: starlink
+kind: satellite
+urdf: ../../assets/urdf/starlink_new/urdf/starlink.urdf
+
+links:
+  base: base_star_body_link
+
+morph:
+  spawn:
+    position: [-2.0, 0.0, 0.5]
+    euler: [0.0, 0.0, 180.0]
+  scale: 0.7
+  fixed: false
+  collision: true
+  visualization: true
+  links_to_keep: [base_star_cylinder_link]
+  convexify: true
+  decompose_object_error_threshold: 0.0
+  coacd:
+    threshold: 0.05
+    max_convex_hull: -1
+    resolution: 10000
+    preprocess_mode: auto
+
+material:
+  gravity_compensation: 1.0
+
+grasp_sites:
+  - id: side_socket
+    link: base_star_body_link
+    position: [-0.33519137, 0.06895784, 0.22731882]
+    quaternion: [1.0, 0.0, 0.0, 0.0]
+    marker_offset: [0.0, 0.0, 0.0]
+
+# Taken from the fixed connection joint in the existing merged URDF.
+mount_site:
+  link: base_star_body_link
+  position: [-0.35, 0.75, 0.2]
+  euler: [-1.574, 0.0, -1.574]
+
+pid:
+  name: starlink
+  enable_pid: false
+  P: [0, 0, 0, 0, 0, 0]
+  I: [0, 0, 0, 0, 0, 0]
+  D: [0, 0, 0, 0, 0, 0]
+  setpoint: [0, 0, 0, 0, 0, 0]
+  dt: 0.01
+  limits: [null, null, null, null, null, null]
+
+cameras:
+  name: starlink
+  wrist:
+    camera:
+      res: [640, 480]
+      pos: [0.0, 0.0, 0.0]
+      lookat: [0.0, 0.0, 0.0]
+      fov: 40
+      GUI: false
+  base: {}

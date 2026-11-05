@@ -12,6 +12,8 @@ sys.path.append(str(current_file_path.parent))
 from robots.robot import Robot
 from envs.genesis_env import GenesisSim
 from configs.asset_configs import get_pid
+from configs.registry import registry
+from configs.schema import ManipulatorSpec, SatelliteManipulatorSpec, SceneCameraSpec
 from utils.twolink_state import TwoLinkState
 from utils.utils import convert_dict_to_tensors, map_to_range
 from controllers.smooth_IK_solver import SmoothIKSolver
@@ -29,9 +31,23 @@ class Manipulator(Robot):
     def __init__(
         self,
         name="franka",
-        sensors=[],
-        backends=[]
+        asset_spec: ManipulatorSpec | SatelliteManipulatorSpec | None = None,
+        scene_camera_spec: SceneCameraSpec | None = None,
+        sensors=None,
+        backends=None,
     ):
+        explicit_asset_spec = asset_spec is not None
+        if asset_spec is None and name in registry:
+            asset_spec = registry.get(name)
+        if asset_spec is not None and not isinstance(
+            asset_spec, (ManipulatorSpec, SatelliteManipulatorSpec)
+        ):
+            raise TypeError(
+                "Manipulator requires ManipulatorSpec or SatelliteManipulatorSpec, got "
+                f"{type(asset_spec).__name__}"
+            )
+        resolved_name = asset_spec.asset_id if asset_spec is not None else name
+        self.manipulator_spec = asset_spec
         self.device = GenesisSim().device
         # baselink_state = self._base_state.global_state
         self.ee_state = TwoLinkState(device=self.device) # body state is relative to the baselink of robot arm
@@ -45,7 +61,12 @@ class Manipulator(Robot):
         
         # 如果没有提供后端，创建默认的PIDController
         if not backends:
-            manipulator_pid_params = get_pid(name)
+            if self.manipulator_spec is not None:
+                manipulator_pid_params = self.manipulator_spec.pid.to_legacy_dict(
+                    resolved_name
+                )
+            else:
+                manipulator_pid_params = get_pid(resolved_name)
             
             # 检查是否启用PID控制器
             if manipulator_pid_params.get("enable_pid", False):
@@ -64,7 +85,7 @@ class Manipulator(Robot):
                     setpoint=manipulator_pid_params["setpoint"],
                     dt=manipulator_pid_params["dt"],
                     output_limits=manipulator_pid_params["limits"],
-                    name=f"{name}_pid"
+                    name=f"{resolved_name}_pid"
                 )
                 backends = [pid_controller]
         
@@ -72,50 +93,76 @@ class Manipulator(Robot):
         # Initialize the Robot object, and add robot to backends
         # Let FrankaMerge be able to have own posix
         super().__init__(
-            name=name, 
+            name=resolved_name,
+            asset_spec=self.manipulator_spec if explicit_asset_spec else None,
+            scene_camera_spec=scene_camera_spec,
             sensors=sensors,
             backends=backends
             )
         # 初始化logger
-        self.logger = setup_logger(f"Franka.{name}")
+        self.logger = setup_logger(f"Franka.{resolved_name}")
         
         # Get the current world at which we want to spawn the Robot
-        self.manipulator_name = name
+        self.manipulator_name = resolved_name
         self._scene = GenesisSim().scene
         
         ### state
-        self.end_effector = self.robot.get_link(self.params["end_effector"])
-        self.base = self.robot.get_link(self.params["base"])
-        self.config = convert_dict_to_tensors(self.params["config"], self.datatype, self.device)
+        if self.manipulator_spec is not None:
+            spec = self.manipulator_spec
+            self.end_effector = self.robot.get_link(spec.end_effector_link)
+            self.base = self.robot.get_link(spec.manipulator_base_link)
+            self.config = convert_dict_to_tensors(
+                spec.control.to_legacy_dict(), self.datatype, self.device
+            )
+            self.joints_name = spec.joint_names
+            motor_count = len(spec.arm_joint_names)
+            total_joint_count = len(spec.joint_names)
+            gripper_revolute = spec.gripper.revolute
+            gripper_force_scale = spec.gripper.force_scale
+            finger_open = spec.gripper.open_position
+            finger_close = spec.gripper.closed_position
+            self.ik_spec = spec.ik
+        else:
+            self.end_effector = self.robot.get_link(self.params["end_effector"])
+            self.base = self.robot.get_link(self.params["base"])
+            self.config = convert_dict_to_tensors(
+                self.params["config"], self.datatype, self.device
+            )
+            self.joints_name = self.params["joints"]
+            motor_count = self.params["motor"]
+            total_joint_count = self.params["finger"]
+            gripper_revolute = self.params["gripper_revolute"]
+            gripper_force_scale = self.params.get("gripper_force_scale", 1.0)
+            finger_open = self.params["finger_open"][0]
+            finger_close = self.params["finger_close"][0]
+            self.ik_spec = None
         
         ### controller
-        self.joints_name = self.params["joints"]
-
         motors_qs_idx = [self.robot.get_joint(name).qs_idx_local[0] for name in self.joints_name]
-        self.motors_qs = motors_qs_idx[:self.params["motor"]]
-        self.fingers_qs = motors_qs_idx[self.params["motor"] : self.params["finger"]]
+        self.motors_qs = motors_qs_idx[:motor_count]
+        self.fingers_qs = motors_qs_idx[motor_count:total_joint_count]
 
         motors_dof_idx = [self.robot.get_joint(name).dofs_idx_local[0] for name in self.joints_name]
-        self.motors_dof = motors_dof_idx[:self.params["motor"]]
-        self.fingers_dof = motors_dof_idx[self.params["motor"] : self.params["finger"]]
+        self.motors_dof = motors_dof_idx[:motor_count]
+        self.fingers_dof = motors_dof_idx[motor_count:total_joint_count]
 
         # gripper controller
         self.config_gripper_joints = torch.tensor(
-            self.params["gripper_revolute"],
+            gripper_revolute,
             dtype=self.datatype,
             device=self.device,
         )
         self.gripper_force_scale = torch.tensor(
-            self.params.get("gripper_force_scale", 1.0),
+            gripper_force_scale,
             dtype=self.datatype,
             device=self.device,
         )
 
-        self.finger_open = torch.tensor(self.params["finger_open"][0], dtype=self.datatype, device=self.device) * self.config_gripper_joints
-        self.finger_close = torch.tensor(self.params["finger_close"][0], dtype=self.datatype, device=self.device) * self.config_gripper_joints
+        self.finger_open = torch.tensor(finger_open, dtype=self.datatype, device=self.device) * self.config_gripper_joints
+        self.finger_close = torch.tensor(finger_close, dtype=self.datatype, device=self.device) * self.config_gripper_joints
 
         # gripper states
-        self.gripper_value = torch.tensor(self.params["finger_open"][0], dtype=self.datatype, device=self.device)  # absolute value for gripper
+        self.gripper_value = torch.tensor(finger_open, dtype=self.datatype, device=self.device)  # absolute value for gripper
         self.gripper_state = 1.0  # gripper state within range of [0, 1], and 1 for hand open
         self.base_pose_batch = None
         self.ee_pose_batch = None
@@ -194,8 +241,16 @@ class Manipulator(Robot):
         self.IK = SmoothIKSolver(
             robot=self.robot, 
             end_effector=self.end_effector,
-            smooth_factor=self.params["ik_params"]["smooth_factor"], 
-            max_joint_change=self.params["ik_params"]["max_joint_change"],
+            smooth_factor=(
+                self.ik_spec.smooth_factor
+                if self.ik_spec is not None
+                else self.params["ik_params"]["smooth_factor"]
+            ),
+            max_joint_change=(
+                self.ik_spec.max_joint_change
+                if self.ik_spec is not None
+                else self.params["ik_params"]["max_joint_change"]
+            ),
         )
         self.logger.info("IK solver initialized")
         

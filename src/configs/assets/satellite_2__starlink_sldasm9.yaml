@@ -1,0 +1,9 @@
+extends: _profiles/starlink_sldasm9.yaml
+id: satellite_2__starlink_sldasm9
+urdf: ../../assets/urdf/combinations/satellite_2__starlink_sldasm9.urdf
+grasp_sites:
+  - {id: default, link: A_upper_plus_x_mount, position: [0.0, 0.0, 0.0]}
+mount_site: {link: A_upper_plus_x_mount, position: [0.0, 0.0, 0.0]}
+parameters:
+  components: {satellite: satellite_2, manipulator: starlink_sldasm9}
+  calibration: {status: provisional, pending: [grasp_site, reference_pose, camera_extrinsics, pid]}

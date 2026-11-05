@@ -43,7 +43,7 @@ APP_SETTINGS = {
 LIGHT_SETTINGS = {
     "enabled": True,
     "show_world_frame": True,
-    "active_preset": "front_right",
+    "active_preset": "left",
     "ambient_light": (0.08, 0.08, 0.08),
     "background_color": (0.04, 0.08, 0.12),
     "shadow": True,
@@ -69,7 +69,7 @@ LIGHT_SETTINGS = {
         "left": {
             "lights": (
                 gs.options.vis.DirectionalLight(
-                    dir=(1.0, 0.0, -0.2),
+                    dir=(1.0, 0.0, 0.2),
                     color=(1.0, 1.0, 1.0),
                     intensity=5.2,
                 ),
@@ -152,6 +152,20 @@ def _resolve_light_preset(preset_name: str | None = None):
             f"Available presets: {sorted(presets.keys())}"
         )
     return active_preset, presets[active_preset]
+
+
+def get_light_directions(preset_name: str | None = None):
+    """Return configured directional-light travel vectors for a preset."""
+    _, preset = _resolve_light_preset(preset_name)
+    directions = []
+    for light in preset.get("lights", ()):
+        if isinstance(light, dict):
+            direction = light.get("dir", light.get("direction"))
+        else:
+            direction = getattr(light, "dir", None)
+        if direction is not None:
+            directions.append(tuple(float(value) for value in direction))
+    return tuple(directions)
 
 
 def make_light_vis_options(preset_name: str | None = None):
@@ -267,5 +281,6 @@ __all__ = [
     'SPACE_BACKGROUND_SETTINGS',
     'TPV_CAM_SETTINGS',
     'add_batch_renderer_lights',
+    'get_light_directions',
     'make_light_vis_options',
 ]

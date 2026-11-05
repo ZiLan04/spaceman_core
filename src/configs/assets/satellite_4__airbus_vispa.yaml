@@ -1,0 +1,10 @@
+extends: _profiles/airbus_vispa.yaml
+id: satellite_4__airbus_vispa
+urdf: ../../assets/urdf/combinations/satellite_4__airbus_vispa.urdf
+grasp_sites:
+  - {id: default, link: satellite_4_mount, position: [0.0, 0.0, 0.0]}
+mount_site: {link: satellite_4_mount, position: [0.0, 0.0, 0.0]}
+parameters:
+  components: {satellite: satellite_4, manipulator: airbus_vispa}
+  capture_capability: no_gripper_defined
+  calibration: {status: provisional, pending: [grasp_site, tcp, reference_pose, camera_extrinsics, pid]}

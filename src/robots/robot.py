@@ -10,7 +10,9 @@ from pathlib import Path
 current_file_path = Path(__file__).resolve().parent
 sys.path.append(str(current_file_path.parent))
 from envs.genesis_env import GenesisSim
-from configs.asset_configs import *
+from configs.asset_configs import get_asset, get_configs, get_pid, get_wrist_camera
+from configs.registry import build_genesis_asset, registry
+from configs.schema import SatelliteSpec, SceneCameraSpec
 from configs.configs import TPV_CAM_SETTINGS
 from sensors.batched_mounted_camera import BatchedMountedCamera
 from sensors.batched_wrist_camera import BatchedWristCamera
@@ -28,14 +30,32 @@ class Robot:
     def __init__(
         self,
         name="franka",
+        asset_spec: SatelliteSpec | None = None,
+        scene_camera_spec: SceneCameraSpec | None = None,
         sensors=None,
         backends=None,
     ):
-        self.logger = setup_logger(f"Robot.{name}")
-        self.logger.info(f"Initializing robot: {name}")
+        explicit_asset_spec = asset_spec is not None
+        if asset_spec is not None and not isinstance(asset_spec, SatelliteSpec):
+            raise TypeError(
+                f"Robot requires SatelliteSpec, got {type(asset_spec).__name__}"
+            )
+        if asset_spec is not None and name not in (None, "franka", asset_spec.asset_id):
+            raise ValueError(
+                f"name={name!r} does not match asset_spec id={asset_spec.asset_id!r}"
+            )
+        if asset_spec is None and name in registry:
+            asset_spec = registry.get(name)
+        resolved_name = asset_spec.asset_id if asset_spec is not None else name
+        if not resolved_name:
+            raise ValueError("Either name or asset_spec must be provided")
+
+        self.logger = setup_logger(f"Robot.{resolved_name}")
+        self.logger.info(f"Initializing robot: {resolved_name}")
 
         # Get the current scene 
-        self._robot_name = name
+        self._robot_name = resolved_name
+        self.asset_spec = asset_spec
         self._scene = GenesisSim().scene
         self.device = GenesisSim().device
         self.datatype = GenesisSim().datatype
@@ -52,12 +72,25 @@ class Robot:
            
         # entity, config = parse_asset_config(ASSETS, name)
         try:
-            asset = get_asset(name)
-            self.params = get_configs(name)
-            self.pid_params = get_pid(name)
-            self.wrist_camera_params = get_wrist_camera(name)
+            if self.asset_spec is not None:
+                asset = (
+                    build_genesis_asset(self.asset_spec)
+                    if explicit_asset_spec
+                    else get_asset(resolved_name)
+                )
+                self.params = self.asset_spec.to_legacy_params()
+                self.pid_params = self.asset_spec.pid.to_legacy_dict(resolved_name)
+                self.wrist_camera_params = self.asset_spec.camera.to_legacy_dict(
+                    scene_camera_spec
+                )
+            else:
+                # Compatibility path for assets that have not moved to YAML yet.
+                asset = get_asset(resolved_name)
+                self.params = get_configs(resolved_name)
+                self.pid_params = get_pid(resolved_name)
+                self.wrist_camera_params = get_wrist_camera(resolved_name)
             self.robot = self._scene.add_entity(**asset)
-            self.logger.info(f"Robot asset loaded and added to scene: {name}")
+            self.logger.info(f"Robot asset loaded and added to scene: {resolved_name}")
         except Exception as e:
             self.logger.error(f"Failed to load robot asset: {e}")
             raise
@@ -81,7 +114,7 @@ class Robot:
             except Exception as e:
                 self.logger.error(f"Failed to add batched RL wrist camera: {e}")
 
-        if self.wrist_camera_params["wrist_camera"]:
+        if self.wrist_camera_params.get("wrist_camera", False):
             try:
                 wrist_cam = WristCamera(config=self.wrist_camera_params)
                 sensors.append(wrist_cam)
@@ -163,7 +196,7 @@ class Robot:
                 setpoint=self.pid_params["setpoint"],
                 dt=self.pid_params["dt"],
                 output_limits=self.pid_params["limits"],
-                name=f"{name}_pid"
+                name=f"{resolved_name}_pid"
             )
             backends = [pid_controller]
             

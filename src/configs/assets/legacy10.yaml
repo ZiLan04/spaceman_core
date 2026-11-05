@@ -1,0 +1,11 @@
+extends: _profiles/satellite.yaml
+id: legacy10
+urdf: ../../assets/urdf/satellites/legacy10/satellite.urdf
+grasp_sites:
+  - {id: default, link: legacy10_mount, position: [0.0, 0.0, 0.0]}
+mount_site:
+  link: legacy10_mount
+  position: [0.0, 0.0, 0.0]
+parameters:
+  calibration: {status: provisional, pending: [grasp_site, pid, camera_extrinsics]}
+  mount_source: assets/urdf/satellites/legacy10/mount_config.json

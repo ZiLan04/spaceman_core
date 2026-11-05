@@ -15,6 +15,9 @@ sys.path.append(str(current_file_path.parent))
 
 from robots.robot import Robot
 from robots.satellite_manipulator import SatelliteManipulator
+from configs.registry import get_spec
+from configs.scene_registry import resolve_scene_assets
+from configs.schema import SatelliteManipulatorSpec, SatelliteSpec
 from tasks.task import Task, TaskStatus
 from utils.utils import as_rotation_matrix
 
@@ -42,16 +45,35 @@ def resolve_training_device(device: str = "auto") -> str:
     return device
 
 
+def resolve_task_asset_specs(
+    satellite_manipulator_id: str,
+    target_satellite_id: str,
+) -> tuple[SatelliteManipulatorSpec, SatelliteSpec]:
+    manipulator_spec = get_spec(satellite_manipulator_id)
+    target_spec = get_spec(target_satellite_id)
+    if not isinstance(manipulator_spec, SatelliteManipulatorSpec):
+        raise TypeError(
+            f"{satellite_manipulator_id!r} is not a satellite_manipulator"
+        )
+    if type(target_spec) is not SatelliteSpec:
+        raise TypeError(f"{target_satellite_id!r} is not a satellite target")
+    return manipulator_spec, target_spec
+
+
 class RLTask(Task):
     def __init__(
         self,
-        target_asset_name: str = "starlink",
+        target_asset_name: str | None = None,
         num_envs: int = None,
         env_spacing=None,
         n_envs_per_row=None,
         center_envs_at_origin: bool = None,
-        target_position_noise: bool = True,
-        target_position_noise_range=(0.03, 0.03, 0.02),
+        target_position_noise: bool | None = None,
+        target_position_noise_range=None,
+        satellite_manipulator_id: str | None = None,
+        target_satellite_id: str | None = None,
+        scene_id: str = "starlink_franka_capture",
+        scene_selection_seed: int | None = None,
     ):
         super().__init__(
             task_name="RL_task",
@@ -61,9 +83,36 @@ class RLTask(Task):
             center_envs_at_origin=center_envs_at_origin,
         )
 
-        self.starlink_manipulator: Optional[SatelliteManipulator] = None
+        if target_satellite_id is not None and target_asset_name is not None:
+            if target_satellite_id != target_asset_name:
+                raise ValueError(
+                    "target_satellite_id and legacy target_asset_name disagree: "
+                    f"{target_satellite_id!r} != {target_asset_name!r}"
+                )
+        explicit_target_id = target_satellite_id or target_asset_name
+        scene_spec, satellite_manipulator_id, resolved_target_id = resolve_scene_assets(
+            scene_id,
+            seed=scene_selection_seed,
+            satellite_manipulator_id=satellite_manipulator_id,
+            target_satellite_id=explicit_target_id,
+        )
+        manipulator_spec, target_spec = resolve_task_asset_specs(
+            satellite_manipulator_id, resolved_target_id
+        )
+
+        self.scene_spec = scene_spec
+        self.scene_id = scene_id
+        self.satellite_manipulator_spec = manipulator_spec
+        self.target_satellite_spec = target_spec
+        self.satellite_manipulator_id = satellite_manipulator_id
+        self.target_satellite_id = resolved_target_id
+        self.satellite_manipulator: Optional[SatelliteManipulator] = None
         self.target_object: Optional[Robot] = None
-        self.target_asset_name = target_asset_name
+        self.target_asset_name = resolved_target_id
+        if target_position_noise is None:
+            target_position_noise = scene_spec.target_position_noise
+        if target_position_noise_range is None:
+            target_position_noise_range = scene_spec.target_position_noise_range
         self.target_position_noise = bool(target_position_noise)
         self.target_position_noise_range = torch.tensor(
             target_position_noise_range,
@@ -79,9 +128,15 @@ class RLTask(Task):
             [0.0, 0.0, 0.0], dtype=self.datatype, device=self.device
         )
 
-        # TCP uses the gripper grasp center instead of the arm-hand connection link.
+        # TCP uses the asset-defined gripper grasp center.
+        assert manipulator_spec.tcp is not None
         self.tcp_offset_local = torch.tensor(
-            [0.002085, -0.2, 0.0004827],
+            manipulator_spec.tcp.position,
+            dtype=self.datatype,
+            device=self.device,
+        )
+        self.tcp_quaternion_local = torch.tensor(
+            manipulator_spec.tcp.quaternion,
             dtype=self.datatype,
             device=self.device,
         )
@@ -126,10 +181,8 @@ class RLTask(Task):
         self.edge_contact_active = False
         self.approach_alignment_threshold = 0.85
         self.approach_alignment = None
-        self.grasp_finger_link_names = (
-            "starlink_space_manipulator_merged.SLDASM9_starlink_space_manipulator_Finger1_2_Link",
-            "starlink_space_manipulator_merged.SLDASM9_starlink_space_manipulator_Finger2_1_Link",
-        )
+        assert manipulator_spec.gripper is not None
+        self.grasp_finger_link_names = manipulator_spec.gripper.contact_links
         self.env_step_count = None
         self.env_episode_return = None
         self.last_done_mask = None
@@ -139,6 +192,25 @@ class RLTask(Task):
         self.grasp_point_marker_height = 0.006
         self.debug_grasp_marker = True
         self.debug_grasp_marker_interval = 30
+
+    @property
+    def starlink_manipulator(self) -> Optional[SatelliteManipulator]:
+        """Deprecated compatibility alias; use satellite_manipulator."""
+        return self.satellite_manipulator
+
+    @staticmethod
+    def _quaternion_multiply_wxyz(q1: torch.Tensor, q2: torch.Tensor) -> torch.Tensor:
+        w1, x1, y1, z1 = q1.unbind(dim=-1)
+        w2, x2, y2, z2 = q2.unbind(dim=-1)
+        return torch.stack(
+            (
+                w1 * w2 - x1 * x2 - y1 * y2 - z1 * z2,
+                w1 * x2 + x1 * w2 + y1 * z2 - z1 * y2,
+                w1 * y2 - x1 * z2 + y1 * w2 + z1 * x2,
+                w1 * z2 + x1 * y2 - y1 * x2 + z1 * w2,
+            ),
+            dim=-1,
+        )
 
     def _create_grasp_point_marker(self):
         marker = self._scene.add_entity(
@@ -229,14 +301,16 @@ class RLTask(Task):
         return tensor
 
     def _get_tcp_pose(self) -> Tuple[torch.Tensor, torch.Tensor]:
-        ee_link = self.starlink_manipulator.robot.get_link(
-            self.starlink_manipulator.params["end_effector"]
+        assert self.satellite_manipulator_spec.tcp is not None
+        ee_link = self.satellite_manipulator.robot.get_link(
+            self.satellite_manipulator_spec.tcp.link
         )
         ee_pos = self._as_task_tensor(ee_link.get_pos(), expected_last_dim=3)
         ee_quat = self._as_task_tensor(ee_link.get_quat(), expected_last_dim=4)
         ee_rot = as_rotation_matrix(ee_quat, order="wxyz")
         tcp_pos = ee_pos + torch.matmul(ee_rot, self.tcp_offset_local)
-        return tcp_pos, ee_quat
+        tcp_quat = self._quaternion_multiply_wxyz(ee_quat, self.tcp_quaternion_local)
+        return tcp_pos, tcp_quat
 
     def _get_target_grasp_pose(self) -> Tuple[torch.Tensor, torch.Tensor]:
         target_link = self.target_object.robot.get_link(self.target_link_name)
@@ -260,7 +334,7 @@ class RLTask(Task):
         return marker_pos + torch.matmul(target_rot, self.grasp_marker_offset_local)
 
     def _get_base_pose(self) -> Tuple[torch.Tensor, torch.Tensor]:
-        root_qpos = self.starlink_manipulator.robot.get_qpos(
+        root_qpos = self.satellite_manipulator.robot.get_qpos(
             qs_idx_local=list(range(7))
         )
         root_qpos = self._as_task_tensor(root_qpos, expected_last_dim=7)
@@ -281,8 +355,8 @@ class RLTask(Task):
         return torch.sum(world_approach_axis * world_down_axis, dim=-1)
 
     def _get_contact_world_positions(self, finger_link_name: str):
-        finger_link = self.starlink_manipulator.robot.get_link(finger_link_name)
-        contacts = self.starlink_manipulator.robot.get_contacts(with_entity=self.target_object.robot)
+        finger_link = self.satellite_manipulator.robot.get_link(finger_link_name)
+        contacts = self.satellite_manipulator.robot.get_contacts(with_entity=self.target_object.robot)
         positions = []
 
         if contacts is None:
@@ -354,8 +428,8 @@ class RLTask(Task):
         self._sync_grasp_point_marker(grasp_point_pos, grasp_point_quat)
         self._log_grasp_marker_debug(grasp_point_pos)
         base_pos, base_quat = self._get_base_pose()
-        joint_qpos = self.starlink_manipulator.robot.get_qpos(
-            qs_idx_local=self.starlink_manipulator.motors_qs
+        joint_qpos = self.satellite_manipulator.robot.get_qpos(
+            qs_idx_local=self.satellite_manipulator.motors_qs
         )
 
         if self.num_envs > 1:
@@ -555,7 +629,7 @@ class RLTask(Task):
         env_ids=None,
     ):
         root_qpos = torch.cat([base_pos, base_quat], dim=-1)
-        self.starlink_manipulator.robot.set_qpos(
+        self.satellite_manipulator.robot.set_qpos(
             root_qpos,
             qs_idx_local=list(range(7)),
             envs_idx=env_ids,
@@ -569,17 +643,17 @@ class RLTask(Task):
             zero_velocity=True,
             relative=True,
         )
-        self.starlink_manipulator.robot.set_dofs_position(
+        self.satellite_manipulator.robot.set_dofs_position(
             initial_full_dofs,
-            dofs_idx_local=self.starlink_manipulator.motors_dof
-            + self.starlink_manipulator.fingers_dof,
+            dofs_idx_local=self.satellite_manipulator.motors_dof
+            + self.satellite_manipulator.fingers_dof,
             envs_idx=env_ids,
             zero_velocity=True,
         )
-        self.starlink_manipulator.robot.set_dofs_velocity(
+        self.satellite_manipulator.robot.set_dofs_velocity(
             zero_velocity,
-            dofs_idx_local=self.starlink_manipulator.motors_dof
-            + self.starlink_manipulator.fingers_dof,
+            dofs_idx_local=self.satellite_manipulator.motors_dof
+            + self.satellite_manipulator.fingers_dof,
             envs_idx=env_ids,
         )
 
@@ -587,17 +661,18 @@ class RLTask(Task):
         try:
             if self.grasp_point_marker is None:
                 self.grasp_point_marker = self._create_grasp_point_marker()
-            if self.starlink_manipulator is None:
-                self.starlink_manipulator = SatelliteManipulator(
-                    name="franka_merge",
+            if self.satellite_manipulator is None:
+                self.satellite_manipulator = SatelliteManipulator(
+                    name=self.satellite_manipulator_id,
+                    scene_camera_spec=self.scene_spec.cameras,
                     sensors=[],
                     backends=[],
                 )
             if self.target_object is None:
-                self.target_object = Robot(name=self.target_asset_name)
+                self.target_object = Robot(name=self.target_satellite_id)
 
             self.gsim.start()
-            self.starlink_manipulator.initialize()
+            self.satellite_manipulator.initialize()
             self.target_object.initialize()
 
             self.target_link_name = self.target_object.params.get(
@@ -615,7 +690,7 @@ class RLTask(Task):
                 dtype=self.datatype,
                 device=self.device,
             )
-            self.starlink_manipulator.update_state()
+            self.satellite_manipulator.update_state()
             self._update_io_tensors()
 
             self.initial_target_pos = self.target_object.robot.get_link(
@@ -685,9 +760,9 @@ class RLTask(Task):
                 dtype=self.datatype,
                 device=self.device,
             )
-        self.starlink_manipulator.apply_force(
+        self.satellite_manipulator.apply_force(
             force=force_cmd,
-            link_name=self.starlink_manipulator.params["base"],
+            link_name=self.satellite_manipulator.params["base"],
         )
 
     def _apply_arm_action(self, joint_action: torch.Tensor):
@@ -697,7 +772,7 @@ class RLTask(Task):
             keep_batch_dim=self.num_envs > 1,
         )
         target_joint = self.arm_joint_positions + joint_action * self.joint_action_scale
-        self.starlink_manipulator.control_joint_pos(target_joint)
+        self.satellite_manipulator.control_joint_pos(target_joint)
 
     def apply_rl_action(self, action: torch.Tensor):
         action = torch.as_tensor(action, dtype=self.datatype, device=self.device)
@@ -729,7 +804,7 @@ class RLTask(Task):
                 self.last_gripper_command = self.gripper_close_value
             else:
                 self.last_gripper_command = self.gripper_open_value
-        self.starlink_manipulator.control_gripper(self.last_gripper_command)
+        self.satellite_manipulator.control_gripper(self.last_gripper_command)
 
     def step(self, dt: float = None, action: Optional[torch.Tensor] = None) -> bool:
         if self.status != TaskStatus.RUNNING:
@@ -739,9 +814,9 @@ class RLTask(Task):
             if action is not None:
                 self.apply_rl_action(action)
             else:
-                self.starlink_manipulator.control_gripper(self.last_gripper_command)
+                self.satellite_manipulator.control_gripper(self.last_gripper_command)
 
-            self.starlink_manipulator.step()
+            self.satellite_manipulator.step()
             self.target_object.step()
             self.gsim.step()
             self._update_io_tensors()
@@ -847,12 +922,12 @@ class RLTask(Task):
 
     def reset(self) -> bool:
         try:
-            if self.starlink_manipulator is None or self.target_object is None:
+            if self.satellite_manipulator is None or self.target_object is None:
                 self.logger.warning("Reset skipped because task is not initialized.")
                 return False
 
             self.gsim.on_episode_end(1)
-            self.starlink_manipulator.on_episode_end(1)
+            self.satellite_manipulator.on_episode_end(1)
             self.target_object.on_episode_end(1)
 
             self.gsim.reset()
@@ -885,8 +960,8 @@ class RLTask(Task):
                 target_quat = self.initial_target_quat[0]
                 relative_yaw_quat = yaw_quat[0]
 
-            all_dofs = self.starlink_manipulator.motors_dof + self.starlink_manipulator.fingers_dof
-            initial_full_dofs = self.starlink_manipulator.config["initial_dofs"].detach().clone()
+            all_dofs = self.satellite_manipulator.motors_dof + self.satellite_manipulator.fingers_dof
+            initial_full_dofs = self.satellite_manipulator.config["initial_dofs"].detach().clone()
             if self.num_envs > 1:
                 initial_full_dofs = initial_full_dofs.unsqueeze(0).repeat(self.num_envs, 1)
                 initial_full_dofs[:, :6] = self.initial_joint_positions
@@ -904,14 +979,14 @@ class RLTask(Task):
                 zero_velocity,
             )
 
-            self.starlink_manipulator.update_state()
-            if hasattr(self.starlink_manipulator, "pid"):
-                self.starlink_manipulator.pid.reset()
-                self.starlink_manipulator.capture_current_base_pose_as_pid_setpoint()
+            self.satellite_manipulator.update_state()
+            if hasattr(self.satellite_manipulator, "pid"):
+                self.satellite_manipulator.pid.reset()
+                self.satellite_manipulator.capture_current_base_pose_as_pid_setpoint()
 
-            self.starlink_manipulator.control_gripper(self.gripper_open_value)
+            self.satellite_manipulator.control_gripper(self.gripper_open_value)
             self.gsim.step()
-            self.starlink_manipulator.update_state()
+            self.satellite_manipulator.update_state()
             self._update_io_tensors()
 
             self._reset_task_state_buffers()
@@ -926,8 +1001,8 @@ class RLTask(Task):
         try:
             if self.target_object is not None:
                 self.target_object.stop()
-            if self.starlink_manipulator is not None:
-                self.starlink_manipulator.stop()
+            if self.satellite_manipulator is not None:
+                self.satellite_manipulator.stop()
             self.gsim.stop()
 
             if self.status not in {TaskStatus.SUCCEED, TaskStatus.FAILED}:
@@ -946,6 +1021,8 @@ if gym is not None and spaces is not None:
         def __init__(
             self,
             target_asset_name: str = "starlink",
+            satellite_manipulator_id: str = "franka_merge",
+            target_satellite_id: str | None = None,
             num_envs: int = None,
             env_spacing=None,
             n_envs_per_row=None,
@@ -954,6 +1031,8 @@ if gym is not None and spaces is not None:
             super().__init__()
             self.task = RLTask(
                 target_asset_name=target_asset_name,
+                satellite_manipulator_id=satellite_manipulator_id,
+                target_satellite_id=target_satellite_id,
                 num_envs=num_envs,
                 env_spacing=env_spacing,
                 n_envs_per_row=n_envs_per_row,
@@ -1006,13 +1085,18 @@ def train_ppo(
     total_timesteps: int = 100_000,
     model_path: str = "ppo_satellite_side_grasp",
     device: str = "auto",
+    satellite_manipulator_id: str = "franka_merge",
+    target_satellite_id: str = "starlink",
 ):
     if gym is None or spaces is None:
         raise ImportError("gymnasium is not installed. Please install gymnasium first.")
     if PPO is None:
         raise ImportError("stable_baselines3 is not installed. Please install stable-baselines3 first.")
 
-    env = SatelliteSideGraspEnv()
+    env = SatelliteSideGraspEnv(
+        satellite_manipulator_id=satellite_manipulator_id,
+        target_satellite_id=target_satellite_id,
+    )
     training_device = resolve_training_device(device)
     model = PPO("MlpPolicy", env, verbose=1, device=training_device)
     print(f"Using PPO training device: {training_device}")

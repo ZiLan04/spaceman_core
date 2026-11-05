@@ -16,7 +16,8 @@ project_root_path = project_src_path.parent
 sys.path.append(str(project_src_path))
 
 # Keep the custom feature extractor importable when loading visual policies.
-from configs.config_starlink_manipulator import FRANKA_S_Q_CAMERA  # noqa: E402
+from configs.registry import get_legacy_camera  # noqa: E402
+FRANKA_S_Q_CAMERA = get_legacy_camera("franka_merge")
 from configs.configs import SCENE_SETTINGS, TPV_CAM_SETTINGS  # noqa: E402
 from RL.policies.multimodal_extractor import MultiModalExtractor  # noqa: F401,E402
 from tasks.RL_task_parallel import PPO  # noqa: E402

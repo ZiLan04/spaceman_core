@@ -1,0 +1,56 @@
+kind: satellite_manipulator
+
+links:
+  base: base_link
+
+morph:
+  spawn:
+    position: [0.5, 0.0, 0.0]
+    euler: [0.0, 0.0, 0.0]
+  fixed: false
+  merge_fixed_links: false
+
+material:
+  gravity_compensation: 1.0
+
+manipulator:
+  base_link: vispa_Link_0
+  end_effector_link: vispa_Link_6
+  pid_apply_link: base_link
+  tcp:
+    link: vispa_Link_6
+    position: [0.0, 0.0, 0.0]
+    quaternion: [1.0, 0.0, 0.0, 0.0]
+  reference_pose:
+    link: vispa_Link_6
+    joint: vispa_Joint_6
+    position: [0.0, 0.0, 0.0]
+    quaternion: [1.0, 0.0, 0.0, 0.0]
+  arm_joints: [vispa_Joint_1, vispa_Joint_2, vispa_Joint_3, vispa_Joint_4, vispa_Joint_5, vispa_Joint_6]
+  ik:
+    smooth_factor: 0.3
+    max_joint_change: 0.05
+  gripper:
+    joint_names: []
+    revolute: []
+    force_scale: 0.0
+    open_position: 0.0
+    closed_position: 0.0
+    contact_links: []
+  control:
+    initial_dofs: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+    kp: [1000, 1000, 800, 500, 300, 200]
+    kv: [100, 100, 80, 50, 30, 20]
+    force_min: [-50, -50, -50, -50, -50, -50]
+    force_max: [50, 50, 50, 50, 50, 50]
+
+pid:
+  enable_pid: false
+
+cameras:
+  wrist:
+    camera: {res: [84, 84], pos: [0, 0, 0], lookat: [1, 0, 0], fov: 60, GUI: false}
+    mount_link: vispa_Link_6
+  base:
+    camera: {res: [84, 84], pos: [0, 0, 0], lookat: [1, 0, 0], fov: 82, GUI: false}
+    mount_link: vispa_Link_0

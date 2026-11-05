@@ -18,6 +18,7 @@ from configs.configs import (
     SPACE_BACKGROUND_SETTINGS,
     TPV_CAM_SETTINGS,
     add_batch_renderer_lights,
+    get_light_directions,
     make_light_vis_options,
 )
 from sensors.timer import SimpleTimer
@@ -88,6 +89,7 @@ class GenesisSim:
         GenesisSim._init_config = dict(self._build_config)
 
         self.light_preset = light_preset or LIGHT_SETTINGS.get("active_preset", "front")
+        self.light_directions = get_light_directions(self.light_preset)
         SCENE_SETTINGS["vis_options"] = make_light_vis_options(self.light_preset)
 
         # Initialize the simulation

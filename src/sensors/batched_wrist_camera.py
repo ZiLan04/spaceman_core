@@ -18,6 +18,7 @@ sys.path.append(str(current_file_path.parent))
 
 from controllers.backend import Backend
 from envs.genesis_env import GenesisSim
+from sensors.image_effects import CameraImageEffectPipeline
 from sensors.rl_image_recorder import RLImageRecorder
 from utils.utils import calculate_camera_pose
 
@@ -34,6 +35,7 @@ DEFAULT_BATCHED_WRIST_CAM_SETTINGS = {
     "pos_offset": torch.tensor([-0.08, 0.0, 0.12], dtype=torch.float32),
     "lookat_offset": torch.tensor([0.05, -1.0, 0.0], dtype=torch.float32),
     "up_offset": torch.tensor([0.0, 0.0, 1.0], dtype=torch.float32),
+    "image_effects": {},
     "rl_obs": {
         "enabled": True,
         "channels_first": True,
@@ -60,6 +62,7 @@ def _clone_config(config):
             merged["rl_obs"].update(value)
         else:
             merged[key] = value
+    merged["camera"]["res"] = tuple(int(value) for value in merged["camera"]["res"])
     return merged
 
 
@@ -77,8 +80,9 @@ class BatchedWristCamera(Backend):
     def __init__(self, config=None):
         super().__init__()
         self.config = _clone_config(config)
-        self._scene = GenesisSim().scene
-        self.device = GenesisSim().device
+        self._sim = GenesisSim()
+        self._scene = self._sim.scene
+        self.device = self._sim.device
         self.datatype = torch.float32
         self.num_envs = GenesisSim().num_envs
 
@@ -93,6 +97,9 @@ class BatchedWristCamera(Backend):
         self.normalize = bool(rl_obs_config.get("normalize", False))
         self.update_interval = max(1, int(rl_obs_config.get("update_interval", 1)))
         self.use_batch_renderer = bool(rl_obs_config.get("use_batch_renderer", True))
+        self.image_effects = CameraImageEffectPipeline(
+            self.config.get("image_effects"), device=self.device
+        )
         self.recorder = RLImageRecorder(
             name="rl_wrist_camera",
             enabled=bool(rl_obs_config.get("enable_recording", False)),
@@ -230,6 +237,31 @@ class BatchedWristCamera(Backend):
             rgb_tensor = rgb_tensor.to(torch.float32) / 255.0
         return rgb_tensor
 
+    def _apply_image_effects(self, rgb: torch.Tensor) -> torch.Tensor:
+        if not self.image_effects.enabled:
+            return rgb
+        glare_config = self.image_effects.solar_glare.config
+        light_direction = None
+        if glare_config["direction_source"] == "scene_light":
+            light_index = int(glare_config.get("light_index", 0))
+            directions = self._sim.light_directions
+            if not directions:
+                return rgb
+            if not 0 <= light_index < len(directions):
+                raise ValueError(
+                    f"solar glare light_index {light_index} is unavailable for "
+                    f"light preset {self._sim.light_preset!r}"
+                )
+            light_direction = directions[light_index]
+        return self.image_effects.apply(
+            rgb,
+            camera_pos=self.cam_pos,
+            camera_lookat=self.cam_lookat,
+            camera_up=self.cam_up,
+            fov=self.config["camera"]["fov"],
+            scene_light_direction=light_direction,
+        )
+
     def prepare_batch_render(self, force_render: bool = False) -> bool:
         should_render = (
             bool(force_render)
@@ -245,7 +277,7 @@ class BatchedWristCamera(Backend):
         if self._batch_cam is None:
             return self.capture(force_render=force_render)
         rgb, *rest = self._batch_cam.render(rgb=True, force_render=force_render)
-        self.latest_rgb = self._format_batched_rgb(rgb)
+        self.latest_rgb = self._apply_image_effects(self._format_batched_rgb(rgb))
         self.recorder.record_batch(self.latest_rgb)
         self._step_counter += 1
         return self.latest_rgb
@@ -308,7 +340,7 @@ class BatchedWristCamera(Backend):
             cam_pos, cam_lookat, cam_up = self._update_batched_pose()
             self._batch_cam.set_pose(pos=cam_pos, lookat=cam_lookat, up=cam_up)
             rgb, *rest = self._batch_cam.render(rgb=True, force_render=True)
-            self.latest_rgb = self._format_batched_rgb(rgb)
+            self.latest_rgb = self._apply_image_effects(self._format_batched_rgb(rgb))
             self.recorder.record_batch(self.latest_rgb)
             self._step_counter += 1
             return self.latest_rgb
@@ -335,7 +367,7 @@ class BatchedWristCamera(Backend):
         self.cam_pos = torch.stack(cam_pos, dim=0)
         self.cam_lookat = torch.stack(cam_lookat, dim=0)
         self.cam_up = torch.stack(cam_up, dim=0)
-        self.latest_rgb = torch.stack(rendered, dim=0)
+        self.latest_rgb = self._apply_image_effects(torch.stack(rendered, dim=0))
         self.recorder.record_batch(self.latest_rgb)
         self._step_counter += 1
         return self.latest_rgb

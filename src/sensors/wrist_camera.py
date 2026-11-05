@@ -2,6 +2,7 @@
 可给机械臂添加手腕部相机,需要在GenesisSim()初始化之后创建
 """
 
+from copy import deepcopy
 import torch
 
 # Extension APIs
@@ -44,7 +45,12 @@ class WristCamera(Backend):
     """
     def __init__(self, config=None):
         # 使用传入的配置或默认配置
-        self.config = config if config is not None else DEFAULT_WRIST_CAM_SETTINGS
+        self.config = deepcopy(
+            config if config is not None else DEFAULT_WRIST_CAM_SETTINGS
+        )
+        self.config["camera"]["res"] = tuple(
+            int(value) for value in self.config["camera"]["res"]
+        )
         
         # Add wrist camera to the scene
         self._scene = GenesisSim().scene

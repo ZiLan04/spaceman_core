@@ -1,0 +1,80 @@
+id: starlink_franka_capture
+
+selection:
+  # fixed requires one ID in each list; random chooses once when the task is built.
+  mode: fixed
+  satellite_manipulators: [franka_merge]
+  target_satellites: [starlink]
+  seed: 42
+
+target_randomization:
+  position_noise: false
+  position_range: [0.03, 0.03, 0.02]
+
+cameras:
+  wrist:
+    enabled: false
+    recording_enabled: false
+    episodes_per_video: 1
+    image_effects:
+      solar_glare:
+        enabled: true
+        direction_source: scene_light
+        light_index: 0
+        direction: [0.0, 0.0, -1.0]
+        strength: 1.0
+        probability: 1.0
+        broad_sigma_ratio: 0.22
+        small_sigma_ratio: 0.065
+        very_broad_sigma_ratio: 0.55
+        veil_sigma_ratio: 0.035
+        ghost_sigma_ratio: 0.10
+        broad_weight: 0.48
+        small_weight: 0.32
+        very_broad_weight: 0.12
+        veil_weight: 0.09
+        ghost_weight: 0.08
+        color: [1.0, 0.97, 0.89]
+    rl_observation:
+      enabled: true
+      channels_first: true
+      normalize: false
+      enable_recording: true
+      record_env_idx: 0
+      record_fps: 30
+      episodes_per_video: 50
+      use_batch_renderer: true
+      update_interval: 1
+  base:
+    enabled: true
+    recording_enabled: false
+    episodes_per_video: 1
+    image_effects:
+      solar_glare:
+        enabled: true
+        direction_source: scene_light
+        light_index: 0
+        direction: [0.0, 0.0, -1.0]
+        strength: 1.0
+        probability: 1.0
+        broad_sigma_ratio: 0.22
+        small_sigma_ratio: 0.065
+        very_broad_sigma_ratio: 0.55
+        veil_sigma_ratio: 0.035
+        ghost_sigma_ratio: 0.10
+        broad_weight: 0.48
+        small_weight: 0.32
+        very_broad_weight: 0.12
+        veil_weight: 0.09
+        ghost_weight: 0.08
+        color: [1.0, 0.97, 0.89]
+    rl_observation:
+      enabled: true
+      channels_first: true
+      normalize: false
+      enable_recording: true
+      record_env_idx: 0
+      record_fps: 30
+      episodes_per_video: 25
+      use_batch_renderer: true
+      update_interval: 1

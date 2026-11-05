@@ -1,0 +1,11 @@
+extends: _profiles/satellite.yaml
+id: uydu
+urdf: ../../assets/urdf/satellites/uydu/satellite.urdf
+grasp_sites:
+  - {id: default, link: uydu_mount, position: [0.0, 0.0, 0.0]}
+mount_site:
+  link: uydu_mount
+  position: [0.0, 0.0, 0.0]
+parameters:
+  calibration: {status: provisional, pending: [grasp_site, pid, camera_extrinsics]}
+  mount_source: assets/urdf/satellites/uydu/mount_config.json

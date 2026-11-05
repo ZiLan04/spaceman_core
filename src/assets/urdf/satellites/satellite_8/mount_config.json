@@ -1,0 +1,98 @@
+{
+  "candidate_id": "main_prism_side_face",
+  "satellite_id": "satellite_8",
+  "parent_link": "base_link",
+  "mount_frame": "satellite_8_mount",
+  "mount_xyz_m": [
+    0.15477028499931625,
+    -0.178627828679634,
+    0.5965685106964815
+  ],
+  "mount_rpy_rad": [
+    -1.5292767408638297,
+    -0.009960664339460301,
+    1.8061152658260409
+  ],
+  "mount_frame_axes": "Z actual prism-face normal; X projected satellite +Y",
+  "arm_id": "starlink_sldasm9",
+  "arm_root_link": "starlink_space_manipulator_base_link",
+  "mount_to_arm_root_xyz_m": [
+    0.0090872,
+    0.0085192,
+    0.17634242199496758
+  ],
+  "mount_to_arm_root_rpy_rad": [
+    -1.5707963267948966,
+    0,
+    0
+  ],
+  "pad_dimensions_m": [
+    0.32,
+    0.32,
+    0.03
+  ],
+  "status": "held_size_and_structure_confirmation",
+  "source": "local satellite (8) archive",
+  "mesh_scale": [
+    3.0,
+    3.0,
+    3.0
+  ],
+  "scale_status": "PROVISIONAL simulation design scale; not verified real spacecraft dimensions",
+  "assumptions": [
+    "Original provisional scale retained; real dimensions unconfirmed",
+    "Mount is on main body surface selected by face geometry, not outer bounding box",
+    "Structural strength, docking corridors and motion sweep unvalidated"
+  ],
+  "static_screen": {
+    "method": "conservative_5mm_Z_slabs_Y_interval_separation_full_visual_mesh",
+    "joint_pose": "all_zero",
+    "arm_satellite_separation_certified": false,
+    "minimum_separating_gap_m": -0.2945929170588431,
+    "excludes": [
+      "self collision",
+      "motion sweep",
+      "docking corridors",
+      "antenna field of view",
+      "structural attachment",
+      "dynamics"
+    ]
+  },
+  "surface_fit": {
+    "region": "large rectangular side of main triangular-prism body",
+    "selected_face_area_m2": 0.40362372965988386,
+    "face_normal": [
+      -0.9715055723964666,
+      -0.23335425445461744,
+      0.041505598785507435
+    ],
+    "pad_footprint_m": [
+      0.32,
+      0.32
+    ],
+    "coverage_samples": 625,
+    "footprint_coverage_fraction": 1.0,
+    "surface_depth_range_m": [
+      -0.012309830277473923,
+      0.026342421994967585
+    ],
+    "support": "thin surface-conforming shim across recessed body panel",
+    "structural_status": "full sampled geometric footprint supported; load-bearing structure unverified"
+  },
+  "revision": 2,
+  "triangle_surface_check": {
+    "method": "full_mesh_AABB_tree_and_triangle_SAT",
+    "joint_pose": "all_zero",
+    "surface_intersection_found": false,
+    "narrowphase_pairs_tested": 21140,
+    "first_intersection": null,
+    "exclusions": [
+      "solid containment",
+      "self collision",
+      "motion sweep",
+      "mount strength"
+    ]
+  },
+  "arm_adapter_contract": "arm-specific; read pairs registry, do not assume one arm adapter for all arms",
+  "mount_ready": "geometry_candidate"
+}

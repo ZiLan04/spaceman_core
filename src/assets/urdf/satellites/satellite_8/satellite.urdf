@@ -1,0 +1,41 @@
+<?xml version='1.0' encoding='utf-8'?>
+<robot name="satellite_8_provisional_side">
+  <link name="base_link">
+    <visual>
+      <geometry>
+        <mesh filename="satellite.stl" scale="1 1 1" />
+      </geometry>
+      <material name="satellite_body_color">
+        <color rgba="0.65 0.72 0.8 1" />
+      </material>
+    </visual>
+    <collision>
+      <geometry>
+        <mesh filename="satellite.stl" scale="1 1 1" />
+      </geometry>
+    </collision>
+  </link>
+  <link name="satellite_8_mount" />
+  <joint name="satellite_mount_fixed" type="fixed">
+    <parent link="base_link" />
+    <child link="satellite_8_mount" />
+    <origin xyz="0.15477028499931625 -0.178627828679634 0.5965685106964815" rpy="-1.5292767408638297 -0.009960664339460301 1.8061152658260409" />
+  </joint>
+  <link name="concept_mount_pad">
+    <visual>
+      <geometry>
+        <mesh filename="prism_side_shim.stl" />
+      </geometry>
+    </visual>
+    <collision>
+      <geometry>
+        <mesh filename="prism_side_shim.stl" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="pad_fixed" type="fixed">
+    <parent link="satellite_8_mount" />
+    <child link="concept_mount_pad" />
+    <origin xyz="0 0 0" rpy="0 0 0" />
+  </joint>
+</robot>

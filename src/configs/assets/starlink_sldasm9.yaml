@@ -1,0 +1,12 @@
+extends: _profiles/starlink_sldasm9.yaml
+id: starlink_sldasm9
+kind: manipulator
+urdf: ../../assets/urdf/arms/starlink_sldasm9/arm.urdf
+links:
+  base: starlink_space_manipulator_base_link
+manipulator:
+  pid_apply_link: starlink_space_manipulator_base_link
+parameters:
+  calibration:
+    status: provisional
+    pending: [reference_pose, camera_extrinsics, pid]

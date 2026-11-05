@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Combine stage-2 error bands and episode completion times in two panels."""
+"""Combine stage-2 error bands and episode lengths in two panels."""
 
 from __future__ import annotations
 
@@ -63,7 +63,7 @@ def apply_2d_style(ax: plt.Axes) -> None:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Combine stage-2 error-band and completion-time comparisons."
+        description="Combine stage-2 error-band and episode-length comparisons."
     )
     parser.add_argument(
         "--run",
@@ -133,7 +133,7 @@ def plot_combined(
         )
         print(
             f"{label}: {len(csv_paths)} episodes, "
-            f"step {steps[0]}..{steps[-1]}, completion {min(times)}..{max(times)}"
+            f"step {steps[0]}..{steps[-1]}, episode length {min(times)}..{max(times)}"
         )
 
     error_ax.set_xlabel("Step")
@@ -141,7 +141,7 @@ def plot_combined(
     error_ax.legend(frameon=False, loc="best")
 
     time_ax.set_xlabel("Episode")
-    time_ax.set_ylabel("Completion time [steps]")
+    time_ax.set_ylabel("Episode length [steps]", color="red")
     time_ax.set_xlim(0.5, 20.5)
     time_ax.set_xticks([1, 5, 10, 15, 20])
     time_ax.set_xticks(range(1, 21), minor=True)

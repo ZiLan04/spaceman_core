@@ -8,6 +8,7 @@ current_file_path = Path(__file__).resolve().parent
 sys.path.append(str(current_file_path.parent))
 
 from robots.manipulator import Manipulator
+from configs.schema import SatelliteManipulatorSpec, SceneCameraSpec
 from utils.utils import convert_dict_to_tensors,map_to_range
 from controllers.smooth_IK_solver import SmoothIKSolver
 from utils.setup_logger import setup_logger
@@ -23,15 +24,19 @@ class SatelliteManipulator(Manipulator):
     def __init__(
         self,
         name="franka_merge",
-        sensors=[],
-        backends=[]
+        asset_spec: SatelliteManipulatorSpec | None = None,
+        scene_camera_spec: SceneCameraSpec | None = None,
+        sensors=None,
+        backends=None,
     ):
         super().__init__(
             name=name,
+            asset_spec=asset_spec,
+            scene_camera_spec=scene_camera_spec,
             sensors=sensors,
             backends=backends
         )
-        self.logger = setup_logger(f"SatelliteManipulator.{name}")
+        self.logger = setup_logger(f"SatelliteManipulator.{self.name}")
         
         # Logging the robot information
         self.logger.info(f"Joint dof indexes: {self.motors_dof+self.fingers_dof}")
@@ -70,8 +75,16 @@ class SatelliteManipulator(Manipulator):
         self.IK = SmoothIKSolver(
             robot=self.robot, 
             end_effector=self.end_effector,
-            smooth_factor=self.params["ik_params"]["smooth_factor"], 
-            max_joint_change=self.params["ik_params"]["max_joint_change"],
+            smooth_factor=(
+                self.ik_spec.smooth_factor
+                if self.ik_spec is not None
+                else self.params["ik_params"]["smooth_factor"]
+            ),
+            max_joint_change=(
+                self.ik_spec.max_joint_change
+                if self.ik_spec is not None
+                else self.params["ik_params"]["max_joint_change"]
+            ),
         )
         if hasattr(self, "wrist_camera") and hasattr(self, "wrist_camera_enable_recording"):
             if self.wrist_camera_enable_recording:

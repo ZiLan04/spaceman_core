@@ -19,7 +19,8 @@ if str(PROJECT_SRC) not in sys.path:
     sys.path.insert(0, str(PROJECT_SRC))
 
 from configs import asset_configs  # noqa: E402
-from configs.config_starlink_manipulator import FRANKA_S_Q_CAMERA  # noqa: E402
+from configs.registry import get_legacy_camera  # noqa: E402
+FRANKA_S_Q_CAMERA = get_legacy_camera("franka_merge")
 from configs.configs import LIGHT_SETTINGS, SCENE_SETTINGS, TPV_CAM_SETTINGS  # noqa: E402
 from controllers.backend import EmptyBackend  # noqa: E402
 from envs.genesis_env import GenesisSim  # noqa: E402

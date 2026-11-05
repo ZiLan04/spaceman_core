@@ -1,0 +1,11 @@
+extends: _profiles/satellite.yaml
+id: satellite_8
+urdf: ../../assets/urdf/satellites/satellite_8/satellite.urdf
+grasp_sites:
+  - {id: default, link: satellite_8_mount, position: [0.0, 0.0, 0.0]}
+mount_site:
+  link: satellite_8_mount
+  position: [0.0, 0.0, 0.0]
+parameters:
+  calibration: {status: provisional, pending: [grasp_site, pid, camera_extrinsics]}
+  mount_source: assets/urdf/satellites/satellite_8/mount_config.json

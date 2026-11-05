@@ -1,0 +1,13 @@
+extends: _profiles/airbus_vispa.yaml
+id: airbus_vispa
+kind: manipulator
+urdf: ../../assets/urdf/arms/airbus_vispa/arm.urdf
+links:
+  base: vispa_Link_0
+manipulator:
+  pid_apply_link: vispa_Link_0
+parameters:
+  calibration:
+    status: provisional
+    pending: [tcp, reference_pose, camera_extrinsics, pid]
+  capture_capability: no_gripper_defined

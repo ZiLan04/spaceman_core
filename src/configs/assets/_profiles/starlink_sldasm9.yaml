@@ -1,0 +1,78 @@
+kind: satellite_manipulator
+
+links:
+  base: base_link
+
+morph:
+  spawn:
+    position: [0.5, 0.0, 0.0]
+    euler: [0.0, 0.0, 0.0]
+  fixed: false
+  merge_fixed_links: false
+
+material:
+  gravity_compensation: 1.0
+
+manipulator:
+  base_link: starlink_space_manipulator_base_link
+  end_effector_link: starlink__space_manipulator_2F-Body_Link
+  pid_apply_link: base_link
+  tcp:
+    link: starlink__space_manipulator_2F-Body_Link
+    position: [0.002085, -0.2, 0.0004827]
+    quaternion: [1.0, 0.0, 0.0, 0.0]
+  reference_pose:
+    link: starlink__space_manipulator_2F-Body_Link
+    joint: starlink__space_manipulator_2F-Body_Link_yaw
+    position: [0.0, 0.0, 0.0]
+    quaternion: [1.0, 0.0, 0.0, 0.0]
+  arm_joints:
+    - starlink_space_manipulator_Shoulder_link_1_yaw
+    - starlink_space_manipulator_Upper_arm_Link_1_roll
+    - starlink_space_manipulator_Mid_arm_Link_1_roll
+    - starlink_space_manipulator_Upper_wrist_Link_1_yaw
+    - starlink_space_manipulator_Upper_wrist_Link_2_roll
+    - starlink__space_manipulator_2F-Body_Link_yaw
+  ik:
+    smooth_factor: 0.3
+    max_joint_change: 0.05
+  gripper:
+    joint_names:
+      - starlink_space_manipulator_Finger1_2_Link_roll
+      - starlink_space_manipulator_Finger2_1_Link_roll
+    revolute: [1, 1]
+    force_scale: 1.0
+    open_position: 0.0
+    closed_position: 0.04
+    contact_links:
+      - starlink_space_manipulator_Finger1_2_Link
+      - starlink_space_manipulator_Finger2_1_Link
+  control:
+    initial_dofs: [0.14, -0.55, -1.36, 0.81, 1.31, -0.52, 0.0, 0.0]
+    kp: [4500, 4500, 3500, 3500, 2000, 2000, 100, 100]
+    kv: [450, 450, 350, 350, 200, 200, 10, 10]
+    force_min: [-87, -87, -87, -87, -12, -12, -20, -20]
+    force_max: [87, 87, 87, 87, 12, 12, 20, 20]
+
+pid:
+  enable_pid: true
+  P: [800, 800, 800, 627, 627, 627]
+  I: [0, 0, 0, 0, 0, 0]
+  D: [600, 600, 600, 1478, 1478, 1478]
+  setpoint: [0, 0, 0, 0, 0, 0]
+  dt: 0.003
+  limits: [250, 250, 250, 400, 400, 400]
+
+cameras:
+  wrist:
+    camera: {res: [84, 84], pos: [-1, -1, -1], lookat: [0, 0, 0], fov: 60, GUI: false}
+    mount_link: starlink__space_manipulator_2F-Body_Link
+    position_offset: [0.05, -0.08, -0.07]
+    lookat_offset: [0.05, -1.0, -0.1]
+    up_offset: [0.15, -1.0, -1.0]
+  base:
+    camera: {res: [84, 84], pos: [-1, -1, -1], lookat: [0, 0, 0], fov: 82, GUI: false}
+    mount_link: starlink_space_manipulator_base_link
+    position_offset: [0.25, 0.5, 0.4]
+    lookat_offset: [-0.5, 0.55, 0.75]
+    up_offset: [0.0, 0.0, 1.0]

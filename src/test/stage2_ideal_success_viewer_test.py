@@ -21,8 +21,9 @@ if str(PROJECT_SRC) not in sys.path:
     sys.path.insert(0, str(PROJECT_SRC))
 
 from configs import asset_configs  # noqa: E402
-from configs.config_starlink import make_starlink_morph  # noqa: E402
-from configs.config_starlink_manipulator import FRANKA_S_Q_CAMERA  # noqa: E402
+from configs.registry import make_starlink_morph  # noqa: E402
+from configs.registry import get_legacy_camera  # noqa: E402
+FRANKA_S_Q_CAMERA = get_legacy_camera("franka_merge")
 from configs.configs import SCENE_SETTINGS, TPV_CAM_SETTINGS  # noqa: E402
 from tasks.RL_task_parallel import TaskStatus  # noqa: E402
 from tasks.RL_task_parallel_stage2 import ParallelStage2ArmTask  # noqa: E402

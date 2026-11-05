@@ -26,6 +26,7 @@ from tasks.RL_task import (  # noqa: E402
     spaces,
 )
 from configs.configs import SCENE_SETTINGS  # noqa: E402
+from configs.scene_registry import resolve_scene_assets  # noqa: E402
 from utils.utils import as_rotation_matrix  # noqa: E402
 
 try:
@@ -53,7 +54,11 @@ class ParallelRLTask(RLTask):
 
     def __init__(
         self,
-        target_asset_name: str = "starlink",
+        target_asset_name: str | None = None,
+        satellite_manipulator_id: str | None = None,
+        target_satellite_id: str | None = None,
+        scene_id: str = "starlink_franka_capture",
+        scene_selection_seed: int | None = None,
         num_envs: int = 1,
         env_spacing=None,
         n_envs_per_row=None,
@@ -61,11 +66,15 @@ class ParallelRLTask(RLTask):
         enable_visual_obs: bool = False,
         image_shape: Sequence[int] = (3, 84, 84),
         normalize_images: bool = False,
-        target_position_noise: bool = True,
-        target_position_noise_range=(0.03, 0.03, 0.02),
+        target_position_noise: bool | None = None,
+        target_position_noise_range=None,
     ):
         super().__init__(
             target_asset_name=target_asset_name,
+            satellite_manipulator_id=satellite_manipulator_id,
+            target_satellite_id=target_satellite_id,
+            scene_id=scene_id,
+            scene_selection_seed=scene_selection_seed,
             num_envs=num_envs,
             env_spacing=env_spacing,
             n_envs_per_row=n_envs_per_row,
@@ -131,7 +140,7 @@ class ParallelRLTask(RLTask):
         if not self.enable_visual_obs:
             return None
 
-        camera_sensor = getattr(self.starlink_manipulator, "rl_wrist_camera", None)
+        camera_sensor = getattr(self.satellite_manipulator, "rl_wrist_camera", None)
         if camera_sensor is None:
             return self._zero_image_observation()
 
@@ -160,7 +169,7 @@ class ParallelRLTask(RLTask):
         if not self.enable_visual_obs:
             return None
 
-        camera_sensor = getattr(self.starlink_manipulator, sensor_attr, None)
+        camera_sensor = getattr(self.satellite_manipulator, sensor_attr, None)
         if camera_sensor is None:
             return self._zero_image_observation()
 
@@ -212,8 +221,8 @@ class ParallelRLTask(RLTask):
         if not self.enable_visual_obs:
             return None, None
 
-        wrist_sensor = getattr(self.starlink_manipulator, "rl_wrist_camera", None)
-        base_sensor = getattr(self.starlink_manipulator, "rl_base_camera", None)
+        wrist_sensor = getattr(self.satellite_manipulator, "rl_wrist_camera", None)
+        base_sensor = getattr(self.satellite_manipulator, "rl_base_camera", None)
         if wrist_sensor is None and base_sensor is None:
             zero = self._zero_image_observation()
             return zero, zero
@@ -322,8 +331,9 @@ class ParallelRLTask(RLTask):
         )
 
     def _get_tcp_pose(self):
-        ee_link = self.starlink_manipulator.robot.get_link(
-            self.starlink_manipulator.params["end_effector"]
+        assert self.satellite_manipulator_spec.tcp is not None
+        ee_link = self.satellite_manipulator.robot.get_link(
+            self.satellite_manipulator_spec.tcp.link
         )
         ee_pos = _as_batched_tensor(
             ee_link.get_pos(), device=self.device, dtype=self.datatype, expected_last_dim=3
@@ -336,7 +346,8 @@ class ParallelRLTask(RLTask):
             ee_rot = as_rotation_matrix(ee_quat[env_idx], order="wxyz")
             tcp_positions.append(ee_pos[env_idx] + torch.matmul(ee_rot, self.tcp_offset_local))
         tcp_pos = torch.stack(tcp_positions, dim=0)
-        return tcp_pos, ee_quat
+        tcp_quat = self._quaternion_multiply_wxyz(ee_quat, self.tcp_quaternion_local)
+        return tcp_pos, tcp_quat
 
     def _get_target_grasp_pose(self):
         target_link = self.target_object.robot.get_link(self.target_link_name)
@@ -356,7 +367,7 @@ class ParallelRLTask(RLTask):
         return grasp_point_pos, target_quat
 
     def _get_base_pose(self):
-        root_qpos = self.starlink_manipulator.robot.get_qpos(
+        root_qpos = self.satellite_manipulator.robot.get_qpos(
             qs_idx_local=list(range(7))
         )
         root_qpos = _as_batched_tensor(
@@ -428,8 +439,8 @@ class ParallelRLTask(RLTask):
                     flush=True,
                 )
         base_pos, base_quat = self._get_base_pose()
-        joint_qpos = self.starlink_manipulator.robot.get_qpos(
-            qs_idx_local=self.starlink_manipulator.motors_qs
+        joint_qpos = self.satellite_manipulator.robot.get_qpos(
+            qs_idx_local=self.satellite_manipulator.motors_qs
         )
         joint_qpos = _as_batched_tensor(
             joint_qpos, device=self.device, dtype=self.datatype, expected_last_dim=6
@@ -457,8 +468,8 @@ class ParallelRLTask(RLTask):
                 dtype=self.datatype,
                 expected_last_dim=2,
             )
-        joint_qvel = self.starlink_manipulator.robot.get_dofs_velocity(
-            dofs_idx_local=self.starlink_manipulator.motors_dof
+        joint_qvel = self.satellite_manipulator.robot.get_dofs_velocity(
+            dofs_idx_local=self.satellite_manipulator.motors_dof
         )
         joint_qvel = _as_batched_tensor(
             joint_qvel, device=self.device, dtype=self.datatype, expected_last_dim=6
@@ -559,12 +570,12 @@ class ParallelRLTask(RLTask):
 
     def _current_pid_pose_setpoint(self) -> torch.Tensor:
         base_pos, base_quat = self._get_base_pose()
-        base_euler = self.starlink_manipulator.pid.quaternion_to_euler(base_quat)
+        base_euler = self.satellite_manipulator.pid.quaternion_to_euler(base_quat)
         return torch.cat([base_pos, base_euler], dim=-1)
 
     def _base_offset_to_world_target(self, local_offset_xy: torch.Tensor) -> torch.Tensor:
         base_pos, base_quat = self._get_base_pose()
-        base_euler = self.starlink_manipulator.pid.quaternion_to_euler(base_quat)
+        base_euler = self.satellite_manipulator.pid.quaternion_to_euler(base_quat)
         yaw = base_euler[:, 2]
         cos_yaw = torch.cos(yaw)
         sin_yaw = torch.sin(yaw)
@@ -574,8 +585,8 @@ class ParallelRLTask(RLTask):
         return base_pos[:, :2] + world_offset_xy
 
     def _get_pid_link_pose(self):
-        pid_link = self.starlink_manipulator.robot.get_link(
-            self.starlink_manipulator.params["base"]
+        pid_link = self.satellite_manipulator.robot.get_link(
+            self.satellite_manipulator.params["base"]
         )
         pid_pos = _as_batched_tensor(
             pid_link.get_pos(), device=self.device, dtype=self.datatype, expected_last_dim=3
@@ -607,7 +618,7 @@ class ParallelRLTask(RLTask):
         ).squeeze(-1)
         target_pid_rot = torch.matmul(target_root_rot, root_to_pid_rot)
         target_pid_quat = self._rotation_matrix_to_quaternion_wxyz(target_pid_rot)
-        target_pid_euler = self.starlink_manipulator.pid.quaternion_to_euler(target_pid_quat)
+        target_pid_euler = self.satellite_manipulator.pid.quaternion_to_euler(target_pid_quat)
         return torch.cat([target_pid_pos, target_pid_euler], dim=-1)
 
     def _rotation_matrix_to_quaternion_wxyz(self, rot: torch.Tensor) -> torch.Tensor:
@@ -629,7 +640,7 @@ class ParallelRLTask(RLTask):
         return quat / torch.clamp(torch.norm(quat, dim=-1, keepdim=True), min=1e-6)
 
     def _apply_base_action(self, local_offset_action: torch.Tensor):
-        if not hasattr(self.starlink_manipulator, "pid"):
+        if not hasattr(self.satellite_manipulator, "pid"):
             raise RuntimeError("Parallel base position control requires a base PID backend.")
 
         local_offset_action = _as_batched_tensor(
@@ -642,9 +653,9 @@ class ParallelRLTask(RLTask):
         target_root_pos[:, :2] = target_xy
         setpoint = self._root_target_to_pid_link_setpoint(target_root_pos, root_quat)
 
-        if hasattr(self.starlink_manipulator, "set_pid_enabled"):
-            self.starlink_manipulator.set_pid_enabled(True)
-        self.starlink_manipulator.pid.update_setpoint(setpoint)
+        if hasattr(self.satellite_manipulator, "set_pid_enabled"):
+            self.satellite_manipulator.set_pid_enabled(True)
+        self.satellite_manipulator.pid.update_setpoint(setpoint)
 
         self.prev_base_target_position_command = (
             self.base_target_position_command.detach().clone()
@@ -659,7 +670,7 @@ class ParallelRLTask(RLTask):
             joint_action, device=self.device, dtype=self.datatype, expected_last_dim=6
         )
         target_joint = self.arm_joint_positions + joint_action * self.joint_action_scale
-        self.starlink_manipulator.control_joint_pos(target_joint)
+        self.satellite_manipulator.control_joint_pos(target_joint)
 
     def apply_rl_action(self, action: torch.Tensor):
         action = _as_batched_tensor(
@@ -684,7 +695,7 @@ class ParallelRLTask(RLTask):
             dtype=self.datatype,
             device=self.device,
         )
-        self.starlink_manipulator.control_gripper(self.last_gripper_command)
+        self.satellite_manipulator.control_gripper(self.last_gripper_command)
 
     def step(self, dt: float = None, action: Optional[torch.Tensor] = None) -> bool:
         if self.status != TaskStatus.RUNNING:
@@ -694,9 +705,9 @@ class ParallelRLTask(RLTask):
             if action is not None:
                 self.apply_rl_action(action)
             else:
-                self.starlink_manipulator.control_gripper(self.last_gripper_command)
+                self.satellite_manipulator.control_gripper(self.last_gripper_command)
 
-            self.starlink_manipulator.step()
+            self.satellite_manipulator.step()
             self.target_object.step()
             self.gsim.step()
             self._update_io_tensors()
@@ -872,7 +883,7 @@ class ParallelRLTask(RLTask):
 
             finished_episodes = int(env_ids.numel())
             self.gsim.on_episode_end(finished_episodes)
-            self.starlink_manipulator.on_episode_end(finished_episodes, env_ids=env_ids)
+            self.satellite_manipulator.on_episode_end(finished_episodes, env_ids=env_ids)
             self.target_object.on_episode_end(finished_episodes)
 
             if self.initial_joint_positions is None:
@@ -896,15 +907,15 @@ class ParallelRLTask(RLTask):
             target_quat = self.initial_target_quat[env_ids].detach().clone()
             relative_yaw_quat = yaw_quat.detach().clone()
 
-            all_dofs = self.starlink_manipulator.motors_dof + self.starlink_manipulator.fingers_dof
-            current_dofs = self.starlink_manipulator.config["initial_dofs"].detach().clone()
+            all_dofs = self.satellite_manipulator.motors_dof + self.satellite_manipulator.fingers_dof
+            current_dofs = self.satellite_manipulator.config["initial_dofs"].detach().clone()
             current_dofs = current_dofs.unsqueeze(0).repeat(int(env_ids.numel()), 1)
             current_dofs[:, :6] = self.initial_joint_positions[env_ids]
 
             probe_before = None
             if probe_env_id is not None:
                 probe_root_qpos_before = _as_batched_tensor(
-                    self.starlink_manipulator.robot.get_qpos(qs_idx_local=list(range(7))),
+                    self.satellite_manipulator.robot.get_qpos(qs_idx_local=list(range(7))),
                     device=self.device,
                     dtype=self.datatype,
                     expected_last_dim=7,
@@ -922,7 +933,7 @@ class ParallelRLTask(RLTask):
                     expected_last_dim=4,
                 ).detach().clone()
                 probe_dofs_before = _as_batched_tensor(
-                    self.starlink_manipulator.robot.get_qpos(qs_idx_local=all_dofs),
+                    self.satellite_manipulator.robot.get_qpos(qs_idx_local=all_dofs),
                     device=self.device,
                     dtype=self.datatype,
                     expected_last_dim=len(all_dofs),
@@ -947,7 +958,7 @@ class ParallelRLTask(RLTask):
                 zero_velocity,
                 env_ids=env_ids,
             )
-            self.starlink_manipulator.update_state()
+            self.satellite_manipulator.update_state()
 
             if isinstance(self.last_gripper_command, torch.Tensor):
                 updated_gripper_command = self.last_gripper_command.detach().clone()
@@ -959,14 +970,14 @@ class ParallelRLTask(RLTask):
                     dtype=self.datatype,
                     device=self.device,
                 )
-            self.starlink_manipulator.control_gripper(updated_gripper_command)
+            self.satellite_manipulator.control_gripper(updated_gripper_command)
 
-            if hasattr(self.starlink_manipulator, "pid"):
-                current_setpoint = self.starlink_manipulator.pid.setpoint.detach().clone()
+            if hasattr(self.satellite_manipulator, "pid"):
+                current_setpoint = self.satellite_manipulator.pid.setpoint.detach().clone()
                 refreshed_setpoint = torch.cat(
                     [
-                        self.starlink_manipulator.ee_state.link_parent_global_state.position.detach().clone(),
-                        self.starlink_manipulator.ee_state.link_parent_global_state.orient.detach().clone(),
+                        self.satellite_manipulator.ee_state.link_parent_global_state.position.detach().clone(),
+                        self.satellite_manipulator.ee_state.link_parent_global_state.orient.detach().clone(),
                     ],
                     dim=-1,
                 )
@@ -987,14 +998,14 @@ class ParallelRLTask(RLTask):
                     current_setpoint[env_ids] = refreshed_setpoint[env_ids]
                 else:
                     current_setpoint = refreshed_setpoint
-                if hasattr(self.starlink_manipulator.pid, "reset_envs"):
-                    self.starlink_manipulator.pid.reset_envs(env_ids)
-                self.starlink_manipulator.pid.update_setpoint(current_setpoint)
+                if hasattr(self.satellite_manipulator.pid, "reset_envs"):
+                    self.satellite_manipulator.pid.reset_envs(env_ids)
+                self.satellite_manipulator.pid.update_setpoint(current_setpoint)
                 if debug_marker:
                     print(
                         "[PID_SETPOINT_AFTER]",
-                        f"updated_setpoint_shape={tuple(self.starlink_manipulator.pid.setpoint.shape)}",
-                        f"setpoint_0={self.starlink_manipulator.pid.setpoint[0].detach().cpu().tolist() if self.starlink_manipulator.pid.setpoint.dim()>1 else self.starlink_manipulator.pid.setpoint.detach().cpu().tolist()}",
+                        f"updated_setpoint_shape={tuple(self.satellite_manipulator.pid.setpoint.shape)}",
+                        f"setpoint_0={self.satellite_manipulator.pid.setpoint[0].detach().cpu().tolist() if self.satellite_manipulator.pid.setpoint.dim()>1 else self.satellite_manipulator.pid.setpoint.detach().cpu().tolist()}",
                         flush=True,
                     )
             self._update_io_tensors()
@@ -1008,7 +1019,7 @@ class ParallelRLTask(RLTask):
             if probe_before is not None:
                 probe_target_link = self.target_object.robot.get_link(self.target_link_name)
                 probe_root_qpos_after = _as_batched_tensor(
-                    self.starlink_manipulator.robot.get_qpos(qs_idx_local=list(range(7))),
+                    self.satellite_manipulator.robot.get_qpos(qs_idx_local=list(range(7))),
                     device=self.device,
                     dtype=self.datatype,
                     expected_last_dim=7,
@@ -1026,7 +1037,7 @@ class ParallelRLTask(RLTask):
                     expected_last_dim=4,
                 ).detach().clone()
                 probe_dofs_after = _as_batched_tensor(
-                    self.starlink_manipulator.robot.get_qpos(qs_idx_local=all_dofs),
+                    self.satellite_manipulator.robot.get_qpos(qs_idx_local=all_dofs),
                     device=self.device,
                     dtype=self.datatype,
                     expected_last_dim=len(all_dofs),
@@ -1114,6 +1125,8 @@ if gym is not None and spaces is not None:
         def __init__(
             self,
             target_asset_name: str = "starlink",
+            satellite_manipulator_id: str = "franka_merge",
+            target_satellite_id: str | None = None,
             num_envs: int = 4,
             env_spacing=None,
             n_envs_per_row=None,
@@ -1127,6 +1140,8 @@ if gym is not None and spaces is not None:
             super().__init__()
             self.task = ParallelRLTask(
                 target_asset_name=target_asset_name,
+                satellite_manipulator_id=satellite_manipulator_id,
+                target_satellite_id=target_satellite_id,
                 num_envs=num_envs,
                 env_spacing=env_spacing,
                 n_envs_per_row=n_envs_per_row,
@@ -1274,6 +1289,8 @@ if VecEnv is not None and VecEnvStepReturn is not None:
         def __init__(
             self,
             target_asset_name: str = "starlink",
+            satellite_manipulator_id: str = "franka_merge",
+            target_satellite_id: str | None = None,
             num_envs: int = 4,
             env_spacing=None,
             n_envs_per_row=None,
@@ -1286,6 +1303,8 @@ if VecEnv is not None and VecEnvStepReturn is not None:
         ):
             self.env = ParallelSatelliteSideGraspEnv(
                 target_asset_name=target_asset_name,
+                satellite_manipulator_id=satellite_manipulator_id,
+                target_satellite_id=target_satellite_id,
                 num_envs=num_envs,
                 env_spacing=env_spacing,
                 n_envs_per_row=n_envs_per_row,
@@ -1364,6 +1383,8 @@ if VecEnv is not None and VecEnvStepReturn is not None:
 
 def build_parallel_env(
     target_asset: str = "starlink",
+    satellite_manipulator_id: str = "franka_merge",
+    target_satellite_id: str | None = None,
     num_envs: int = 4,
     env_spacing=None,
     n_envs_per_row=None,
@@ -1371,13 +1392,15 @@ def build_parallel_env(
     enable_visual_obs: bool = False,
     image_shape: Sequence[int] = (3, 84, 84),
     normalize_images: bool = False,
-    target_position_noise: bool = True,
-    target_position_noise_range=(0.03, 0.03, 0.02),
+    target_position_noise: bool | None = None,
+    target_position_noise_range=None,
 ):
     if gym is None or spaces is None:
         raise ImportError("gymnasium is not installed. Please install gymnasium first.")
     return ParallelSatelliteSideGraspEnv(
         target_asset_name=target_asset,
+        satellite_manipulator_id=satellite_manipulator_id,
+        target_satellite_id=target_satellite_id,
         num_envs=num_envs,
         env_spacing=env_spacing,
         n_envs_per_row=n_envs_per_row,
@@ -1392,7 +1415,11 @@ def build_parallel_env(
 
 def make_parallel_vec_env(
     num_envs: int = 4,
-    target_asset: str = "starlink",
+    target_asset: str | None = None,
+    satellite_manipulator_id: str | None = None,
+    target_satellite_id: str | None = None,
+    scene_id: str = "starlink_franka_capture",
+    scene_selection_seed: int | None = None,
     env_spacing=None,
     n_envs_per_row=None,
     center_envs_at_origin: bool = None,
@@ -1406,8 +1433,20 @@ def make_parallel_vec_env(
         raise ImportError(
             "stable_baselines3 vectorized env utilities are not installed."
         )
+    scene_spec, satellite_manipulator_id, target_satellite_id = resolve_scene_assets(
+        scene_id,
+        seed=scene_selection_seed,
+        satellite_manipulator_id=satellite_manipulator_id,
+        target_satellite_id=target_satellite_id or target_asset,
+    )
+    if target_position_noise is None:
+        target_position_noise = scene_spec.target_position_noise
+    if target_position_noise_range is None:
+        target_position_noise_range = scene_spec.target_position_noise_range
     vec_env = BatchedGenesisVecEnv(
-        target_asset_name=target_asset,
+        target_asset_name=target_satellite_id,
+        satellite_manipulator_id=satellite_manipulator_id,
+        target_satellite_id=target_satellite_id,
         num_envs=num_envs,
         env_spacing=env_spacing,
         n_envs_per_row=n_envs_per_row,
@@ -1438,6 +1477,8 @@ def train_parallel_ppo(
     seed: int = 42,
     device: str = "auto",
     target_asset: str = "starlink",
+    satellite_manipulator_id: str = "franka_merge",
+    target_satellite_id: str | None = None,
     env_spacing=None,
     n_envs_per_row=None,
     center_envs_at_origin: bool = None,
@@ -1451,6 +1492,8 @@ def train_parallel_ppo(
     env = make_parallel_vec_env(
         num_envs=num_envs,
         target_asset=target_asset,
+        satellite_manipulator_id=satellite_manipulator_id,
+        target_satellite_id=target_satellite_id,
         env_spacing=env_spacing,
         n_envs_per_row=n_envs_per_row,
         center_envs_at_origin=center_envs_at_origin,

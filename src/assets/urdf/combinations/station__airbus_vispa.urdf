@@ -1,0 +1,175 @@
+<?xml version='1.0' encoding='utf-8'?>
+<robot name="station__airbus_vispa">
+  <link name="base_link">
+    <visual>
+      <geometry>
+        <mesh filename="../satellites/station/satellite.stl" />
+      </geometry>
+      <material name="satellite_grey">
+        <color rgba=".6 .7 .8 1" />
+      </material>
+    </visual>
+    <collision>
+      <geometry>
+        <mesh filename="../satellites/station/satellite.stl" />
+      </geometry>
+    </collision>
+  </link>
+  <link name="station_mount" />
+  <joint name="satellite_mount_fixed" type="fixed">
+    <parent link="base_link" />
+    <child link="station_mount" />
+    <origin xyz="-1.2 0.6066343669416991 0.0" rpy="-1.5707963267948966 -1.5707963267948966 0.0" />
+  </joint>
+  <link name="mount_support">
+    <visual>
+      <geometry>
+        <mesh filename="../satellites/station/mount_support.stl" />
+      </geometry>
+      <material name="mount_green">
+        <color rgba=".2 .7 .35 1" />
+      </material>
+    </visual>
+    <collision>
+      <geometry>
+        <mesh filename="../satellites/station/mount_support.stl" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="support_fixed" type="fixed">
+    <parent link="station_mount" />
+    <child link="mount_support" />
+    <origin xyz="0 0 0" rpy="0 0 0" />
+  </joint>
+  <joint name="arm_adapter_fixed" type="fixed">
+    <parent link="station_mount" />
+    <child link="vispa_Link_0" />
+    <origin xyz="-0.0025000013411045074 -3.725290298461914e-09 0.04299999877810467" rpy="0.0 0.0 0.0" />
+  </joint>
+  <link name="vispa_Link_0">
+    <visual>
+      <geometry>
+        <mesh filename="../arms/airbus_vispa/meshes/Link0-DHReference-PublicRelease.stl" />
+      </geometry>
+    </visual>
+    <inertial>
+      <mass value="0.627" />
+      <inertia ixx="0.00281845585208" ixy="0" ixz="0" iyy="0.00281883333333" iyz="0" izz="0.00379978918542" />
+      <origin xyz="0 0 0.0" />
+    </inertial>
+  </link>
+  <link name="vispa_Link_1">
+    <visual>
+      <geometry>
+        <mesh filename="../arms/airbus_vispa/meshes/Link1-DHReference-PublicRelease.stl" />
+      </geometry>
+    </visual>
+    <inertial>
+      <mass value="2.328" />
+      <inertia ixx="0.012" ixy="0" ixz="0" iyy="0.007" iyz="0.003" izz="0.008" />
+      <origin xyz="0 -0.029 -0.043" />
+    </inertial>
+  </link>
+  <link name="vispa_Link_2">
+    <visual>
+      <geometry>
+        <mesh filename="../arms/airbus_vispa/meshes/Link2-DHReference-PublicRelease.stl" />
+      </geometry>
+    </visual>
+    <inertial>
+      <mass value="3.995" />
+      <inertia ixx="0.010 " ixy="0" ixz="0" iyy="0.578" iyz="0" izz="0.574" />
+      <origin xyz="0.4 0 0.142" />
+    </inertial>
+  </link>
+  <link name="vispa_Link_3">
+    <visual>
+      <geometry>
+        <mesh filename="../arms/airbus_vispa/meshes/Link3-DHReference-PublicRelease.stl" />
+      </geometry>
+    </visual>
+    <inertial>
+      <mass value="2.328" />
+      <inertia ixx="0.012" ixy="0" ixz="0" iyy="0.008" iyz="0.003" izz="0.007" />
+      <origin xyz="0 0.043 0.029" />
+    </inertial>
+  </link>
+  <link name="vispa_Link_4">
+    <visual>
+      <geometry>
+        <mesh filename="../arms/airbus_vispa/meshes/Link4-DHReference-PublicRelease.stl" />
+      </geometry>
+    </visual>
+    <inertial>
+      <mass value="3.157" />
+      <inertia ixx="0.199" ixy="0" ixz="0" iyy="0.193" iyz="0.01" izz="0.01" />
+      <origin xyz="0 -0.043 -0.210" />
+    </inertial>
+  </link>
+  <link name="vispa_Link_5">
+    <visual>
+      <geometry>
+        <mesh filename="../arms/airbus_vispa/meshes/Link5-DHReference-PublicRelease.stl" />
+      </geometry>
+    </visual>
+    <inertial>
+      <mass value="2.695" />
+      <inertia ixx="0.029" ixy="0" ixz="0" iyy="0.006" iyz="-0.001" izz="0.027" />
+      <origin xyz="0 0.125 -0.007" />
+    </inertial>
+  </link>
+  <link name="vispa_Link_6">
+    <visual>
+      <geometry>
+        <mesh filename="../arms/airbus_vispa/meshes/Link6-DHReference-PublicRelease.stl" />
+      </geometry>
+    </visual>
+    <inertial>
+      <mass value="0.924" />
+      <inertia ixx="0.002" ixy="0" ixz="0" iyy="0.002" iyz="0" izz="0.001" />
+      <origin xyz="0 0 0.0" />
+    </inertial>
+  </link>
+  <joint name="vispa_Joint_1" type="revolute">
+    <parent link="vispa_Link_0" />
+    <child link="vispa_Link_1" />
+    <axis xyz="0 0 1" />
+    <limit effort="50" lower="-3.14149265359" upper="3.14149265359" velocity="0.09395689" />
+    <origin xyz="0 0 0.18" rpy="0 0 0" />
+  </joint>
+  <joint name="vispa_Joint_2" type="revolute">
+    <parent link="vispa_Link_1" />
+    <child link="vispa_Link_2" />
+    <axis xyz="0 0 1" />
+    <limit effort="50" lower="-3.14149265359" upper="3.14149265359" velocity="0.09395689" />
+    <origin xyz="0 0 0" rpy="1.57079632679 -1.57079632679 0" />
+  </joint>
+  <joint name="vispa_Joint_3" type="revolute">
+    <parent link="vispa_Link_2" />
+    <child link="vispa_Link_3" />
+    <axis xyz="0 0 1" />
+    <limit effort="50" lower="-3.14149265359" upper="3.14149265359" velocity="0.09395689" />
+    <origin xyz="0.8 0 0" rpy="0 0 -1.57079632679" />
+  </joint>
+  <joint name="vispa_Joint_4" type="revolute">
+    <parent link="vispa_Link_3" />
+    <child link="vispa_Link_4" />
+    <axis xyz="0 0 1" />
+    <limit effort="50" lower="-3.14149265359" upper="3.14149265359" velocity="0.09395689" />
+    <origin xyz="0 0.65 0" rpy="-1.57079632679 0 0" />
+  </joint>
+  <joint name="vispa_Joint_5" type="revolute">
+    <parent link="vispa_Link_4" />
+    <child link="vispa_Link_5" />
+    <axis xyz="0 0 1" />
+    <limit effort="50" lower="-3.14149265359" upper="3.14149265359" velocity="0.09395689" />
+    <origin xyz="0 0 0" rpy="1.57079632679 0 0" />
+  </joint>
+  <joint name="vispa_Joint_6" type="revolute">
+    <parent link="vispa_Link_5" />
+    <child link="vispa_Link_6" />
+    <axis xyz="0 0 1" />
+    <limit effort="50" lower="-3.14149265359" upper="3.14149265359" velocity="0.09395689" />
+    <origin xyz="0 0.325 0" rpy="-1.57079632679 0 0" />
+  </joint>
+</robot>

@@ -1,0 +1,21 @@
+kind: satellite
+
+links:
+  base: base_link
+
+morph:
+  spawn:
+    position: [-2.0, 0.0, 0.5]
+    euler: [0.0, 0.0, 0.0]
+  fixed: false
+  collision: true
+  visualization: true
+  merge_fixed_links: false
+
+material:
+  gravity_compensation: 1.0
+
+pid:
+  enable_pid: false
+
+cameras: {}

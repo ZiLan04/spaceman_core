@@ -15,7 +15,8 @@ import torch
 current_file_path = Path(__file__).resolve().parent
 sys.path.append(str(current_file_path.parent))
 
-from configs.config_starlink_manipulator import FRANKA_S_Q_CAMERA  # noqa: E402
+from configs.registry import get_legacy_camera  # noqa: E402
+FRANKA_S_Q_CAMERA = get_legacy_camera("franka_merge")
 from configs.configs import (  # noqa: E402
     EARTH_BACKGROUND_SETTINGS,
     LIGHT_SETTINGS,

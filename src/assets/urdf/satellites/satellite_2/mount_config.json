@@ -1,0 +1,80 @@
+{
+  "candidate_id": "A_upper_plus_x",
+  "satellite_id": "satellite_2",
+  "parent_link": "base_link",
+  "status": "static_geometry_screened_task_and_dynamics_unvalidated",
+  "mount_frame": "A_upper_plus_x_mount",
+  "mount_xyz_m": [
+    1.21,
+    0.0,
+    6.0
+  ],
+  "mount_rpy_rad": [
+    -1.5707963267948966,
+    0.0,
+    -1.5707963267948966
+  ],
+  "mount_frame_axes": "Z outward, Y satellite -Z, X completes right-handed frame",
+  "mesh_scale": [
+    0.011,
+    0.011,
+    0.011
+  ],
+  "visual_origin_xyz_m": [
+    0.0,
+    0.0,
+    -0.355
+  ],
+  "arm_id": "starlink_sldasm9",
+  "arm_root_link": "starlink_space_manipulator_base_link",
+  "mount_to_arm_root_xyz_m": [
+    0.0090872,
+    0.0085192,
+    0.15
+  ],
+  "mount_to_arm_root_rpy_rad": [
+    -1.5707963267948966,
+    0,
+    0
+  ],
+  "pad_dimensions_m": [
+    0.32,
+    0.32,
+    0.03
+  ],
+  "pad_status": "concept_only_attachment_not_structurally_qualified",
+  "assumptions": [
+    "+Z is provisional task end",
+    "Both axial end centers reserved, exact corridors unknown",
+    "Side surface equipment and supporting structure unknown"
+  ],
+  "scope": "Relative satellite/arm mount transform; no random switching implementation",
+  "static_screen": {
+    "joint_pose": "all_zero",
+    "method": "full_visual_mesh_halfspace_separation_over_arm_z_extent",
+    "arm_satellite_separation_certified": true,
+    "separating_plane_gap_m": 0.034999997913837566,
+    "arm_bounds_m": [
+      [
+        1.2449999979138375,
+        -0.3288457178866995,
+        5.850000041213798
+      ],
+      [
+        4.357122912939203,
+        0.26724027942204176,
+        7.14665147711593
+      ]
+    ],
+    "exclusions": [
+      "arm self-collision",
+      "swept motion",
+      "true docking corridor",
+      "pad attachment strength"
+    ]
+  },
+  "symmetry_equivalent_candidate": "B_upper_minus_x",
+  "selection": "A canonical; B equivalent by user confirmation; C not selected",
+  "arm_adapter_contract": "arm-specific; read pairs registry, do not assume one arm adapter for all arms",
+  "mount_ready": "geometry_candidate"
+}

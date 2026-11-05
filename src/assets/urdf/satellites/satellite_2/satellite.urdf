@@ -1,0 +1,53 @@
+<?xml version='1.0' encoding='utf-8'?>
+<robot name="A_upper_plus_x">
+  <link name="base_link">
+    <inertial>
+      <origin xyz="0 0 -0.029031273" rpy="0 0 0" />
+      <mass value="21.782594" />
+      <inertia ixx="1.0564574" iyy="0.94781648" izz="0.2101786" ixy="0" ixz="2.310708e-13" iyz="-6.8461865e-12" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 -0.355" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="meshes/part_001_solid_001.stl" scale="0.011 0.011 0.011" />
+      </geometry>
+      <material name="satellite_body_color">
+        <color rgba="0.65 0.72 0.8 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 -0.355" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="meshes/part_001_solid_001.stl" scale="0.011 0.011 0.011" />
+      </geometry>
+    </collision>
+  </link>
+  <link name="A_upper_plus_x_mount" />
+  <joint name="satellite_mount_fixed" type="fixed">
+    <parent link="base_link" />
+    <child link="A_upper_plus_x_mount" />
+    <origin xyz="1.21 0.0 6.0" rpy="-1.5707963267948966 0.0 -1.5707963267948966" />
+  </joint>
+  <link name="concept_mount_pad">
+    <visual>
+      <origin xyz="0 0 0.015" rpy="0 0 0" />
+      <geometry>
+        <box size="0.32 0.32 0.03" />
+      </geometry>
+      <material name="pad_grey">
+        <color rgba="0.3 0.35 0.4 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0.015" rpy="0 0 0" />
+      <geometry>
+        <box size="0.32 0.32 0.03" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="pad_fixed" type="fixed">
+    <parent link="A_upper_plus_x_mount" />
+    <child link="concept_mount_pad" />
+    <origin xyz="0 0 0" rpy="0 0 0" />
+  </joint>
+</robot>

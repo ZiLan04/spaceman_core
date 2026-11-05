@@ -102,7 +102,7 @@ budget is 700 control steps = 21 s; the training task's stock budget remains
   the damping (Kd) have to be derived from the inertia, and Kd additionally has
   to stay inside the torque limit - a D term that saturates turns the loop into
   a permanent +/-4 deg rocking limit cycle. See the derivation comment above
-  ``FRANKA_S_Q_PID`` in configs/config_starlink_manipulator.py.
+  the ``pid`` section in configs/assets/franka_merge.yaml.
 * The final attitude equals the reset attitude. The attitude PID still has to
   reject translation/arm coupling and bring angular velocity back to zero.
 
@@ -123,7 +123,8 @@ if str(PROJECT_SRC) not in sys.path:
     sys.path.insert(0, str(PROJECT_SRC))
 
 from configs.configs import SCENE_SETTINGS, TPV_CAM_SETTINGS  # noqa: E402
-from configs.config_starlink_manipulator import FRANKA_S_Q_CAMERA  # noqa: E402
+from configs.registry import get_legacy_camera  # noqa: E402
+FRANKA_S_Q_CAMERA = get_legacy_camera("franka_merge")
 from tasks.RL_task_parallel_stage1 import build_stage1_env  # noqa: E402
 
 
