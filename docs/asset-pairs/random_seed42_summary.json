@@ -1,0 +1,33 @@
+{
+  "seed": 42,
+  "count": 2,
+  "render_requested": true,
+  "results": [
+    {
+      "pair": "satellite_sb1__airbus_vispa",
+      "target": "artificial1",
+      "returncode": 0,
+      "result": "artifacts/skill_random_42/01_satellite_sb1__airbus_vispa.json",
+      "log": "artifacts/skill_random_42/01_satellite_sb1__airbus_vispa.log",
+      "resources": {
+        "returncode": 0,
+        "stop_reason": null,
+        "peak_rss_gib": 1.4903335571289062,
+        "elapsed_seconds": 12.949088516645133
+      }
+    },
+    {
+      "pair": "design__starlink_sldasm9",
+      "target": "sputnik",
+      "returncode": 0,
+      "result": "artifacts/skill_random_42/02_design__starlink_sldasm9.json",
+      "log": "artifacts/skill_random_42/02_design__starlink_sldasm9.log",
+      "resources": {
+        "returncode": 0,
+        "stop_reason": null,
+        "peak_rss_gib": 1.50079345703125,
+        "elapsed_seconds": 12.428010008763522
+      }
+    }
+  ]
+}
