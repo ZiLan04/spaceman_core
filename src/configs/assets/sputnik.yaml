@@ -1,0 +1,61 @@
+kind: satellite
+links:
+  base: base_link
+morph:
+  fixed: true
+  collision: false
+  merge_fixed_links: false
+  spawn:
+    position:
+    - -7.802974700927734
+    - 0.0
+    - 0.0
+    euler:
+    - 0.0
+    - 0.0
+    - 0.0
+  scale: 1.0
+material:
+  gravity_compensation: 1.0
+pid:
+  enable_pid: false
+cameras: {}
+id: sputnik
+urdf: ../../assets/registered_library/satellites/sputnik/satellite.urdf
+grasp_sites:
+- id: body_surface_candidate
+  link: base_link
+  position:
+  - -0.3409793727239791
+  - -0.2415249735665143
+  - 1.3379246962589
+  quaternion:
+  - 0.8175561502946468
+  - 0.15289468918381902
+  - -0.2529228703753661
+  - 0.4942217890541313
+mount_site:
+  link: sputnik_mount
+  position:
+  - 0.0
+  - 0.0
+  - 0.0
+  euler:
+  - 0.0
+  - 0.0
+  - 0.0
+parameters:
+  components:
+    satellite: sputnik
+    manipulator: null
+  calibration:
+    status: inspection_only
+    pending:
+    - grasp_site
+    - initial_task_pose
+    - tcp
+    - pid
+    - camera_extrinsics
+  grasp_site_status: candidate_not_grasp_validated
+  asset_status: geometry_candidate
+  task_ready: false

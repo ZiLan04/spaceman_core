@@ -1,0 +1,64 @@
+{
+  "candidate_id": "upper_side_plus_y",
+  "satellite_id": "satellite_4",
+  "parent_link": "base_link",
+  "mount_frame": "satellite_4_mount",
+  "mount_xyz_m": [
+    0,
+    0.5000001517447981,
+    0.8
+  ],
+  "mount_rpy_rad": [
+    -1.5707963267948966,
+    0.0,
+    0.0
+  ],
+  "mount_frame_axes": "Z outward +satellite Y; Y toward -satellite Z",
+  "arm_id": "starlink_sldasm9",
+  "arm_root_link": "starlink_space_manipulator_base_link",
+  "mount_to_arm_root_xyz_m": [
+    0.0090872,
+    0.0085192,
+    0.15
+  ],
+  "mount_to_arm_root_rpy_rad": [
+    -1.5707963267948966,
+    0,
+    0
+  ],
+  "pad_dimensions_m": [
+    0.32,
+    0.32,
+    0.03
+  ],
+  "status": "static_preview_task_and_dynamics_unvalidated",
+  "source": "local satellite (4) GLB with complete node transforms",
+  "mesh_scale": [
+    1,
+    1,
+    1
+  ],
+  "scale_status": "glTF metre convention; real spacecraft dimensions unverified",
+  "assumptions": [
+    "+Z provisionally task-facing, terminal antenna and opposite axial end reserved",
+    "curved bus requires a shaped saddle and structural support verification",
+    "solar arrays occupy +/-X sectors; choose +Y side",
+    "GLB textures omitted from monochrome STL preview; geometry retained"
+  ],
+  "static_screen": {
+    "method": "conservative_5mm_Z_slabs_Y_interval_separation_full_visual_mesh",
+    "joint_pose": "all_zero",
+    "arm_satellite_separation_certified": true,
+    "minimum_separating_gap_m": 0.034999997913837344,
+    "excludes": [
+      "self collision",
+      "motion sweep",
+      "docking corridors",
+      "antenna field of view",
+      "structural attachment",
+      "dynamics"
+    ]
+  },
+  "arm_adapter_contract": "arm-specific; read pairs registry, do not assume one arm adapter for all arms",
+  "mount_ready": "geometry_candidate"
+}

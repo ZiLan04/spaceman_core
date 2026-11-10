@@ -1,0 +1,80 @@
+{
+  "satellite_id": "satellite_sb1",
+  "mount_frame": "satellite_sb1_mount",
+  "mount_xyz_m": [
+    0.3630675039246468,
+    -0.08451072736787024,
+    0.2428048142333857
+  ],
+  "mount_rpy_rad": [
+    3.141592653589793,
+    -1.5707963267948963,
+    0.0
+  ],
+  "source": {
+    "satellite_id": "satellite_sb1",
+    "source_archive": "卫星SB1可用.zip",
+    "file": "卫星SB1可用\\Satellite.SLDPRT",
+    "status": "decoded",
+    "diagnostics": [
+      {
+        "code": "modern.configuration_manager_version_unsupported",
+        "severity": "info",
+        "kind": "unsupported",
+        "message": "configuration-manager header layout is not enabled for this internal version",
+        "offset": null,
+        "stream_path": "Contents/CMgrHdr2",
+        "details": {
+          "internal_version": "8000"
+        }
+      },
+      {
+        "code": "modern.property_stream_has_no_named_values",
+        "severity": "info",
+        "kind": "preserved",
+        "message": "property stream contains no named properties in the selected section",
+        "offset": null,
+        "stream_path": "docProps/Config-0-Properties.xml",
+        "details": {}
+      },
+      {
+        "code": "modern.property_stream_has_no_named_values",
+        "severity": "info",
+        "kind": "preserved",
+        "message": "property stream contains no named properties in the selected section",
+        "offset": null,
+        "stream_path": "docProps/custom.xml",
+        "details": {}
+      }
+    ],
+    "cache": "sources\\satellite_sb1\\geometry.npy",
+    "triangles": 80912,
+    "bounds": [
+      [
+        -12740.0,
+        -4971.25,
+        -2600.0
+      ],
+      [
+        12740.0,
+        4971.25,
+        5700.0
+      ]
+    ],
+    "units": "millimeter",
+    "source_sha256": "21dba6b9522846c953e0f8c94005bae497a0017e153961e9937785515be3dbc4",
+    "scope": "saved display tessellation, not exact BRep; assembly occurrence transforms not independently reconstructed",
+    "source_to_model_scale": 0.0003139717425431711
+  },
+  "surface_fit": {
+    "grid": "17x17",
+    "footprint_m": [
+      0.32,
+      0.32
+    ],
+    "coverage": 1,
+    "clearance_m": 0.002
+  },
+  "status": "automatically_screened_candidate_pending_task_and_structural_review",
+  "dynamics_ready": false
+}

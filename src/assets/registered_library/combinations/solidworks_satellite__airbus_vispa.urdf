@@ -1,0 +1,250 @@
+<?xml version='1.0' encoding='utf-8'?>
+<robot name="solidworks_satellite__airbus_vispa">
+  <link name="base_link">
+    <visual>
+      <geometry>
+        <mesh filename="../satellites/solidworks_satellite/satellite.stl" />
+      </geometry>
+    </visual>
+    <collision>
+      <geometry>
+        <mesh filename="../satellites/solidworks_satellite/satellite.stl" />
+      </geometry>
+    </collision>
+  </link>
+  <link name="solidworks_satellite_mount" />
+  <joint name="satellite_mount_fixed" type="fixed">
+    <parent link="base_link" />
+    <child link="solidworks_satellite_mount" />
+    <origin xyz="-2.437326161586077 0.20975094889472667 -0.29954458009684976" rpy="3.141592653589793 -0.654498604372334 1.5707963267948966" />
+  </joint>
+  <link name="mount_support">
+    <visual>
+      <geometry>
+        <mesh filename="../satellites/solidworks_satellite/mount_support.stl" />
+      </geometry>
+    </visual>
+    <collision>
+      <geometry>
+        <mesh filename="../satellites/solidworks_satellite/mount_support.stl" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="support_fixed" type="fixed">
+    <parent link="solidworks_satellite_mount" />
+    <child link="mount_support" />
+    <origin xyz="0 0 0" rpy="0 0 0" />
+  </joint>
+  <joint name="arm_adapter_fixed" type="fixed">
+    <parent link="solidworks_satellite_mount" />
+    <child link="vispa_Link_0" />
+    <origin xyz="-0.0039634800766936845 -5.90604237737935e-09 0.05768312767349504" rpy="0 0 0.0" />
+  </joint>
+  <link name="vispa_Link_0">
+    <visual>
+      <geometry>
+        <mesh filename="../arms/airbus_vispa/meshes/Link0-DHReference-PublicRelease.stl" scale="1.5853911802073728 1.5853911802073728 1.5853911802073728" />
+      </geometry>
+    </visual>
+  </link>
+  <link name="vispa_Link_1">
+    <visual>
+      <geometry>
+        <mesh filename="../arms/airbus_vispa/meshes/Link1-DHReference-PublicRelease.stl" scale="1.5853911802073728 1.5853911802073728 1.5853911802073728" />
+      </geometry>
+    </visual>
+  </link>
+  <link name="vispa_Link_2">
+    <visual>
+      <geometry>
+        <mesh filename="../arms/airbus_vispa/meshes/Link2-DHReference-PublicRelease.stl" scale="1.5853911802073728 1.5853911802073728 1.5853911802073728" />
+      </geometry>
+    </visual>
+  </link>
+  <link name="vispa_Link_3">
+    <visual>
+      <geometry>
+        <mesh filename="../arms/airbus_vispa/meshes/Link3-DHReference-PublicRelease.stl" scale="1.5853911802073728 1.5853911802073728 1.5853911802073728" />
+      </geometry>
+    </visual>
+  </link>
+  <link name="vispa_Link_4">
+    <visual>
+      <geometry>
+        <mesh filename="../arms/airbus_vispa/meshes/Link4-DHReference-PublicRelease.stl" scale="1.5853911802073728 1.5853911802073728 1.5853911802073728" />
+      </geometry>
+    </visual>
+  </link>
+  <link name="vispa_Link_5">
+    <visual>
+      <geometry>
+        <mesh filename="../arms/airbus_vispa/meshes/Link5-DHReference-PublicRelease.stl" scale="1.5853911802073728 1.5853911802073728 1.5853911802073728" />
+      </geometry>
+    </visual>
+  </link>
+  <link name="vispa_Link_6">
+    <visual>
+      <geometry>
+        <mesh filename="../arms/airbus_vispa/meshes/Link6-DHReference-PublicRelease.stl" scale="1.5853911802073728 1.5853911802073728 1.5853911802073728" />
+      </geometry>
+    </visual>
+  </link>
+  <joint name="vispa_Joint_1" type="revolute">
+    <parent link="vispa_Link_0" />
+    <child link="vispa_Link_1" />
+    <axis xyz="0 0 1" />
+    <limit effort="50" lower="-3.14149265359" upper="3.14149265359" velocity="0.09395689" />
+    <origin xyz="0.0 0.0 0.2853704124373271" rpy="0 0 0" />
+  </joint>
+  <joint name="vispa_Joint_2" type="revolute">
+    <parent link="vispa_Link_1" />
+    <child link="vispa_Link_2" />
+    <axis xyz="0 0 1" />
+    <limit effort="50" lower="-3.14149265359" upper="3.14149265359" velocity="0.09395689" />
+    <origin xyz="0.0 0.0 0.0" rpy="1.57079632679 -1.57079632679 0" />
+  </joint>
+  <joint name="vispa_Joint_3" type="revolute">
+    <parent link="vispa_Link_2" />
+    <child link="vispa_Link_3" />
+    <axis xyz="0 0 1" />
+    <limit effort="50" lower="-3.14149265359" upper="3.14149265359" velocity="0.09395689" />
+    <origin xyz="1.2683129441658982 0.0 0.0" rpy="0 0 -1.57079632679" />
+  </joint>
+  <joint name="vispa_Joint_4" type="revolute">
+    <parent link="vispa_Link_3" />
+    <child link="vispa_Link_4" />
+    <axis xyz="0 0 1" />
+    <limit effort="50" lower="-3.14149265359" upper="3.14149265359" velocity="0.09395689" />
+    <origin xyz="0.0 1.0305042671347924 0.0" rpy="-1.57079632679 0 0" />
+  </joint>
+  <joint name="vispa_Joint_5" type="revolute">
+    <parent link="vispa_Link_4" />
+    <child link="vispa_Link_5" />
+    <axis xyz="0 0 1" />
+    <limit effort="50" lower="-3.14149265359" upper="3.14149265359" velocity="0.09395689" />
+    <origin xyz="0.0 0.0 0.0" rpy="1.57079632679 0 0" />
+  </joint>
+  <joint name="vispa_Joint_6" type="revolute">
+    <parent link="vispa_Link_5" />
+    <child link="vispa_Link_6" />
+    <axis xyz="0 0 1" />
+    <limit effort="50" lower="-3.14149265359" upper="3.14149265359" velocity="0.09395689" />
+    <origin xyz="0.0 0.5152521335673962 0.0" rpy="-1.57079632679 0 0" />
+  </joint>
+  <link name="angular_hand">
+    <visual>
+      <geometry>
+        <mesh filename="../arms/airbus_vispa/meshes/hand_2finger.STL" scale="2 2 2" />
+      </geometry>
+    </visual>
+    <collision>
+      <geometry>
+        <mesh filename="../arms/airbus_vispa/meshes/hand_2finger.STL" scale="2 2 2" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="angular_hand_fixed" type="fixed">
+    <parent link="vispa_Link_6" />
+    <child link="angular_hand" />
+    <origin xyz="0 0 0.036" rpy="3.141592653589793 0 0" />
+  </joint>
+  <link name="angular_adapter">
+    <visual>
+      <geometry>
+        <mesh filename="../arms/airbus_vispa/meshes/angular_adapter.stl" />
+      </geometry>
+    </visual>
+    <collision>
+      <geometry>
+        <mesh filename="../arms/airbus_vispa/meshes/angular_adapter.stl" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="angular_adapter_fixed" type="fixed">
+    <parent link="vispa_Link_6" />
+    <child link="angular_adapter" />
+    <origin xyz="0 0 0.0005" rpy="0 0 0" />
+  </joint>
+  <link name="angular_finger_1">
+    <visual>
+      <geometry>
+        <mesh filename="../arms/airbus_vispa/meshes/finger_proximal.STL" scale="2 2 2" />
+      </geometry>
+    </visual>
+    <collision>
+      <geometry>
+        <mesh filename="../arms/airbus_vispa/meshes/finger_proximal.STL" scale="2 2 2" />
+      </geometry>
+    </collision>
+  </link>
+  <link name="angular_tip_1">
+    <visual>
+      <geometry>
+        <mesh filename="../arms/airbus_vispa/meshes/finger_distal.STL" scale="2 2 2" />
+      </geometry>
+    </visual>
+    <collision>
+      <geometry>
+        <mesh filename="../arms/airbus_vispa/meshes/finger_distal.STL" scale="2 2 2" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="angular_joint_1" type="revolute">
+    <parent link="angular_hand" />
+    <child link="angular_finger_1" />
+    <axis xyz="0 0 1" />
+    <origin xyz="-0.005 0.0619 -0.22964" rpy="-1.570796327 .649262481663582 1.5707963267948966" />
+    <limit lower="0" upper="1.51" effort="2" velocity="1" />
+  </joint>
+  <joint name="angular_joint_tip_1" type="revolute">
+    <parent link="angular_finger_1" />
+    <child link="angular_tip_1" />
+    <axis xyz="0 0 1" />
+    <origin xyz="0.088 -0.006 0.0" rpy="0 0 0" />
+    <limit lower="0" upper="2" effort="2" velocity="1" />
+  </joint>
+  <link name="angular_finger_2">
+    <visual>
+      <geometry>
+        <mesh filename="../arms/airbus_vispa/meshes/finger_proximal.STL" scale="2 2 2" />
+      </geometry>
+    </visual>
+    <collision>
+      <geometry>
+        <mesh filename="../arms/airbus_vispa/meshes/finger_proximal.STL" scale="2 2 2" />
+      </geometry>
+    </collision>
+  </link>
+  <link name="angular_tip_2">
+    <visual>
+      <geometry>
+        <mesh filename="../arms/airbus_vispa/meshes/finger_distal.STL" scale="2 2 2" />
+      </geometry>
+    </visual>
+    <collision>
+      <geometry>
+        <mesh filename="../arms/airbus_vispa/meshes/finger_distal.STL" scale="2 2 2" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="angular_joint_2" type="revolute">
+    <parent link="angular_hand" />
+    <child link="angular_finger_2" />
+    <axis xyz="0 0 1" />
+    <origin xyz="-0.005 -0.0619 -0.22964" rpy="-1.570796327 .649262481663582 -1.5707963267948966" />
+    <limit lower="0" upper="1.51" effort="2" velocity="1" />
+  </joint>
+  <joint name="angular_joint_tip_2" type="revolute">
+    <parent link="angular_finger_2" />
+    <child link="angular_tip_2" />
+    <axis xyz="0 0 1" />
+    <origin xyz="0.088 -0.006 0.0" rpy="0 0 0" />
+    <limit lower="0" upper="2" effort="2" velocity="1" />
+  </joint>
+  <link name="angular_tcp" />
+  <joint name="angular_tcp_fixed" type="fixed">
+    <parent link="angular_hand" />
+    <child link="angular_tcp" />
+    <origin xyz="-0.005 0 -0.34" rpy="3.141592653589793 0 0" />
+  </joint>
+</robot>

@@ -1,0 +1,38 @@
+<?xml version='1.0' encoding='utf-8'?>
+<robot name="satellite_11">
+  <link name="base_link">
+    <visual>
+      <geometry>
+        <mesh filename="satellite.stl" />
+      </geometry>
+    </visual>
+    <collision>
+      <geometry>
+        <mesh filename="satellite.stl" />
+      </geometry>
+    </collision>
+  </link>
+  <link name="satellite_11_mount" />
+  <joint name="satellite_mount_fixed" type="fixed">
+    <parent link="base_link" />
+    <child link="satellite_11_mount" />
+    <origin xyz="-0.3692992002694974 0.36206781363916873 3.4259989261627197" rpy="0.2945705079256369 -1.5707963267948966 0.0" />
+  </joint>
+  <link name="mount_support">
+    <visual>
+      <geometry>
+        <mesh filename="mount_support.stl" />
+      </geometry>
+    </visual>
+    <collision>
+      <geometry>
+        <mesh filename="mount_support.stl" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="support_fixed" type="fixed">
+    <parent link="satellite_11_mount" />
+    <child link="mount_support" />
+    <origin xyz="0 0 0" rpy="0 0 0" />
+  </joint>
+</robot>

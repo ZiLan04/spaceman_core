@@ -1,0 +1,40 @@
+{
+  "satellite_id": "satellite_11",
+  "mount_frame": "satellite_11_mount",
+  "mount_xyz_m": [
+    -0.3692992002694974,
+    0.36206781363916873,
+    3.4259989261627197
+  ],
+  "mount_rpy_rad": [
+    0.2945705079256369,
+    -1.5707963267948966,
+    0.0
+  ],
+  "source": {
+    "satellite_id": "satellite_11",
+    "source_archive": "卫星 (11)可用.zip",
+    "member": "temp/Copy of Crewed interplanetary #Ion transport #modularspace.stl",
+    "status": "converted",
+    "triangles": 267500,
+    "source_extent": [
+      377.5,
+      207.73705291748047,
+      235.59300231933594
+    ],
+    "source_sha256": "b7538844c9166f794f9f5490e412581a112c93ab3c73beb3d0dbb51c133309a8",
+    "source_to_model_scale": 0.02119205298013245
+  },
+  "surface_fit": {
+    "grid": "17x17",
+    "footprint_m": [
+      0.24,
+      0.24
+    ],
+    "coverage": 1,
+    "clearance_m": 0.002,
+    "region": "upper axial body shoulder below head instruments; +Z provisional work direction"
+  },
+  "status": "body_mount_candidate_pending_structural_and_task_reach_validation",
+  "dynamics_ready": false
+}

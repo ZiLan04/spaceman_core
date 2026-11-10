@@ -1,0 +1,109 @@
+{
+  "arm_checks": [
+    {
+      "arm": "starlink_sldasm9",
+      "u": 0,
+      "arm_surface_check": {
+        "method": "full_mesh_AABB_tree_and_triangle_SAT",
+        "joint_pose": "all_zero",
+        "surface_intersection_found": false,
+        "narrowphase_pairs_tested": 188,
+        "first_intersection": null,
+        "exclusions": [
+          "solid containment",
+          "self collision",
+          "motion sweep",
+          "mount strength"
+        ]
+      }
+    },
+    {
+      "arm": "starlink_sldasm9",
+      "u": 0.5,
+      "arm_surface_check": {
+        "method": "full_mesh_AABB_tree_and_triangle_SAT",
+        "joint_pose": "all_zero",
+        "surface_intersection_found": false,
+        "narrowphase_pairs_tested": 188,
+        "first_intersection": null,
+        "exclusions": [
+          "solid containment",
+          "self collision",
+          "motion sweep",
+          "mount strength"
+        ]
+      }
+    },
+    {
+      "arm": "starlink_sldasm9",
+      "u": 1,
+      "arm_surface_check": {
+        "method": "full_mesh_AABB_tree_and_triangle_SAT",
+        "joint_pose": "all_zero",
+        "surface_intersection_found": false,
+        "narrowphase_pairs_tested": 188,
+        "first_intersection": null,
+        "exclusions": [
+          "solid containment",
+          "self collision",
+          "motion sweep",
+          "mount strength"
+        ]
+      }
+    },
+    {
+      "arm": "airbus_vispa",
+      "u": 0,
+      "arm_surface_check": {
+        "method": "full_mesh_AABB_tree_and_triangle_SAT",
+        "joint_pose": "all_zero",
+        "surface_intersection_found": false,
+        "narrowphase_pairs_tested": 0,
+        "first_intersection": null,
+        "exclusions": [
+          "solid containment",
+          "self collision",
+          "motion sweep",
+          "mount strength"
+        ]
+      }
+    },
+    {
+      "arm": "airbus_vispa",
+      "u": 0.5,
+      "arm_surface_check": {
+        "method": "full_mesh_AABB_tree_and_triangle_SAT",
+        "joint_pose": "all_zero",
+        "surface_intersection_found": false,
+        "narrowphase_pairs_tested": 0,
+        "first_intersection": null,
+        "exclusions": [
+          "solid containment",
+          "self collision",
+          "motion sweep",
+          "mount strength"
+        ]
+      }
+    },
+    {
+      "arm": "airbus_vispa",
+      "u": 1,
+      "arm_surface_check": {
+        "method": "full_mesh_AABB_tree_and_triangle_SAT",
+        "joint_pose": "all_zero",
+        "surface_intersection_found": false,
+        "narrowphase_pairs_tested": 0,
+        "first_intersection": null,
+        "exclusions": [
+          "solid containment",
+          "self collision",
+          "motion sweep",
+          "mount strength"
+        ]
+      }
+    }
+  ],
+  "pair_count": 54,
+  "pair_failures": [],
+  "scope": "zero arm posture endpoint triangle surfaces only; no full motion, containment, contact or dynamics validation"
+}

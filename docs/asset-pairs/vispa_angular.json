@@ -1,0 +1,133 @@
+{
+  "status": "passed",
+  "plan": {
+    "schema_version": 1,
+    "seed": 0,
+    "purpose": "inspection",
+    "carrier_satellite": "satellite_17",
+    "arm": "airbus_vispa",
+    "target_satellite": "gps",
+    "pair_id": "satellite_17__airbus_vispa",
+    "carrier_pose": {
+      "position_m": [
+        5.925822582141528,
+        0.0,
+        0.0
+      ],
+      "euler_deg": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "target_pose": {
+      "position_m": [
+        -5.925822582141528,
+        0.0,
+        0.0
+      ],
+      "euler_deg": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "initial_joints": {
+      "vispa_Joint_1": 0.0,
+      "vispa_Joint_2": 0.0,
+      "vispa_Joint_3": 0.0,
+      "vispa_Joint_4": 0.0,
+      "vispa_Joint_5": 0.0,
+      "vispa_Joint_6": 0.0,
+      "angular_joint_1": 0.0,
+      "angular_joint_tip_1": 0.0,
+      "angular_joint_2": 0.0,
+      "angular_joint_tip_2": 0.0
+    },
+    "gripper_semantics": "1=open, 0=curl; proximal=(1-command), distal=.65*(1-command) radians",
+    "target_grasp_sites": [
+      {
+        "id": "body_surface_candidate",
+        "link": "base_link",
+        "position": [
+          -0.28457456828885463,
+          0.0,
+          0.15
+        ],
+        "quaternion": [
+          0.7071067811865476,
+          0.0,
+          -0.7071067811865476,
+          0.0
+        ],
+        "status": "candidate_not_grasp_validated",
+        "source": "reviewed body mount patch; not a grasp handle",
+        "normal": [
+          -1.0000000000000002,
+          0.0,
+          0.0
+        ],
+        "world_position_m": [
+          -6.210397150430382,
+          0.0,
+          0.15
+        ],
+        "world_normal": [
+          -1.0000000000000002,
+          0.0,
+          0.0
+        ],
+        "world_quaternion_wxyz": [
+          0.7071067811865476,
+          0.0,
+          -0.7071067811865476,
+          0.0
+        ]
+      }
+    ],
+    "task_ready": false,
+    "camera": {
+      "position_m": [
+        0,
+        -14.221974197139668,
+        7.703569356783986
+      ],
+      "lookat_m": [
+        0,
+        0,
+        0
+      ],
+      "fov_deg": 50
+    },
+    "inspection": {
+      "fixed": true,
+      "collision": false,
+      "bounding_sphere_separation_m": 11.851645164283056
+    },
+    "warnings": [
+      "Grasp coordinates are body mount surface candidates, not validated grasp handles.",
+      "Initial poses are for separated viewing, not a reachable capture scene.",
+      "satellite_6 partial; catch01 has 12 unmeshed faces."
+    ]
+  },
+  "steps": 2,
+  "measured_joint_positions": {
+    "vispa_Joint_1": 0.0,
+    "vispa_Joint_2": 0.0,
+    "vispa_Joint_3": 0.0,
+    "vispa_Joint_4": 0.0,
+    "vispa_Joint_5": 0.0,
+    "vispa_Joint_6": 0.0,
+    "angular_joint_1": 0.0,
+    "angular_joint_tip_1": 0.0,
+    "angular_joint_2": 0.0,
+    "angular_joint_tip_2": 0.0
+  },
+  "target_n_links": 3,
+  "carrier_n_links": 17,
+  "scope": "single fixed collision-disabled CPU Genesis load, named joint initialization, two steps; not dynamics or capture validation",
+  "renders": [
+    "artifacts/vispa_angular_overview.png",
+    "artifacts/vispa_angular_carrier.png"
+  ]
+}

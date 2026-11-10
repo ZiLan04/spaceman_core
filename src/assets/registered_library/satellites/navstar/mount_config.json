@@ -1,0 +1,39 @@
+{
+  "satellite_id": "navstar",
+  "mount_frame": "navstar_mount",
+  "mount_xyz_m": [
+    -0.06259960387694356,
+    0.04391826006281371,
+    0.9515232222782899
+  ],
+  "mount_rpy_rad": [
+    -0.823698879557603,
+    -1.5707963267948966,
+    0.0
+  ],
+  "source": {
+    "satellite_id": "navstar",
+    "source_archive": "导航卫星GPS卫星可用.zip",
+    "member": "temp/NAVSTAR GPS Satellite.STL",
+    "status": "converted",
+    "triangles": 169222,
+    "source_extent": [
+      283.29736328125,
+      135.13426971435547,
+      619.8959350585938
+    ],
+    "source_sha256": "4d719658ec74d18ee3154e16a8feea8ab4f094520675851abfd18ce2c0d3f0e8",
+    "source_to_model_scale": 0.01290539193363774
+  },
+  "surface_fit": {
+    "grid": "17x17",
+    "footprint_m": [
+      0.4,
+      0.4
+    ],
+    "coverage": 1,
+    "clearance_m": 0.002
+  },
+  "status": "automatically_screened_candidate_pending_task_and_structural_review",
+  "dynamics_ready": false
+}

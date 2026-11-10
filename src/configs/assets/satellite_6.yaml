@@ -1,0 +1,61 @@
+kind: satellite
+links:
+  base: base_link
+morph:
+  fixed: true
+  collision: false
+  merge_fixed_links: false
+  spawn:
+    position:
+    - -7.942886531352997
+    - 0.0
+    - 0.0
+    euler:
+    - 0.0
+    - 0.0
+    - 0.0
+  scale: 1.0
+material:
+  gravity_compensation: 1.0
+pid:
+  enable_pid: false
+cameras: {}
+id: satellite_6
+urdf: ../../assets/registered_library/satellites/satellite_6/satellite.urdf
+grasp_sites:
+- id: body_surface_candidate
+  link: base_link
+  position:
+  - 0.24293569051620173
+  - 0.1141647029853909
+  - -0.28765164731723913
+  quaternion:
+  - 0.18025442477245895
+  - -0.983617049523559
+  - 0.00043568917575951004
+  - -0.0023774800652512145
+mount_site:
+  link: satellite_6_mount
+  position:
+  - 0.0
+  - 0.0
+  - 0.0
+  euler:
+  - 0.0
+  - 0.0
+  - 0.0
+parameters:
+  components:
+    satellite: satellite_6
+    manipulator: null
+  calibration:
+    status: inspection_only
+    pending:
+    - grasp_site
+    - initial_task_pose
+    - tcp
+    - pid
+    - camera_extrinsics
+  grasp_site_status: candidate_not_grasp_validated
+  asset_status: partial_assembly_experimental
+  task_ready: false

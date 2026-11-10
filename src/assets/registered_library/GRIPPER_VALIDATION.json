@@ -1,0 +1,50 @@
+[
+  {
+    "q_m": 0,
+    "gripper_vs_arm": {
+      "method": "full_mesh_AABB_tree_and_triangle_SAT",
+      "joint_pose": "all_zero",
+      "surface_intersection_found": false,
+      "narrowphase_pairs_tested": 0,
+      "first_intersection": null,
+      "exclusions": [
+        "solid containment",
+        "self collision",
+        "motion sweep",
+        "mount strength"
+      ]
+    }
+  },
+  {
+    "q_m": 0.02,
+    "gripper_vs_arm": {
+      "method": "full_mesh_AABB_tree_and_triangle_SAT",
+      "joint_pose": "all_zero",
+      "surface_intersection_found": false,
+      "narrowphase_pairs_tested": 0,
+      "first_intersection": null,
+      "exclusions": [
+        "solid containment",
+        "self collision",
+        "motion sweep",
+        "mount strength"
+      ]
+    }
+  },
+  {
+    "q_m": 0.04,
+    "gripper_vs_arm": {
+      "method": "full_mesh_AABB_tree_and_triangle_SAT",
+      "joint_pose": "all_zero",
+      "surface_intersection_found": false,
+      "narrowphase_pairs_tested": 0,
+      "first_intersection": null,
+      "exclusions": [
+        "solid containment",
+        "self collision",
+        "motion sweep",
+        "mount strength"
+      ]
+    }
+  }
+]

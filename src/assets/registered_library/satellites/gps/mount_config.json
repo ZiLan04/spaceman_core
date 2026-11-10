@@ -1,0 +1,41 @@
+{
+  "satellite_id": "gps",
+  "parent_link": "base_link",
+  "mount_frame": "gps_mount",
+  "mount_xyz_m": [
+    -0.28457456828885463,
+    0.0,
+    0.15
+  ],
+  "mount_rpy_rad": [
+    0.0,
+    -1.5707963267948966,
+    0.0
+  ],
+  "mount_frame_axes": "Z body outward normal; X in body surface",
+  "source_to_model_scale": 0.3139717425431711,
+  "scale_status": "provisional simulation normalization: maximum source extent -> 8 m; not real spacecraft dimensions",
+  "preview_extent_m": [
+    8.0,
+    3.1216640434305987,
+    2.6059654631083204
+  ],
+  "surface_fit": {
+    "region": "main bus side panel, away from axial antenna mast",
+    "support": "0.32m square sampled surface-conforming support",
+    "sample_grid": "17x17",
+    "sample_coverage": 1.0,
+    "height_range_m": [
+      -0.0004254317111459516,
+      -0.0004254317111453642
+    ],
+    "contact_clearance_m": 0.002
+  },
+  "status": "held_size_structure_and_task_confirmation",
+  "dynamics_ready": false,
+  "notes": [
+    "support shape is geometry only, not a qualified load path",
+    "both axial end centres should remain reserved unless task says otherwise",
+    "source textures omitted; source geometry retained"
+  ]
+}

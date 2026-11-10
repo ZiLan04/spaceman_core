@@ -1,0 +1,74 @@
+[
+  {
+    "satellite_id": "sputnik",
+    "before_xyz_m": [
+      -0.3296195210308696,
+      1.5905010307034348,
+      0.9058898096178927
+    ],
+    "after_xyz_m": [
+      -0.3409793727239791,
+      -0.2415249735665143,
+      1.3379246962589
+    ],
+    "contact_footprint_m": [
+      0.32,
+      0.32
+    ],
+    "region": "central main bus upper sloped shell; solar wings excluded"
+  },
+  {
+    "satellite_id": "satellite_17",
+    "before_xyz_m": [
+      0.22222192724244333,
+      1.475,
+      1.2
+    ],
+    "after_xyz_m": [
+      0.21167709790354092,
+      1.2761797060204623,
+      2.356391633916866
+    ],
+    "contact_footprint_m": [
+      0.12,
+      0.12
+    ],
+    "region": "upper axial body shoulder below head instruments; +Z provisional work direction"
+  },
+  {
+    "satellite_id": "legacy10",
+    "before_xyz_m": [
+      0.0,
+      0.6713043683937775,
+      1.8
+    ],
+    "after_xyz_m": [
+      0.6696842409943525,
+      0.04390860234940623,
+      2.6205085134159303
+    ],
+    "contact_footprint_m": [
+      0.32,
+      0.32
+    ],
+    "region": "upper axial body shoulder below head instruments; +Z provisional work direction"
+  },
+  {
+    "satellite_id": "satellite_11",
+    "before_xyz_m": [
+      0.18482775811611232,
+      0.0741176510484229,
+      0.7770419426048566
+    ],
+    "after_xyz_m": [
+      -0.3692992002694974,
+      0.36206781363916873,
+      3.4259989261627197
+    ],
+    "contact_footprint_m": [
+      0.24,
+      0.24
+    ],
+    "region": "upper axial body shoulder below head instruments; +Z provisional work direction"
+  }
+]

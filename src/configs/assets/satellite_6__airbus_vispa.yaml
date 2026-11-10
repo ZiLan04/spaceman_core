@@ -1,0 +1,203 @@
+kind: satellite_manipulator
+links:
+  base: base_link
+morph:
+  spawn:
+    position:
+    - 7.942886531352997
+    - 0.0
+    - 0.0
+    euler:
+    - 0.0
+    - 0.0
+    - 0.0
+  fixed: true
+  merge_fixed_links: false
+  collision: false
+  scale: 1.0
+material:
+  gravity_compensation: 1.0
+manipulator:
+  base_link: vispa_Link_0
+  end_effector_link: angular_hand
+  pid_apply_link: base_link
+  tcp:
+    link: angular_hand
+    position:
+    - -0.005
+    - 0
+    - -0.34
+    quaternion:
+    - 0
+    - 1
+    - 0
+    - 0
+  reference_pose:
+    link: angular_hand
+    joint: vispa_Joint_6
+    position:
+    - 0.0
+    - 0.0
+    - 0.0
+    quaternion:
+    - 1.0
+    - 0.0
+    - 0.0
+    - 0.0
+  arm_joints:
+  - vispa_Joint_1
+  - vispa_Joint_2
+  - vispa_Joint_3
+  - vispa_Joint_4
+  - vispa_Joint_5
+  - vispa_Joint_6
+  ik:
+    smooth_factor: 0.3
+    max_joint_change: 0.05
+  gripper:
+    joint_names:
+    - angular_joint_1
+    - angular_joint_tip_1
+    - angular_joint_2
+    - angular_joint_tip_2
+    revolute:
+    - 1
+    - 0.65
+    - 1
+    - 0.65
+    force_scale: 1.0
+    open_position: 0.0
+    closed_position: 1.0
+    contact_links:
+    - angular_tip_1
+    - angular_tip_2
+  control:
+    initial_dofs:
+    - 0.0
+    - 0.0
+    - 0.0
+    - 0.0
+    - 0.0
+    - 0.0
+    - 0
+    - 0
+    - 0
+    - 0
+    kp:
+    - 1000
+    - 1000
+    - 800
+    - 500
+    - 300
+    - 200
+    - 10
+    - 10
+    - 10
+    - 10
+    kv:
+    - 100
+    - 100
+    - 80
+    - 50
+    - 30
+    - 20
+    - 1
+    - 1
+    - 1
+    - 1
+    force_min:
+    - -50
+    - -50
+    - -50
+    - -50
+    - -50
+    - -50
+    - -2
+    - -2
+    - -2
+    - -2
+    force_max:
+    - 50
+    - 50
+    - 50
+    - 50
+    - 50
+    - 50
+    - 2
+    - 2
+    - 2
+    - 2
+pid:
+  enable_pid: false
+cameras:
+  wrist:
+    camera:
+      res:
+      - 84
+      - 84
+      pos:
+      - 0
+      - 0
+      - 0
+      lookat:
+      - 1
+      - 0
+      - 0
+      fov: 60
+      GUI: false
+    mount_link: vispa_Link_6
+  base:
+    camera:
+      res:
+      - 84
+      - 84
+      pos:
+      - 0
+      - 0
+      - 0
+      lookat:
+      - 1
+      - 0
+      - 0
+      fov: 82
+      GUI: false
+    mount_link: vispa_Link_0
+parameters:
+  components:
+    satellite: satellite_6
+    manipulator: airbus_vispa
+  calibration:
+    status: rotary_gripper_unvalidated
+    pending:
+    - grasp_site
+    - initial_task_pose
+    - tcp
+    - pid
+    - camera_extrinsics
+  grasp_site_status: candidate_not_grasp_validated
+  asset_status: partial_assembly_experimental
+  task_ready: false
+id: satellite_6__airbus_vispa
+urdf: ../../assets/registered_library/combinations/satellite_6__airbus_vispa.urdf
+grasp_sites:
+- id: body_surface_candidate
+  link: base_link
+  position:
+  - 0.24293569051620173
+  - 0.1141647029853909
+  - -0.28765164731723913
+  quaternion:
+  - 0.18025442477245895
+  - -0.983617049523559
+  - 0.00043568917575951004
+  - -0.0023774800652512145
+mount_site:
+  link: satellite_6_mount
+  position:
+  - 0.0
+  - 0.0
+  - 0.0
+  euler:
+  - 0.0
+  - 0.0
+  - 0.0

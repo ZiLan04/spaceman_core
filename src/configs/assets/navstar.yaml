@@ -1,0 +1,61 @@
+kind: satellite
+links:
+  base: base_link
+morph:
+  fixed: true
+  collision: false
+  merge_fixed_links: false
+  spawn:
+    position:
+    - -8.656063556671143
+    - 0.0
+    - 0.0
+    euler:
+    - 0.0
+    - 0.0
+    - 0.0
+  scale: 1.0
+material:
+  gravity_compensation: 1.0
+pid:
+  enable_pid: false
+cameras: {}
+id: navstar
+urdf: ../../assets/registered_library/satellites/navstar/satellite.urdf
+grasp_sites:
+- id: body_surface_candidate
+  link: base_link
+  position:
+  - -0.06259960387694356
+  - 0.04391826006281371
+  - 0.9515232222782899
+  quaternion:
+  - 0.6479799622905452
+  - -0.2830582421869105
+  - -0.6479799622905452
+  - -0.2830582421869105
+mount_site:
+  link: navstar_mount
+  position:
+  - 0.0
+  - 0.0
+  - 0.0
+  euler:
+  - 0.0
+  - 0.0
+  - 0.0
+parameters:
+  components:
+    satellite: navstar
+    manipulator: null
+  calibration:
+    status: inspection_only
+    pending:
+    - grasp_site
+    - initial_task_pose
+    - tcp
+    - pid
+    - camera_extrinsics
+  grasp_site_status: candidate_not_grasp_validated
+  asset_status: geometry_candidate
+  task_ready: false

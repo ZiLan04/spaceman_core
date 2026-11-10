@@ -1,0 +1,8 @@
+
+# Asset pair runtime generated files
+__pycache__/
+.pytest_cache/
+.asset_backups/
+artifacts/
+/src/assets/registered_library/satellites/catch01/satellite.stl
+/src/assets/registered_library/satellites/scifi/satellite.stl

@@ -1,11 +1,61 @@
-extends: _profiles/satellite.yaml
+kind: satellite
+links:
+  base: base_link
+morph:
+  fixed: true
+  collision: false
+  merge_fixed_links: false
+  spawn:
+    position:
+    - -13.0
+    - 0.0
+    - 0.0
+    euler:
+    - 0.0
+    - 0.0
+    - 0.0
+  scale: 1.0
+material:
+  gravity_compensation: 1.0
+pid:
+  enable_pid: false
+cameras: {}
 id: uydu
-urdf: ../../assets/urdf/satellites/uydu/satellite.urdf
+urdf: ../../assets/registered_library/satellites/uydu/satellite.urdf
 grasp_sites:
-  - {id: default, link: uydu_mount, position: [0.0, 0.0, 0.0]}
+- id: body_surface_candidate
+  link: base_link
+  position:
+  - 0.15
+  - 0.15
+  - 0.4046098543457654
+  quaternion:
+  - 1.0
+  - 0.0
+  - 0.0
+  - 0.0
 mount_site:
   link: uydu_mount
-  position: [0.0, 0.0, 0.0]
+  position:
+  - 0.0
+  - 0.0
+  - 0.0
+  euler:
+  - 0.0
+  - 0.0
+  - 0.0
 parameters:
-  calibration: {status: provisional, pending: [grasp_site, pid, camera_extrinsics]}
-  mount_source: assets/urdf/satellites/uydu/mount_config.json
+  components:
+    satellite: uydu
+    manipulator: null
+  calibration:
+    status: inspection_only
+    pending:
+    - grasp_site
+    - initial_task_pose
+    - tcp
+    - pid
+    - camera_extrinsics
+  grasp_site_status: candidate_not_grasp_validated
+  asset_status: geometry_candidate
+  task_ready: false

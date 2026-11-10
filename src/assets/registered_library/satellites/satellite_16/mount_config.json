@@ -1,0 +1,39 @@
+{
+  "satellite_id": "satellite_16",
+  "mount_frame": "satellite_16_mount",
+  "mount_xyz_m": [
+    0.054587137540405395,
+    -7.8260790473016195,
+    -0.05458727652902946
+  ],
+  "mount_rpy_rad": [
+    3.1415926535897922,
+    -1.473089441440349,
+    -1.4726166555900306
+  ],
+  "source": {
+    "satellite_id": "satellite_16",
+    "source_archive": "卫星 (16)可用但长得比较科幻（blender）.zip",
+    "member": "15778541/satellite.blend",
+    "status": "converted",
+    "triangles": 76108,
+    "source_extent": [
+      54.265926361083984,
+      259.51700162887573,
+      54.265926361083984
+    ],
+    "source_sha256": "13fe55dd8e057a0debe8135cc9c260a9c0b5164b42fbd975c87abbb1cd47b691",
+    "source_to_model_scale": 0.030826496721939094
+  },
+  "surface_fit": {
+    "grid": "17x17",
+    "footprint_m": [
+      0.4,
+      0.4
+    ],
+    "coverage": 1,
+    "clearance_m": 0.002
+  },
+  "status": "automatically_screened_candidate_pending_task_and_structural_review",
+  "dynamics_ready": false
+}

@@ -1,0 +1,38 @@
+<?xml version='1.0' encoding='utf-8'?>
+<robot name="navstar">
+  <link name="base_link">
+    <visual>
+      <geometry>
+        <mesh filename="satellite.stl" />
+      </geometry>
+    </visual>
+    <collision>
+      <geometry>
+        <mesh filename="satellite.stl" />
+      </geometry>
+    </collision>
+  </link>
+  <link name="navstar_mount" />
+  <joint name="satellite_mount_fixed" type="fixed">
+    <parent link="base_link" />
+    <child link="navstar_mount" />
+    <origin xyz="-0.06259960387694356 0.04391826006281371 0.9515232222782899" rpy="-0.823698879557603 -1.5707963267948966 0.0" />
+  </joint>
+  <link name="mount_support">
+    <visual>
+      <geometry>
+        <mesh filename="mount_support.stl" />
+      </geometry>
+    </visual>
+    <collision>
+      <geometry>
+        <mesh filename="mount_support.stl" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="support_fixed" type="fixed">
+    <parent link="navstar_mount" />
+    <child link="mount_support" />
+    <origin xyz="0 0 0" rpy="0 0 0" />
+  </joint>
+</robot>

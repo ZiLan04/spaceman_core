@@ -1,0 +1,39 @@
+{
+  "satellite_id": "satellite_15",
+  "mount_frame": "satellite_15_mount",
+  "mount_xyz_m": [
+    -0.49366891630210286,
+    0.5608585823519294,
+    0.24660813695555958
+  ],
+  "mount_rpy_rad": [
+    0.0,
+    -1.079922418600288,
+    -1.5707963267948966
+  ],
+  "source": {
+    "satellite_id": "satellite_15",
+    "source_archive": "卫星 (15)可用（blender）.zip",
+    "member": "satellite.blend",
+    "status": "converted",
+    "triangles": 30720,
+    "source_extent": [
+      62.548927307128906,
+      78.85380935668945,
+      23.97219181060791
+    ],
+    "source_sha256": "c306c20e16c330768cc1db3508b83a2f7b208e76053656204b5ba5bd0a26e89e",
+    "source_to_model_scale": 0.10145356407339287
+  },
+  "surface_fit": {
+    "grid": "17x17",
+    "footprint_m": [
+      0.4,
+      0.4
+    ],
+    "coverage": 1,
+    "clearance_m": 0.002
+  },
+  "status": "automatically_screened_candidate_pending_task_and_structural_review",
+  "dynamics_ready": false
+}

@@ -1,0 +1,1001 @@
+[
+  {
+    "satellite_id": "satellite_2",
+    "checks": [
+      {
+        "finger_q_m": 0.0,
+        "check": {
+          "method": "full_mesh_AABB_tree_and_triangle_SAT",
+          "joint_pose": "all_zero",
+          "surface_intersection_found": false,
+          "narrowphase_pairs_tested": 0,
+          "first_intersection": null,
+          "exclusions": [
+            "solid containment",
+            "self collision",
+            "motion sweep",
+            "mount strength"
+          ]
+        }
+      },
+      {
+        "finger_q_m": 0.04,
+        "check": {
+          "method": "full_mesh_AABB_tree_and_triangle_SAT",
+          "joint_pose": "all_zero",
+          "surface_intersection_found": false,
+          "narrowphase_pairs_tested": 0,
+          "first_intersection": null,
+          "exclusions": [
+            "solid containment",
+            "self collision",
+            "motion sweep",
+            "mount strength"
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "satellite_id": "satellite_4",
+    "checks": [
+      {
+        "finger_q_m": 0.0,
+        "check": {
+          "method": "full_mesh_AABB_tree_and_triangle_SAT",
+          "joint_pose": "all_zero",
+          "surface_intersection_found": false,
+          "narrowphase_pairs_tested": 0,
+          "first_intersection": null,
+          "exclusions": [
+            "solid containment",
+            "self collision",
+            "motion sweep",
+            "mount strength"
+          ]
+        }
+      },
+      {
+        "finger_q_m": 0.04,
+        "check": {
+          "method": "full_mesh_AABB_tree_and_triangle_SAT",
+          "joint_pose": "all_zero",
+          "surface_intersection_found": false,
+          "narrowphase_pairs_tested": 0,
+          "first_intersection": null,
+          "exclusions": [
+            "solid containment",
+            "self collision",
+            "motion sweep",
+            "mount strength"
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "satellite_id": "satellite_5",
+    "checks": [
+      {
+        "finger_q_m": 0.0,
+        "check": {
+          "method": "full_mesh_AABB_tree_and_triangle_SAT",
+          "joint_pose": "all_zero",
+          "surface_intersection_found": false,
+          "narrowphase_pairs_tested": 0,
+          "first_intersection": null,
+          "exclusions": [
+            "solid containment",
+            "self collision",
+            "motion sweep",
+            "mount strength"
+          ]
+        }
+      },
+      {
+        "finger_q_m": 0.04,
+        "check": {
+          "method": "full_mesh_AABB_tree_and_triangle_SAT",
+          "joint_pose": "all_zero",
+          "surface_intersection_found": false,
+          "narrowphase_pairs_tested": 0,
+          "first_intersection": null,
+          "exclusions": [
+            "solid containment",
+            "self collision",
+            "motion sweep",
+            "mount strength"
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "satellite_id": "satellite_8",
+    "checks": [
+      {
+        "finger_q_m": 0.0,
+        "check": {
+          "method": "full_mesh_AABB_tree_and_triangle_SAT",
+          "joint_pose": "all_zero",
+          "surface_intersection_found": false,
+          "narrowphase_pairs_tested": 0,
+          "first_intersection": null,
+          "exclusions": [
+            "solid containment",
+            "self collision",
+            "motion sweep",
+            "mount strength"
+          ]
+        }
+      },
+      {
+        "finger_q_m": 0.04,
+        "check": {
+          "method": "full_mesh_AABB_tree_and_triangle_SAT",
+          "joint_pose": "all_zero",
+          "surface_intersection_found": false,
+          "narrowphase_pairs_tested": 0,
+          "first_intersection": null,
+          "exclusions": [
+            "solid containment",
+            "self collision",
+            "motion sweep",
+            "mount strength"
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "satellite_id": "uydu",
+    "checks": [
+      {
+        "finger_q_m": 0.0,
+        "check": {
+          "method": "full_mesh_AABB_tree_and_triangle_SAT",
+          "joint_pose": "all_zero",
+          "surface_intersection_found": false,
+          "narrowphase_pairs_tested": 0,
+          "first_intersection": null,
+          "exclusions": [
+            "solid containment",
+            "self collision",
+            "motion sweep",
+            "mount strength"
+          ]
+        }
+      },
+      {
+        "finger_q_m": 0.04,
+        "check": {
+          "method": "full_mesh_AABB_tree_and_triangle_SAT",
+          "joint_pose": "all_zero",
+          "surface_intersection_found": false,
+          "narrowphase_pairs_tested": 0,
+          "first_intersection": null,
+          "exclusions": [
+            "solid containment",
+            "self collision",
+            "motion sweep",
+            "mount strength"
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "satellite_id": "design",
+    "checks": [
+      {
+        "finger_q_m": 0.0,
+        "check": {
+          "method": "full_mesh_AABB_tree_and_triangle_SAT",
+          "joint_pose": "all_zero",
+          "surface_intersection_found": false,
+          "narrowphase_pairs_tested": 0,
+          "first_intersection": null,
+          "exclusions": [
+            "solid containment",
+            "self collision",
+            "motion sweep",
+            "mount strength"
+          ]
+        }
+      },
+      {
+        "finger_q_m": 0.04,
+        "check": {
+          "method": "full_mesh_AABB_tree_and_triangle_SAT",
+          "joint_pose": "all_zero",
+          "surface_intersection_found": false,
+          "narrowphase_pairs_tested": 0,
+          "first_intersection": null,
+          "exclusions": [
+            "solid containment",
+            "self collision",
+            "motion sweep",
+            "mount strength"
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "satellite_id": "station",
+    "checks": [
+      {
+        "finger_q_m": 0.0,
+        "check": {
+          "method": "full_mesh_AABB_tree_and_triangle_SAT",
+          "joint_pose": "all_zero",
+          "surface_intersection_found": false,
+          "narrowphase_pairs_tested": 0,
+          "first_intersection": null,
+          "exclusions": [
+            "solid containment",
+            "self collision",
+            "motion sweep",
+            "mount strength"
+          ]
+        }
+      },
+      {
+        "finger_q_m": 0.04,
+        "check": {
+          "method": "full_mesh_AABB_tree_and_triangle_SAT",
+          "joint_pose": "all_zero",
+          "surface_intersection_found": false,
+          "narrowphase_pairs_tested": 0,
+          "first_intersection": null,
+          "exclusions": [
+            "solid containment",
+            "self collision",
+            "motion sweep",
+            "mount strength"
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "satellite_id": "gps",
+    "checks": [
+      {
+        "finger_q_m": 0.0,
+        "check": {
+          "method": "full_mesh_AABB_tree_and_triangle_SAT",
+          "joint_pose": "all_zero",
+          "surface_intersection_found": false,
+          "narrowphase_pairs_tested": 56,
+          "first_intersection": null,
+          "exclusions": [
+            "solid containment",
+            "self collision",
+            "motion sweep",
+            "mount strength"
+          ]
+        }
+      },
+      {
+        "finger_q_m": 0.04,
+        "check": {
+          "method": "full_mesh_AABB_tree_and_triangle_SAT",
+          "joint_pose": "all_zero",
+          "surface_intersection_found": false,
+          "narrowphase_pairs_tested": 0,
+          "first_intersection": null,
+          "exclusions": [
+            "solid containment",
+            "self collision",
+            "motion sweep",
+            "mount strength"
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "satellite_id": "artificial2",
+    "checks": [
+      {
+        "finger_q_m": 0.0,
+        "check": {
+          "method": "full_mesh_AABB_tree_and_triangle_SAT",
+          "joint_pose": "all_zero",
+          "surface_intersection_found": false,
+          "narrowphase_pairs_tested": 0,
+          "first_intersection": null,
+          "exclusions": [
+            "solid containment",
+            "self collision",
+            "motion sweep",
+            "mount strength"
+          ]
+        }
+      },
+      {
+        "finger_q_m": 0.04,
+        "check": {
+          "method": "full_mesh_AABB_tree_and_triangle_SAT",
+          "joint_pose": "all_zero",
+          "surface_intersection_found": false,
+          "narrowphase_pairs_tested": 0,
+          "first_intersection": null,
+          "exclusions": [
+            "solid containment",
+            "self collision",
+            "motion sweep",
+            "mount strength"
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "satellite_id": "satellite_12",
+    "checks": [
+      {
+        "finger_q_m": 0.0,
+        "check": {
+          "method": "full_mesh_AABB_tree_and_triangle_SAT",
+          "joint_pose": "all_zero",
+          "surface_intersection_found": false,
+          "narrowphase_pairs_tested": 0,
+          "first_intersection": null,
+          "exclusions": [
+            "solid containment",
+            "self collision",
+            "motion sweep",
+            "mount strength"
+          ]
+        }
+      },
+      {
+        "finger_q_m": 0.04,
+        "check": {
+          "method": "full_mesh_AABB_tree_and_triangle_SAT",
+          "joint_pose": "all_zero",
+          "surface_intersection_found": false,
+          "narrowphase_pairs_tested": 0,
+          "first_intersection": null,
+          "exclusions": [
+            "solid containment",
+            "self collision",
+            "motion sweep",
+            "mount strength"
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "satellite_id": "satellite_13",
+    "checks": [
+      {
+        "finger_q_m": 0.0,
+        "check": {
+          "method": "full_mesh_AABB_tree_and_triangle_SAT",
+          "joint_pose": "all_zero",
+          "surface_intersection_found": false,
+          "narrowphase_pairs_tested": 0,
+          "first_intersection": null,
+          "exclusions": [
+            "solid containment",
+            "self collision",
+            "motion sweep",
+            "mount strength"
+          ]
+        }
+      },
+      {
+        "finger_q_m": 0.04,
+        "check": {
+          "method": "full_mesh_AABB_tree_and_triangle_SAT",
+          "joint_pose": "all_zero",
+          "surface_intersection_found": false,
+          "narrowphase_pairs_tested": 0,
+          "first_intersection": null,
+          "exclusions": [
+            "solid containment",
+            "self collision",
+            "motion sweep",
+            "mount strength"
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "satellite_id": "satellite_9",
+    "checks": [
+      {
+        "finger_q_m": 0.0,
+        "check": {
+          "method": "full_mesh_AABB_tree_and_triangle_SAT",
+          "joint_pose": "all_zero",
+          "surface_intersection_found": false,
+          "narrowphase_pairs_tested": 0,
+          "first_intersection": null,
+          "exclusions": [
+            "solid containment",
+            "self collision",
+            "motion sweep",
+            "mount strength"
+          ]
+        }
+      },
+      {
+        "finger_q_m": 0.04,
+        "check": {
+          "method": "full_mesh_AABB_tree_and_triangle_SAT",
+          "joint_pose": "all_zero",
+          "surface_intersection_found": false,
+          "narrowphase_pairs_tested": 0,
+          "first_intersection": null,
+          "exclusions": [
+            "solid containment",
+            "self collision",
+            "motion sweep",
+            "mount strength"
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "satellite_id": "navstar",
+    "checks": [
+      {
+        "finger_q_m": 0.0,
+        "check": {
+          "method": "full_mesh_AABB_tree_and_triangle_SAT",
+          "joint_pose": "all_zero",
+          "surface_intersection_found": false,
+          "narrowphase_pairs_tested": 0,
+          "first_intersection": null,
+          "exclusions": [
+            "solid containment",
+            "self collision",
+            "motion sweep",
+            "mount strength"
+          ]
+        }
+      },
+      {
+        "finger_q_m": 0.04,
+        "check": {
+          "method": "full_mesh_AABB_tree_and_triangle_SAT",
+          "joint_pose": "all_zero",
+          "surface_intersection_found": false,
+          "narrowphase_pairs_tested": 0,
+          "first_intersection": null,
+          "exclusions": [
+            "solid containment",
+            "self collision",
+            "motion sweep",
+            "mount strength"
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "satellite_id": "satellite_15",
+    "checks": [
+      {
+        "finger_q_m": 0.0,
+        "check": {
+          "method": "full_mesh_AABB_tree_and_triangle_SAT",
+          "joint_pose": "all_zero",
+          "surface_intersection_found": false,
+          "narrowphase_pairs_tested": 0,
+          "first_intersection": null,
+          "exclusions": [
+            "solid containment",
+            "self collision",
+            "motion sweep",
+            "mount strength"
+          ]
+        }
+      },
+      {
+        "finger_q_m": 0.04,
+        "check": {
+          "method": "full_mesh_AABB_tree_and_triangle_SAT",
+          "joint_pose": "all_zero",
+          "surface_intersection_found": false,
+          "narrowphase_pairs_tested": 0,
+          "first_intersection": null,
+          "exclusions": [
+            "solid containment",
+            "self collision",
+            "motion sweep",
+            "mount strength"
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "satellite_id": "satellite_16",
+    "checks": [
+      {
+        "finger_q_m": 0.0,
+        "check": {
+          "method": "full_mesh_AABB_tree_and_triangle_SAT",
+          "joint_pose": "all_zero",
+          "surface_intersection_found": false,
+          "narrowphase_pairs_tested": 0,
+          "first_intersection": null,
+          "exclusions": [
+            "solid containment",
+            "self collision",
+            "motion sweep",
+            "mount strength"
+          ]
+        }
+      },
+      {
+        "finger_q_m": 0.04,
+        "check": {
+          "method": "full_mesh_AABB_tree_and_triangle_SAT",
+          "joint_pose": "all_zero",
+          "surface_intersection_found": false,
+          "narrowphase_pairs_tested": 0,
+          "first_intersection": null,
+          "exclusions": [
+            "solid containment",
+            "self collision",
+            "motion sweep",
+            "mount strength"
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "satellite_id": "scifi",
+    "checks": [
+      {
+        "finger_q_m": 0.0,
+        "check": {
+          "method": "full_mesh_AABB_tree_and_triangle_SAT",
+          "joint_pose": "all_zero",
+          "surface_intersection_found": false,
+          "narrowphase_pairs_tested": 0,
+          "first_intersection": null,
+          "exclusions": [
+            "solid containment",
+            "self collision",
+            "motion sweep",
+            "mount strength"
+          ]
+        }
+      },
+      {
+        "finger_q_m": 0.04,
+        "check": {
+          "method": "full_mesh_AABB_tree_and_triangle_SAT",
+          "joint_pose": "all_zero",
+          "surface_intersection_found": false,
+          "narrowphase_pairs_tested": 0,
+          "first_intersection": null,
+          "exclusions": [
+            "solid containment",
+            "self collision",
+            "motion sweep",
+            "mount strength"
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "satellite_id": "solidworks_satellite",
+    "checks": [
+      {
+        "finger_q_m": 0.0,
+        "check": {
+          "method": "full_mesh_AABB_tree_and_triangle_SAT",
+          "joint_pose": "all_zero",
+          "surface_intersection_found": false,
+          "narrowphase_pairs_tested": 0,
+          "first_intersection": null,
+          "exclusions": [
+            "solid containment",
+            "self collision",
+            "motion sweep",
+            "mount strength"
+          ]
+        }
+      },
+      {
+        "finger_q_m": 0.04,
+        "check": {
+          "method": "full_mesh_AABB_tree_and_triangle_SAT",
+          "joint_pose": "all_zero",
+          "surface_intersection_found": false,
+          "narrowphase_pairs_tested": 0,
+          "first_intersection": null,
+          "exclusions": [
+            "solid containment",
+            "self collision",
+            "motion sweep",
+            "mount strength"
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "satellite_id": "satellite_14",
+    "checks": [
+      {
+        "finger_q_m": 0.0,
+        "check": {
+          "method": "full_mesh_AABB_tree_and_triangle_SAT",
+          "joint_pose": "all_zero",
+          "surface_intersection_found": false,
+          "narrowphase_pairs_tested": 0,
+          "first_intersection": null,
+          "exclusions": [
+            "solid containment",
+            "self collision",
+            "motion sweep",
+            "mount strength"
+          ]
+        }
+      },
+      {
+        "finger_q_m": 0.04,
+        "check": {
+          "method": "full_mesh_AABB_tree_and_triangle_SAT",
+          "joint_pose": "all_zero",
+          "surface_intersection_found": false,
+          "narrowphase_pairs_tested": 0,
+          "first_intersection": null,
+          "exclusions": [
+            "solid containment",
+            "self collision",
+            "motion sweep",
+            "mount strength"
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "satellite_id": "satellite_sb1",
+    "checks": [
+      {
+        "finger_q_m": 0.0,
+        "check": {
+          "method": "full_mesh_AABB_tree_and_triangle_SAT",
+          "joint_pose": "all_zero",
+          "surface_intersection_found": false,
+          "narrowphase_pairs_tested": 0,
+          "first_intersection": null,
+          "exclusions": [
+            "solid containment",
+            "self collision",
+            "motion sweep",
+            "mount strength"
+          ]
+        }
+      },
+      {
+        "finger_q_m": 0.04,
+        "check": {
+          "method": "full_mesh_AABB_tree_and_triangle_SAT",
+          "joint_pose": "all_zero",
+          "surface_intersection_found": false,
+          "narrowphase_pairs_tested": 0,
+          "first_intersection": null,
+          "exclusions": [
+            "solid containment",
+            "self collision",
+            "motion sweep",
+            "mount strength"
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "satellite_id": "satellite_model1",
+    "checks": [
+      {
+        "finger_q_m": 0.0,
+        "check": {
+          "method": "full_mesh_AABB_tree_and_triangle_SAT",
+          "joint_pose": "all_zero",
+          "surface_intersection_found": false,
+          "narrowphase_pairs_tested": 0,
+          "first_intersection": null,
+          "exclusions": [
+            "solid containment",
+            "self collision",
+            "motion sweep",
+            "mount strength"
+          ]
+        }
+      },
+      {
+        "finger_q_m": 0.04,
+        "check": {
+          "method": "full_mesh_AABB_tree_and_triangle_SAT",
+          "joint_pose": "all_zero",
+          "surface_intersection_found": false,
+          "narrowphase_pairs_tested": 0,
+          "first_intersection": null,
+          "exclusions": [
+            "solid containment",
+            "self collision",
+            "motion sweep",
+            "mount strength"
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "satellite_id": "catch01",
+    "checks": [
+      {
+        "finger_q_m": 0.0,
+        "check": {
+          "method": "full_mesh_AABB_tree_and_triangle_SAT",
+          "joint_pose": "all_zero",
+          "surface_intersection_found": false,
+          "narrowphase_pairs_tested": 0,
+          "first_intersection": null,
+          "exclusions": [
+            "solid containment",
+            "self collision",
+            "motion sweep",
+            "mount strength"
+          ]
+        }
+      },
+      {
+        "finger_q_m": 0.04,
+        "check": {
+          "method": "full_mesh_AABB_tree_and_triangle_SAT",
+          "joint_pose": "all_zero",
+          "surface_intersection_found": false,
+          "narrowphase_pairs_tested": 0,
+          "first_intersection": null,
+          "exclusions": [
+            "solid containment",
+            "self collision",
+            "motion sweep",
+            "mount strength"
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "satellite_id": "artificial1",
+    "checks": [
+      {
+        "finger_q_m": 0.0,
+        "check": {
+          "method": "full_mesh_AABB_tree_and_triangle_SAT",
+          "joint_pose": "all_zero",
+          "surface_intersection_found": false,
+          "narrowphase_pairs_tested": 186192,
+          "first_intersection": null,
+          "exclusions": [
+            "solid containment",
+            "self collision",
+            "motion sweep",
+            "mount strength"
+          ]
+        }
+      },
+      {
+        "finger_q_m": 0.04,
+        "check": {
+          "method": "full_mesh_AABB_tree_and_triangle_SAT",
+          "joint_pose": "all_zero",
+          "surface_intersection_found": false,
+          "narrowphase_pairs_tested": 186192,
+          "first_intersection": null,
+          "exclusions": [
+            "solid containment",
+            "self collision",
+            "motion sweep",
+            "mount strength"
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "satellite_id": "satellite_6",
+    "checks": [
+      {
+        "finger_q_m": 0.0,
+        "check": {
+          "method": "full_mesh_AABB_tree_and_triangle_SAT",
+          "joint_pose": "all_zero",
+          "surface_intersection_found": false,
+          "narrowphase_pairs_tested": 0,
+          "first_intersection": null,
+          "exclusions": [
+            "solid containment",
+            "self collision",
+            "motion sweep",
+            "mount strength"
+          ]
+        }
+      },
+      {
+        "finger_q_m": 0.04,
+        "check": {
+          "method": "full_mesh_AABB_tree_and_triangle_SAT",
+          "joint_pose": "all_zero",
+          "surface_intersection_found": false,
+          "narrowphase_pairs_tested": 0,
+          "first_intersection": null,
+          "exclusions": [
+            "solid containment",
+            "self collision",
+            "motion sweep",
+            "mount strength"
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "satellite_id": "sputnik",
+    "checks": [
+      {
+        "finger_q_m": 0.0,
+        "check": {
+          "method": "full_mesh_AABB_tree_and_triangle_SAT",
+          "joint_pose": "all_zero",
+          "surface_intersection_found": false,
+          "narrowphase_pairs_tested": 0,
+          "first_intersection": null,
+          "exclusions": [
+            "solid containment",
+            "self collision",
+            "motion sweep",
+            "mount strength"
+          ]
+        }
+      },
+      {
+        "finger_q_m": 0.04,
+        "check": {
+          "method": "full_mesh_AABB_tree_and_triangle_SAT",
+          "joint_pose": "all_zero",
+          "surface_intersection_found": false,
+          "narrowphase_pairs_tested": 0,
+          "first_intersection": null,
+          "exclusions": [
+            "solid containment",
+            "self collision",
+            "motion sweep",
+            "mount strength"
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "satellite_id": "satellite_17",
+    "checks": [
+      {
+        "finger_q_m": 0.0,
+        "check": {
+          "method": "full_mesh_AABB_tree_and_triangle_SAT",
+          "joint_pose": "all_zero",
+          "surface_intersection_found": false,
+          "narrowphase_pairs_tested": 0,
+          "first_intersection": null,
+          "exclusions": [
+            "solid containment",
+            "self collision",
+            "motion sweep",
+            "mount strength"
+          ]
+        }
+      },
+      {
+        "finger_q_m": 0.04,
+        "check": {
+          "method": "full_mesh_AABB_tree_and_triangle_SAT",
+          "joint_pose": "all_zero",
+          "surface_intersection_found": false,
+          "narrowphase_pairs_tested": 0,
+          "first_intersection": null,
+          "exclusions": [
+            "solid containment",
+            "self collision",
+            "motion sweep",
+            "mount strength"
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "satellite_id": "legacy10",
+    "checks": [
+      {
+        "finger_q_m": 0.0,
+        "check": {
+          "method": "full_mesh_AABB_tree_and_triangle_SAT",
+          "joint_pose": "all_zero",
+          "surface_intersection_found": false,
+          "narrowphase_pairs_tested": 0,
+          "first_intersection": null,
+          "exclusions": [
+            "solid containment",
+            "self collision",
+            "motion sweep",
+            "mount strength"
+          ]
+        }
+      },
+      {
+        "finger_q_m": 0.04,
+        "check": {
+          "method": "full_mesh_AABB_tree_and_triangle_SAT",
+          "joint_pose": "all_zero",
+          "surface_intersection_found": false,
+          "narrowphase_pairs_tested": 0,
+          "first_intersection": null,
+          "exclusions": [
+            "solid containment",
+            "self collision",
+            "motion sweep",
+            "mount strength"
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "satellite_id": "satellite_11",
+    "checks": [
+      {
+        "finger_q_m": 0.0,
+        "check": {
+          "method": "full_mesh_AABB_tree_and_triangle_SAT",
+          "joint_pose": "all_zero",
+          "surface_intersection_found": false,
+          "narrowphase_pairs_tested": 0,
+          "first_intersection": null,
+          "exclusions": [
+            "solid containment",
+            "self collision",
+            "motion sweep",
+            "mount strength"
+          ]
+        }
+      },
+      {
+        "finger_q_m": 0.04,
+        "check": {
+          "method": "full_mesh_AABB_tree_and_triangle_SAT",
+          "joint_pose": "all_zero",
+          "surface_intersection_found": false,
+          "narrowphase_pairs_tested": 0,
+          "first_intersection": null,
+          "exclusions": [
+            "solid containment",
+            "self collision",
+            "motion sweep",
+            "mount strength"
+          ]
+        }
+      }
+    ]
+  }
+]

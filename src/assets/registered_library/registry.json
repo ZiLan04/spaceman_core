@@ -1,0 +1,5405 @@
+{
+  "schema_version": 2,
+  "purpose": "static geometry composition, not dynamic simulation-ready",
+  "units": {
+    "length": "meter",
+    "angle": "radian"
+  },
+  "transform_contract": "T_satellite_arm_root = T_satellite_mount @ T_mount_arm_root",
+  "rpy_convention": "Rz(yaw) @ Ry(pitch) @ Rx(roll)",
+  "satellites": [
+    {
+      "satellite_id": "satellite_2",
+      "display_name": "卫星 2",
+      "satellite_urdf": "satellites/satellite_2/satellite.urdf",
+      "mount_config": "satellites/satellite_2/mount_config.json",
+      "scale_status": "user selected uniform mesh scale 0.011",
+      "source": "previous handoff reviewed mount",
+      "state": "geometry_candidate"
+    },
+    {
+      "satellite_id": "satellite_4",
+      "display_name": "卫星 4",
+      "satellite_urdf": "satellites/satellite_4/satellite.urdf",
+      "mount_config": "satellites/satellite_4/mount_config.json",
+      "scale_status": "glTF metre convention; real spacecraft dimensions unverified",
+      "source": "previous handoff reviewed mount",
+      "state": "geometry_candidate"
+    },
+    {
+      "satellite_id": "satellite_5",
+      "display_name": "卫星 5（顶部修订版）",
+      "satellite_urdf": "satellites/satellite_5/satellite.urdf",
+      "mount_config": "satellites/satellite_5/mount_config.json",
+      "scale_status": "prior provisional size, unconfirmed",
+      "source": "previous handoff reviewed mount",
+      "state": "geometry_candidate"
+    },
+    {
+      "satellite_id": "satellite_8",
+      "display_name": "卫星 8（三棱柱侧面修订版）",
+      "satellite_urdf": "satellites/satellite_8/satellite.urdf",
+      "mount_config": "satellites/satellite_8/mount_config.json",
+      "scale_status": "prior provisional size, unconfirmed",
+      "source": "previous handoff reviewed mount",
+      "state": "geometry_candidate"
+    },
+    {
+      "satellite_id": "uydu",
+      "display_name": "卫星-UYDU",
+      "satellite_urdf": "satellites/uydu/satellite.urdf",
+      "mount_config": "satellites/uydu/mount_config.json",
+      "scale_status": "provisional simulation normalization: maximum source extent -> 8 m; not real spacecraft dimensions",
+      "source": "local source archive / sources/provenance.json",
+      "state": "geometry_candidate"
+    },
+    {
+      "satellite_id": "design",
+      "display_name": "卫星设计",
+      "satellite_urdf": "satellites/design/satellite.urdf",
+      "mount_config": "satellites/design/mount_config.json",
+      "scale_status": "provisional simulation normalization: maximum source extent -> 8 m; not real spacecraft dimensions",
+      "source": "local source archive / sources/provenance.json",
+      "state": "geometry_candidate"
+    },
+    {
+      "satellite_id": "station",
+      "display_name": "卫星空间站",
+      "satellite_urdf": "satellites/station/satellite.urdf",
+      "mount_config": "satellites/station/mount_config.json",
+      "scale_status": "provisional simulation normalization: maximum source extent -> 8 m; not real spacecraft dimensions",
+      "source": "local source archive / sources/provenance.json",
+      "state": "geometry_candidate"
+    },
+    {
+      "satellite_id": "gps",
+      "display_name": "全球定位系统卫星",
+      "satellite_urdf": "satellites/gps/satellite.urdf",
+      "mount_config": "satellites/gps/mount_config.json",
+      "scale_status": "provisional simulation normalization: maximum source extent -> 8 m; not real spacecraft dimensions",
+      "source": "local source archive / sources/provenance.json",
+      "state": "geometry_candidate"
+    },
+    {
+      "satellite_id": "artificial2",
+      "display_name": "人造卫星 (2)",
+      "satellite_urdf": "satellites/artificial2/satellite.urdf",
+      "mount_config": "satellites/artificial2/mount_config.json",
+      "scale_status": "provisional simulation normalization: maximum source extent -> 8 m; not real spacecraft dimensions",
+      "source": "local source archive / sources/provenance.json",
+      "state": "geometry_candidate"
+    },
+    {
+      "satellite_id": "legacy10",
+      "display_name": "卫星 (10)",
+      "satellite_urdf": "satellites/legacy10/satellite.urdf",
+      "mount_config": "satellites/legacy10/mount_config.json",
+      "scale_status": "provisional simulation normalization: maximum source extent -> 8 m; not real spacecraft dimensions",
+      "source": "local source archive / sources/provenance.json",
+      "state": "geometry_candidate"
+    },
+    {
+      "satellite_id": "satellite_11",
+      "display_name": "卫星 (11)可用.zip",
+      "satellite_urdf": "satellites/satellite_11/satellite.urdf",
+      "mount_config": "satellites/satellite_11/mount_config.json",
+      "scale_status": "uniform maximum extent 8 m; provisional simulation size",
+      "state": "automatically_screened_candidate_pending_task_and_structural_review"
+    },
+    {
+      "satellite_id": "satellite_12",
+      "display_name": "卫星 (12)可用.zip",
+      "satellite_urdf": "satellites/satellite_12/satellite.urdf",
+      "mount_config": "satellites/satellite_12/mount_config.json",
+      "scale_status": "uniform maximum extent 8 m; provisional simulation size",
+      "state": "automatically_screened_candidate_pending_task_and_structural_review"
+    },
+    {
+      "satellite_id": "satellite_13",
+      "display_name": "卫星 (13)可用.zip",
+      "satellite_urdf": "satellites/satellite_13/satellite.urdf",
+      "mount_config": "satellites/satellite_13/mount_config.json",
+      "scale_status": "uniform maximum extent 8 m; provisional simulation size",
+      "state": "automatically_screened_candidate_pending_task_and_structural_review"
+    },
+    {
+      "satellite_id": "satellite_9",
+      "display_name": "卫星 (9)可用.zip",
+      "satellite_urdf": "satellites/satellite_9/satellite.urdf",
+      "mount_config": "satellites/satellite_9/mount_config.json",
+      "scale_status": "uniform maximum extent 8 m; provisional simulation size",
+      "state": "automatically_screened_candidate_pending_task_and_structural_review"
+    },
+    {
+      "satellite_id": "navstar",
+      "display_name": "导航卫星GPS卫星可用.zip",
+      "satellite_urdf": "satellites/navstar/satellite.urdf",
+      "mount_config": "satellites/navstar/mount_config.json",
+      "scale_status": "uniform maximum extent 8 m; provisional simulation size",
+      "state": "automatically_screened_candidate_pending_task_and_structural_review"
+    },
+    {
+      "satellite_id": "satellite_15",
+      "display_name": "卫星 (15)可用（blender）.zip",
+      "satellite_urdf": "satellites/satellite_15/satellite.urdf",
+      "mount_config": "satellites/satellite_15/mount_config.json",
+      "scale_status": "uniform maximum extent 8 m; provisional simulation size",
+      "state": "automatically_screened_candidate_pending_task_and_structural_review"
+    },
+    {
+      "satellite_id": "satellite_16",
+      "display_name": "卫星 (16)可用但长得比较科幻（blender）.zip",
+      "satellite_urdf": "satellites/satellite_16/satellite.urdf",
+      "mount_config": "satellites/satellite_16/mount_config.json",
+      "scale_status": "uniform maximum extent 8 m; provisional simulation size",
+      "state": "automatically_screened_candidate_pending_task_and_structural_review"
+    },
+    {
+      "satellite_id": "scifi",
+      "display_name": "SciFi卫星可用。.zip",
+      "satellite_urdf": "satellites/scifi/satellite.urdf",
+      "mount_config": "satellites/scifi/mount_config.json",
+      "scale_status": "uniform maximum extent 8 m; provisional simulation size",
+      "state": "automatically_screened_candidate_pending_task_and_structural_review"
+    },
+    {
+      "satellite_id": "sputnik",
+      "display_name": "斯普特尼克卫星可用.zip",
+      "satellite_urdf": "satellites/sputnik/satellite.urdf",
+      "mount_config": "satellites/sputnik/mount_config.json",
+      "scale_status": "uniform maximum extent 8 m; provisional simulation size",
+      "state": "automatically_screened_candidate_pending_task_and_structural_review"
+    },
+    {
+      "satellite_id": "solidworks_satellite",
+      "display_name": "solidworks中的卫星模型可用.zip",
+      "satellite_urdf": "satellites/solidworks_satellite/satellite.urdf",
+      "mount_config": "satellites/solidworks_satellite/mount_config.json",
+      "scale_status": "uniform maximum extent 8 m; provisional simulation size",
+      "state": "automatically_screened_candidate_pending_task_and_structural_review"
+    },
+    {
+      "satellite_id": "satellite_14",
+      "display_name": "卫星 (14)可用.zip",
+      "satellite_urdf": "satellites/satellite_14/satellite.urdf",
+      "mount_config": "satellites/satellite_14/mount_config.json",
+      "scale_status": "uniform maximum extent 8 m; provisional simulation size",
+      "state": "automatically_screened_candidate_pending_task_and_structural_review"
+    },
+    {
+      "satellite_id": "satellite_sb1",
+      "display_name": "卫星SB1可用.zip",
+      "satellite_urdf": "satellites/satellite_sb1/satellite.urdf",
+      "mount_config": "satellites/satellite_sb1/mount_config.json",
+      "scale_status": "uniform maximum extent 8 m; provisional simulation size",
+      "state": "automatically_screened_candidate_pending_task_and_structural_review"
+    },
+    {
+      "satellite_id": "satellite_model1",
+      "display_name": "卫星模型 (1)可用.zip",
+      "satellite_urdf": "satellites/satellite_model1/satellite.urdf",
+      "mount_config": "satellites/satellite_model1/mount_config.json",
+      "scale_status": "uniform maximum extent 8 m; provisional simulation size",
+      "state": "automatically_screened_candidate_pending_task_and_structural_review"
+    },
+    {
+      "satellite_id": "catch01",
+      "display_name": "catch01_zy_20260902_asm.stp",
+      "satellite_urdf": "satellites/catch01/satellite.urdf",
+      "mount_config": "satellites/catch01/mount_config.json",
+      "scale_status": "uniform maximum extent 8 m; provisional simulation size",
+      "state": "automatically_screened_candidate_pending_task_and_structural_review",
+      "asset_status": "native_STEP_recovery_12_unmeshed_faces",
+      "source_geometry_complete": false
+    },
+    {
+      "satellite_id": "satellite_17",
+      "display_name": "卫星 (17)可用.zip",
+      "satellite_urdf": "satellites/satellite_17/satellite.urdf",
+      "mount_config": "satellites/satellite_17/mount_config.json",
+      "scale_status": "uniform maximum extent 8 m; provisional simulation size",
+      "state": "automatically_screened_candidate_pending_task_and_structural_review",
+      "asset_status": "dedicated_support_geometry_candidate",
+      "structural_validation": false
+    },
+    {
+      "satellite_id": "artificial1",
+      "display_name": "人造卫星 (1)可用.zip",
+      "satellite_urdf": "satellites/artificial1/satellite.urdf",
+      "mount_config": "satellites/artificial1/mount_config.json",
+      "scale_status": "uniform maximum extent 8 m; provisional simulation size",
+      "state": "automatically_screened_candidate_pending_task_and_structural_review"
+    },
+    {
+      "satellite_id": "satellite_6",
+      "display_name": "卫星 (6)可以预览部分模型，但是应该需要组装.zip",
+      "satellite_urdf": "satellites/satellite_6/satellite.urdf",
+      "mount_config": "satellites/satellite_6/mount_config.json",
+      "scale_status": "uniform maximum extent 8 m; provisional simulation size",
+      "state": "automatically_screened_candidate_pending_task_and_structural_review",
+      "asset_status": "partial_assembly_experimental",
+      "default_training_eligible": false
+    }
+  ],
+  "arms": [
+    {
+      "arm_id": "starlink_sldasm9",
+      "urdf": "arms/starlink_sldasm9/arm.urdf",
+      "root_link": "starlink_space_manipulator_base_link",
+      "dof": 6,
+      "end_effector": "Kinova rotary two-finger, 2x simulation variant",
+      "scope": "existing user supplied arm",
+      "tcp_frame": "angular_tcp"
+    },
+    {
+      "arm_id": "airbus_vispa",
+      "urdf": "arms/airbus_vispa/arm.urdf",
+      "root_link": "vispa_Link_0",
+      "dof": 6,
+      "end_effector": "Kinova rotary two-finger, 2x simulation variant",
+      "scope": "uniformly enlarged simulation VISPA variant; original physical specification does not apply",
+      "geometric_scale_applied": 1.5853911802073728,
+      "dynamics_ready": false,
+      "tcp_frame": "angular_tcp",
+      "gripper_control": "arms/airbus_vispa/gripper_control.json"
+    }
+  ],
+  "pairs": [
+    {
+      "satellite_id": "satellite_2",
+      "arm_id": "starlink_sldasm9",
+      "mount_frame": "A_upper_plus_x_mount",
+      "mount_to_arm_root_xyz_m": [
+        0.009087204933166504,
+        0.008519247174263,
+        0.1500000020861624
+      ],
+      "mount_to_arm_root_rpy_rad": [
+        -1.5707963267948966,
+        0,
+        0
+      ],
+      "assembly": "combinations/satellite_2__starlink_sldasm9.urdf",
+      "static_surface_check": {
+        "method": "full_mesh_AABB_tree_and_triangle_SAT",
+        "joint_pose": "all_zero",
+        "surface_intersection_found": false,
+        "narrowphase_pairs_tested": 0,
+        "first_intersection": null,
+        "exclusions": [
+          "solid containment",
+          "self collision",
+          "motion sweep",
+          "mount strength"
+        ]
+      },
+      "support_surface_check": {
+        "method": "full_mesh_AABB_tree_and_triangle_SAT",
+        "joint_pose": "all_zero",
+        "surface_intersection_found": false,
+        "narrowphase_pairs_tested": 0,
+        "first_intersection": null,
+        "exclusions": [
+          "solid containment",
+          "self collision",
+          "motion sweep",
+          "mount strength"
+        ]
+      },
+      "status": "angular_endpoints_surface_clear",
+      "dynamics_ready": false,
+      "angular_surface_checks": [
+        {
+          "u": 0,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        },
+        {
+          "u": 1,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "satellite_id": "satellite_2",
+      "arm_id": "airbus_vispa",
+      "mount_frame": "A_upper_plus_x_mount",
+      "mount_to_arm_root_xyz_m": [
+        -0.0039634800766936845,
+        -5.90604237737935e-09,
+        0.047683128567564514
+      ],
+      "mount_to_arm_root_rpy_rad": [
+        0,
+        0,
+        0.0
+      ],
+      "assembly": "combinations/satellite_2__airbus_vispa.urdf",
+      "static_surface_check": {
+        "method": "full_mesh_AABB_tree_and_triangle_SAT",
+        "joint_pose": "all_zero",
+        "surface_intersection_found": false,
+        "narrowphase_pairs_tested": 0,
+        "first_intersection": null,
+        "exclusions": [
+          "solid containment",
+          "self collision",
+          "motion sweep",
+          "mount strength"
+        ]
+      },
+      "support_surface_check": {
+        "method": "full_mesh_AABB_tree_and_triangle_SAT",
+        "joint_pose": "all_zero",
+        "surface_intersection_found": false,
+        "narrowphase_pairs_tested": 0,
+        "first_intersection": null,
+        "exclusions": [
+          "solid containment",
+          "self collision",
+          "motion sweep",
+          "mount strength"
+        ]
+      },
+      "status": "angular_endpoints_surface_clear",
+      "dynamics_ready": false,
+      "gripper_surface_check": [
+        {
+          "finger_q_m": 0.0,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        },
+        {
+          "finger_q_m": 0.04,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        }
+      ],
+      "angular_surface_checks": [
+        {
+          "u": 0,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        },
+        {
+          "u": 1,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "satellite_id": "satellite_4",
+      "arm_id": "starlink_sldasm9",
+      "mount_frame": "satellite_4_mount",
+      "mount_to_arm_root_xyz_m": [
+        0.009087204933166504,
+        0.008519247174263,
+        0.15000000208616263
+      ],
+      "mount_to_arm_root_rpy_rad": [
+        -1.5707963267948966,
+        0,
+        0
+      ],
+      "assembly": "combinations/satellite_4__starlink_sldasm9.urdf",
+      "static_surface_check": {
+        "method": "full_mesh_AABB_tree_and_triangle_SAT",
+        "joint_pose": "all_zero",
+        "surface_intersection_found": false,
+        "narrowphase_pairs_tested": 0,
+        "first_intersection": null,
+        "exclusions": [
+          "solid containment",
+          "self collision",
+          "motion sweep",
+          "mount strength"
+        ]
+      },
+      "support_surface_check": {
+        "method": "full_mesh_AABB_tree_and_triangle_SAT",
+        "joint_pose": "all_zero",
+        "surface_intersection_found": false,
+        "narrowphase_pairs_tested": 0,
+        "first_intersection": null,
+        "exclusions": [
+          "solid containment",
+          "self collision",
+          "motion sweep",
+          "mount strength"
+        ]
+      },
+      "status": "angular_endpoints_surface_clear",
+      "dynamics_ready": false,
+      "angular_surface_checks": [
+        {
+          "u": 0,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        },
+        {
+          "u": 1,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "satellite_id": "satellite_4",
+      "arm_id": "airbus_vispa",
+      "mount_frame": "satellite_4_mount",
+      "mount_to_arm_root_xyz_m": [
+        -0.0039634800766936845,
+        -5.90604237737935e-09,
+        0.047683128567564736
+      ],
+      "mount_to_arm_root_rpy_rad": [
+        0,
+        0,
+        0.0
+      ],
+      "assembly": "combinations/satellite_4__airbus_vispa.urdf",
+      "static_surface_check": {
+        "method": "full_mesh_AABB_tree_and_triangle_SAT",
+        "joint_pose": "all_zero",
+        "surface_intersection_found": false,
+        "narrowphase_pairs_tested": 0,
+        "first_intersection": null,
+        "exclusions": [
+          "solid containment",
+          "self collision",
+          "motion sweep",
+          "mount strength"
+        ]
+      },
+      "support_surface_check": {
+        "method": "full_mesh_AABB_tree_and_triangle_SAT",
+        "joint_pose": "all_zero",
+        "surface_intersection_found": false,
+        "narrowphase_pairs_tested": 0,
+        "first_intersection": null,
+        "exclusions": [
+          "solid containment",
+          "self collision",
+          "motion sweep",
+          "mount strength"
+        ]
+      },
+      "status": "angular_endpoints_surface_clear",
+      "dynamics_ready": false,
+      "gripper_surface_check": [
+        {
+          "finger_q_m": 0.0,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        },
+        {
+          "finger_q_m": 0.04,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        }
+      ],
+      "angular_surface_checks": [
+        {
+          "u": 0,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        },
+        {
+          "u": 1,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "satellite_id": "satellite_5",
+      "arm_id": "starlink_sldasm9",
+      "mount_frame": "satellite_5_mount",
+      "mount_to_arm_root_xyz_m": [
+        0.009087204933166504,
+        0.008519247174263,
+        0.15000000141561035
+      ],
+      "mount_to_arm_root_rpy_rad": [
+        -1.5707963267948966,
+        0,
+        0
+      ],
+      "assembly": "combinations/satellite_5__starlink_sldasm9.urdf",
+      "static_surface_check": {
+        "method": "full_mesh_AABB_tree_and_triangle_SAT",
+        "joint_pose": "all_zero",
+        "surface_intersection_found": false,
+        "narrowphase_pairs_tested": 0,
+        "first_intersection": null,
+        "exclusions": [
+          "solid containment",
+          "self collision",
+          "motion sweep",
+          "mount strength"
+        ]
+      },
+      "support_surface_check": {
+        "method": "full_mesh_AABB_tree_and_triangle_SAT",
+        "joint_pose": "all_zero",
+        "surface_intersection_found": false,
+        "narrowphase_pairs_tested": 0,
+        "first_intersection": null,
+        "exclusions": [
+          "solid containment",
+          "self collision",
+          "motion sweep",
+          "mount strength"
+        ]
+      },
+      "status": "angular_endpoints_surface_clear",
+      "dynamics_ready": false,
+      "angular_surface_checks": [
+        {
+          "u": 0,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        },
+        {
+          "u": 1,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "satellite_id": "satellite_5",
+      "arm_id": "airbus_vispa",
+      "mount_frame": "satellite_5_mount",
+      "mount_to_arm_root_xyz_m": [
+        -0.0039634800766936845,
+        -5.90604237737935e-09,
+        0.047683127897012456
+      ],
+      "mount_to_arm_root_rpy_rad": [
+        0,
+        0,
+        0.0
+      ],
+      "assembly": "combinations/satellite_5__airbus_vispa.urdf",
+      "static_surface_check": {
+        "method": "full_mesh_AABB_tree_and_triangle_SAT",
+        "joint_pose": "all_zero",
+        "surface_intersection_found": false,
+        "narrowphase_pairs_tested": 0,
+        "first_intersection": null,
+        "exclusions": [
+          "solid containment",
+          "self collision",
+          "motion sweep",
+          "mount strength"
+        ]
+      },
+      "support_surface_check": {
+        "method": "full_mesh_AABB_tree_and_triangle_SAT",
+        "joint_pose": "all_zero",
+        "surface_intersection_found": false,
+        "narrowphase_pairs_tested": 0,
+        "first_intersection": null,
+        "exclusions": [
+          "solid containment",
+          "self collision",
+          "motion sweep",
+          "mount strength"
+        ]
+      },
+      "status": "angular_endpoints_surface_clear",
+      "dynamics_ready": false,
+      "gripper_surface_check": [
+        {
+          "finger_q_m": 0.0,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        },
+        {
+          "finger_q_m": 0.04,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        }
+      ],
+      "angular_surface_checks": [
+        {
+          "u": 0,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        },
+        {
+          "u": 1,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "satellite_id": "satellite_8",
+      "arm_id": "starlink_sldasm9",
+      "mount_frame": "satellite_8_mount",
+      "mount_to_arm_root_xyz_m": [
+        0.009087204933166504,
+        0.008519247174263,
+        0.17734242334961897
+      ],
+      "mount_to_arm_root_rpy_rad": [
+        -1.5707963267948966,
+        0,
+        0
+      ],
+      "assembly": "combinations/satellite_8__starlink_sldasm9.urdf",
+      "static_surface_check": {
+        "method": "full_mesh_AABB_tree_and_triangle_SAT",
+        "joint_pose": "all_zero",
+        "surface_intersection_found": false,
+        "narrowphase_pairs_tested": 20958,
+        "first_intersection": null,
+        "exclusions": [
+          "solid containment",
+          "self collision",
+          "motion sweep",
+          "mount strength"
+        ]
+      },
+      "support_surface_check": {
+        "method": "full_mesh_AABB_tree_and_triangle_SAT",
+        "joint_pose": "all_zero",
+        "surface_intersection_found": false,
+        "narrowphase_pairs_tested": 6031,
+        "first_intersection": null,
+        "exclusions": [
+          "solid containment",
+          "self collision",
+          "motion sweep",
+          "mount strength"
+        ]
+      },
+      "status": "angular_endpoints_surface_clear",
+      "dynamics_ready": false,
+      "angular_surface_checks": [
+        {
+          "u": 0,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        },
+        {
+          "u": 1,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "satellite_id": "satellite_8",
+      "arm_id": "airbus_vispa",
+      "mount_frame": "satellite_8_mount",
+      "mount_to_arm_root_xyz_m": [
+        5.90604237737935e-09,
+        -0.003963480076693698,
+        0.07502554983102108
+      ],
+      "mount_to_arm_root_rpy_rad": [
+        0,
+        0,
+        1.5707963267948966
+      ],
+      "assembly": "combinations/satellite_8__airbus_vispa.urdf",
+      "static_surface_check": {
+        "method": "full_mesh_AABB_tree_and_triangle_SAT",
+        "joint_pose": "all_zero",
+        "surface_intersection_found": false,
+        "narrowphase_pairs_tested": 25580,
+        "first_intersection": null,
+        "exclusions": [
+          "solid containment",
+          "self collision",
+          "motion sweep",
+          "mount strength"
+        ]
+      },
+      "support_surface_check": {
+        "method": "full_mesh_AABB_tree_and_triangle_SAT",
+        "joint_pose": "all_zero",
+        "surface_intersection_found": false,
+        "narrowphase_pairs_tested": 14,
+        "first_intersection": null,
+        "exclusions": [
+          "solid containment",
+          "self collision",
+          "motion sweep",
+          "mount strength"
+        ]
+      },
+      "status": "angular_endpoints_surface_clear",
+      "dynamics_ready": false,
+      "gripper_surface_check": [
+        {
+          "finger_q_m": 0.0,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        },
+        {
+          "finger_q_m": 0.04,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        }
+      ],
+      "angular_surface_checks": [
+        {
+          "u": 0,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        },
+        {
+          "u": 1,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "satellite_id": "uydu",
+      "arm_id": "starlink_sldasm9",
+      "mount_frame": "uydu_mount",
+      "mount_to_arm_root_xyz_m": [
+        0.009087204933166504,
+        0.008519247174263,
+        0.15000000141561035
+      ],
+      "mount_to_arm_root_rpy_rad": [
+        -1.5707963267948966,
+        0,
+        0
+      ],
+      "assembly": "combinations/uydu__starlink_sldasm9.urdf",
+      "static_surface_check": {
+        "method": "full_mesh_AABB_tree_and_triangle_SAT",
+        "joint_pose": "all_zero",
+        "surface_intersection_found": false,
+        "narrowphase_pairs_tested": 2116,
+        "first_intersection": null,
+        "exclusions": [
+          "solid containment",
+          "self collision",
+          "motion sweep",
+          "mount strength"
+        ]
+      },
+      "support_surface_check": {
+        "method": "full_mesh_AABB_tree_and_triangle_SAT",
+        "joint_pose": "all_zero",
+        "surface_intersection_found": false,
+        "narrowphase_pairs_tested": 0,
+        "first_intersection": null,
+        "exclusions": [
+          "solid containment",
+          "self collision",
+          "motion sweep",
+          "mount strength"
+        ]
+      },
+      "status": "angular_endpoints_surface_clear",
+      "dynamics_ready": false,
+      "angular_surface_checks": [
+        {
+          "u": 0,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        },
+        {
+          "u": 1,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "satellite_id": "uydu",
+      "arm_id": "airbus_vispa",
+      "mount_frame": "uydu_mount",
+      "mount_to_arm_root_xyz_m": [
+        5.90604237737935e-09,
+        -0.003963480076693698,
+        0.047683127897012456
+      ],
+      "mount_to_arm_root_rpy_rad": [
+        0,
+        0,
+        1.5707963267948966
+      ],
+      "assembly": "combinations/uydu__airbus_vispa.urdf",
+      "static_surface_check": {
+        "method": "full_mesh_AABB_tree_and_triangle_SAT",
+        "joint_pose": "all_zero",
+        "surface_intersection_found": false,
+        "narrowphase_pairs_tested": 0,
+        "first_intersection": null,
+        "exclusions": [
+          "solid containment",
+          "self collision",
+          "motion sweep",
+          "mount strength"
+        ]
+      },
+      "support_surface_check": {
+        "method": "full_mesh_AABB_tree_and_triangle_SAT",
+        "joint_pose": "all_zero",
+        "surface_intersection_found": false,
+        "narrowphase_pairs_tested": 0,
+        "first_intersection": null,
+        "exclusions": [
+          "solid containment",
+          "self collision",
+          "motion sweep",
+          "mount strength"
+        ]
+      },
+      "status": "angular_endpoints_surface_clear",
+      "dynamics_ready": false,
+      "gripper_surface_check": [
+        {
+          "finger_q_m": 0.0,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        },
+        {
+          "finger_q_m": 0.04,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        }
+      ],
+      "angular_surface_checks": [
+        {
+          "u": 0,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        },
+        {
+          "u": 1,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "satellite_id": "design",
+      "arm_id": "starlink_sldasm9",
+      "mount_frame": "design_mount",
+      "mount_to_arm_root_xyz_m": [
+        0.009087204933166504,
+        0.008519247174263,
+        0.15000000141561035
+      ],
+      "mount_to_arm_root_rpy_rad": [
+        -1.5707963267948966,
+        0,
+        0
+      ],
+      "assembly": "combinations/design__starlink_sldasm9.urdf",
+      "static_surface_check": {
+        "method": "full_mesh_AABB_tree_and_triangle_SAT",
+        "joint_pose": "all_zero",
+        "surface_intersection_found": false,
+        "narrowphase_pairs_tested": 0,
+        "first_intersection": null,
+        "exclusions": [
+          "solid containment",
+          "self collision",
+          "motion sweep",
+          "mount strength"
+        ]
+      },
+      "support_surface_check": {
+        "method": "full_mesh_AABB_tree_and_triangle_SAT",
+        "joint_pose": "all_zero",
+        "surface_intersection_found": false,
+        "narrowphase_pairs_tested": 0,
+        "first_intersection": null,
+        "exclusions": [
+          "solid containment",
+          "self collision",
+          "motion sweep",
+          "mount strength"
+        ]
+      },
+      "status": "angular_endpoints_surface_clear",
+      "dynamics_ready": false,
+      "angular_surface_checks": [
+        {
+          "u": 0,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        },
+        {
+          "u": 1,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "satellite_id": "design",
+      "arm_id": "airbus_vispa",
+      "mount_frame": "design_mount",
+      "mount_to_arm_root_xyz_m": [
+        -0.0039634800766936845,
+        -5.90604237737935e-09,
+        0.047683127897012456
+      ],
+      "mount_to_arm_root_rpy_rad": [
+        0,
+        0,
+        0.0
+      ],
+      "assembly": "combinations/design__airbus_vispa.urdf",
+      "static_surface_check": {
+        "method": "full_mesh_AABB_tree_and_triangle_SAT",
+        "joint_pose": "all_zero",
+        "surface_intersection_found": false,
+        "narrowphase_pairs_tested": 0,
+        "first_intersection": null,
+        "exclusions": [
+          "solid containment",
+          "self collision",
+          "motion sweep",
+          "mount strength"
+        ]
+      },
+      "support_surface_check": {
+        "method": "full_mesh_AABB_tree_and_triangle_SAT",
+        "joint_pose": "all_zero",
+        "surface_intersection_found": false,
+        "narrowphase_pairs_tested": 0,
+        "first_intersection": null,
+        "exclusions": [
+          "solid containment",
+          "self collision",
+          "motion sweep",
+          "mount strength"
+        ]
+      },
+      "status": "angular_endpoints_surface_clear",
+      "dynamics_ready": false,
+      "gripper_surface_check": [
+        {
+          "finger_q_m": 0.0,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        },
+        {
+          "finger_q_m": 0.04,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        }
+      ],
+      "angular_surface_checks": [
+        {
+          "u": 0,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        },
+        {
+          "u": 1,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "satellite_id": "station",
+      "arm_id": "starlink_sldasm9",
+      "mount_frame": "station_mount",
+      "mount_to_arm_root_xyz_m": [
+        -0.008519247174263014,
+        0.009087204933166518,
+        0.15000000141561026
+      ],
+      "mount_to_arm_root_rpy_rad": [
+        -1.5707963267948966,
+        0,
+        1.5707963267948966
+      ],
+      "assembly": "combinations/station__starlink_sldasm9.urdf",
+      "static_surface_check": {
+        "method": "full_mesh_AABB_tree_and_triangle_SAT",
+        "joint_pose": "all_zero",
+        "surface_intersection_found": false,
+        "narrowphase_pairs_tested": 0,
+        "first_intersection": null,
+        "exclusions": [
+          "solid containment",
+          "self collision",
+          "motion sweep",
+          "mount strength"
+        ]
+      },
+      "support_surface_check": {
+        "method": "full_mesh_AABB_tree_and_triangle_SAT",
+        "joint_pose": "all_zero",
+        "surface_intersection_found": false,
+        "narrowphase_pairs_tested": 0,
+        "first_intersection": null,
+        "exclusions": [
+          "solid containment",
+          "self collision",
+          "motion sweep",
+          "mount strength"
+        ]
+      },
+      "status": "angular_endpoints_surface_clear",
+      "dynamics_ready": false,
+      "angular_surface_checks": [
+        {
+          "u": 0,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        },
+        {
+          "u": 1,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "satellite_id": "station",
+      "arm_id": "airbus_vispa",
+      "mount_frame": "station_mount",
+      "mount_to_arm_root_xyz_m": [
+        -5.90604237737935e-09,
+        0.0039634800766936845,
+        0.047683127897012345
+      ],
+      "mount_to_arm_root_rpy_rad": [
+        0,
+        0,
+        4.71238898038469
+      ],
+      "assembly": "combinations/station__airbus_vispa.urdf",
+      "static_surface_check": {
+        "method": "full_mesh_AABB_tree_and_triangle_SAT",
+        "joint_pose": "all_zero",
+        "surface_intersection_found": false,
+        "narrowphase_pairs_tested": 0,
+        "first_intersection": null,
+        "exclusions": [
+          "solid containment",
+          "self collision",
+          "motion sweep",
+          "mount strength"
+        ]
+      },
+      "support_surface_check": {
+        "method": "full_mesh_AABB_tree_and_triangle_SAT",
+        "joint_pose": "all_zero",
+        "surface_intersection_found": false,
+        "narrowphase_pairs_tested": 0,
+        "first_intersection": null,
+        "exclusions": [
+          "solid containment",
+          "self collision",
+          "motion sweep",
+          "mount strength"
+        ]
+      },
+      "status": "angular_endpoints_surface_clear",
+      "dynamics_ready": false,
+      "gripper_surface_check": [
+        {
+          "finger_q_m": 0.0,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        },
+        {
+          "finger_q_m": 0.04,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        }
+      ],
+      "angular_surface_checks": [
+        {
+          "u": 0,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        },
+        {
+          "u": 1,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "satellite_id": "gps",
+      "arm_id": "starlink_sldasm9",
+      "mount_frame": "gps_mount",
+      "mount_to_arm_root_xyz_m": [
+        0.009087204933166504,
+        0.008519247174263,
+        0.15000000141561035
+      ],
+      "mount_to_arm_root_rpy_rad": [
+        -1.5707963267948966,
+        0,
+        0
+      ],
+      "assembly": "combinations/gps__starlink_sldasm9.urdf",
+      "static_surface_check": {
+        "method": "full_mesh_AABB_tree_and_triangle_SAT",
+        "joint_pose": "all_zero",
+        "surface_intersection_found": false,
+        "narrowphase_pairs_tested": 1742,
+        "first_intersection": null,
+        "exclusions": [
+          "solid containment",
+          "self collision",
+          "motion sweep",
+          "mount strength"
+        ]
+      },
+      "support_surface_check": {
+        "method": "full_mesh_AABB_tree_and_triangle_SAT",
+        "joint_pose": "all_zero",
+        "surface_intersection_found": false,
+        "narrowphase_pairs_tested": 0,
+        "first_intersection": null,
+        "exclusions": [
+          "solid containment",
+          "self collision",
+          "motion sweep",
+          "mount strength"
+        ]
+      },
+      "status": "angular_endpoints_surface_clear",
+      "dynamics_ready": false,
+      "angular_surface_checks": [
+        {
+          "u": 0,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        },
+        {
+          "u": 1,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "satellite_id": "gps",
+      "arm_id": "airbus_vispa",
+      "mount_frame": "gps_mount",
+      "mount_to_arm_root_xyz_m": [
+        -0.0039634800766936845,
+        -5.90604237737935e-09,
+        0.047683127897012456
+      ],
+      "mount_to_arm_root_rpy_rad": [
+        0,
+        0,
+        0.0
+      ],
+      "assembly": "combinations/gps__airbus_vispa.urdf",
+      "static_surface_check": {
+        "method": "full_mesh_AABB_tree_and_triangle_SAT",
+        "joint_pose": "all_zero",
+        "surface_intersection_found": false,
+        "narrowphase_pairs_tested": 82,
+        "first_intersection": null,
+        "exclusions": [
+          "solid containment",
+          "self collision",
+          "motion sweep",
+          "mount strength"
+        ]
+      },
+      "support_surface_check": {
+        "method": "full_mesh_AABB_tree_and_triangle_SAT",
+        "joint_pose": "all_zero",
+        "surface_intersection_found": false,
+        "narrowphase_pairs_tested": 0,
+        "first_intersection": null,
+        "exclusions": [
+          "solid containment",
+          "self collision",
+          "motion sweep",
+          "mount strength"
+        ]
+      },
+      "status": "angular_endpoints_surface_clear",
+      "dynamics_ready": false,
+      "gripper_surface_check": [
+        {
+          "finger_q_m": 0.0,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 56,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        },
+        {
+          "finger_q_m": 0.04,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        }
+      ],
+      "angular_surface_checks": [
+        {
+          "u": 0,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        },
+        {
+          "u": 1,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "satellite_id": "artificial2",
+      "arm_id": "starlink_sldasm9",
+      "mount_frame": "artificial2_mount",
+      "mount_to_arm_root_xyz_m": [
+        0.009087204933166504,
+        0.008519247174263,
+        0.15000000141561035
+      ],
+      "mount_to_arm_root_rpy_rad": [
+        -1.5707963267948966,
+        0,
+        0
+      ],
+      "assembly": "combinations/artificial2__starlink_sldasm9.urdf",
+      "static_surface_check": {
+        "method": "full_mesh_AABB_tree_and_triangle_SAT",
+        "joint_pose": "all_zero",
+        "surface_intersection_found": false,
+        "narrowphase_pairs_tested": 0,
+        "first_intersection": null,
+        "exclusions": [
+          "solid containment",
+          "self collision",
+          "motion sweep",
+          "mount strength"
+        ]
+      },
+      "support_surface_check": {
+        "method": "full_mesh_AABB_tree_and_triangle_SAT",
+        "joint_pose": "all_zero",
+        "surface_intersection_found": false,
+        "narrowphase_pairs_tested": 0,
+        "first_intersection": null,
+        "exclusions": [
+          "solid containment",
+          "self collision",
+          "motion sweep",
+          "mount strength"
+        ]
+      },
+      "status": "angular_endpoints_surface_clear",
+      "dynamics_ready": false,
+      "angular_surface_checks": [
+        {
+          "u": 0,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        },
+        {
+          "u": 1,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "satellite_id": "artificial2",
+      "arm_id": "airbus_vispa",
+      "mount_frame": "artificial2_mount",
+      "mount_to_arm_root_xyz_m": [
+        -0.0039634800766936845,
+        -5.90604237737935e-09,
+        0.047683127897012456
+      ],
+      "mount_to_arm_root_rpy_rad": [
+        0,
+        0,
+        0.0
+      ],
+      "assembly": "combinations/artificial2__airbus_vispa.urdf",
+      "static_surface_check": {
+        "method": "full_mesh_AABB_tree_and_triangle_SAT",
+        "joint_pose": "all_zero",
+        "surface_intersection_found": false,
+        "narrowphase_pairs_tested": 0,
+        "first_intersection": null,
+        "exclusions": [
+          "solid containment",
+          "self collision",
+          "motion sweep",
+          "mount strength"
+        ]
+      },
+      "support_surface_check": {
+        "method": "full_mesh_AABB_tree_and_triangle_SAT",
+        "joint_pose": "all_zero",
+        "surface_intersection_found": false,
+        "narrowphase_pairs_tested": 0,
+        "first_intersection": null,
+        "exclusions": [
+          "solid containment",
+          "self collision",
+          "motion sweep",
+          "mount strength"
+        ]
+      },
+      "status": "angular_endpoints_surface_clear",
+      "dynamics_ready": false,
+      "gripper_surface_check": [
+        {
+          "finger_q_m": 0.0,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        },
+        {
+          "finger_q_m": 0.04,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        }
+      ],
+      "angular_surface_checks": [
+        {
+          "u": 0,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        },
+        {
+          "u": 1,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "satellite_id": "satellite_12",
+      "arm_id": "starlink_sldasm9",
+      "mount_frame": "satellite_12_mount",
+      "mount_to_arm_root_xyz_m": [
+        0.009087204933166504,
+        0.008519247174263,
+        0.16000000119209293
+      ],
+      "mount_to_arm_root_rpy_rad": [
+        -1.5707963267948966,
+        0,
+        0.0
+      ],
+      "assembly": "combinations/satellite_12__starlink_sldasm9.urdf",
+      "static_surface_check": {
+        "method": "full_mesh_AABB_tree_and_triangle_SAT",
+        "joint_pose": "all_zero",
+        "surface_intersection_found": false,
+        "narrowphase_pairs_tested": 1188,
+        "first_intersection": null,
+        "exclusions": [
+          "solid containment",
+          "self collision",
+          "motion sweep",
+          "mount strength"
+        ]
+      },
+      "support_surface_check": {
+        "method": "full_mesh_AABB_tree_and_triangle_SAT",
+        "joint_pose": "all_zero",
+        "surface_intersection_found": false,
+        "narrowphase_pairs_tested": 4038,
+        "first_intersection": null,
+        "exclusions": [
+          "solid containment",
+          "self collision",
+          "motion sweep",
+          "mount strength"
+        ]
+      },
+      "status": "angular_endpoints_surface_clear",
+      "dynamics_ready": false,
+      "angular_surface_checks": [
+        {
+          "u": 0,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        },
+        {
+          "u": 1,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "satellite_id": "satellite_12",
+      "arm_id": "airbus_vispa",
+      "mount_frame": "satellite_12_mount",
+      "mount_to_arm_root_xyz_m": [
+        -0.0039634800766936845,
+        -5.90604237737935e-09,
+        0.05768312767349504
+      ],
+      "mount_to_arm_root_rpy_rad": [
+        0,
+        0,
+        0.0
+      ],
+      "assembly": "combinations/satellite_12__airbus_vispa.urdf",
+      "static_surface_check": {
+        "method": "full_mesh_AABB_tree_and_triangle_SAT",
+        "joint_pose": "all_zero",
+        "surface_intersection_found": false,
+        "narrowphase_pairs_tested": 10880,
+        "first_intersection": null,
+        "exclusions": [
+          "solid containment",
+          "self collision",
+          "motion sweep",
+          "mount strength"
+        ]
+      },
+      "support_surface_check": {
+        "method": "full_mesh_AABB_tree_and_triangle_SAT",
+        "joint_pose": "all_zero",
+        "surface_intersection_found": false,
+        "narrowphase_pairs_tested": 1562,
+        "first_intersection": null,
+        "exclusions": [
+          "solid containment",
+          "self collision",
+          "motion sweep",
+          "mount strength"
+        ]
+      },
+      "status": "angular_endpoints_surface_clear",
+      "dynamics_ready": false,
+      "gripper_surface_check": [
+        {
+          "finger_q_m": 0.0,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        },
+        {
+          "finger_q_m": 0.04,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        }
+      ],
+      "angular_surface_checks": [
+        {
+          "u": 0,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        },
+        {
+          "u": 1,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "satellite_id": "satellite_13",
+      "arm_id": "starlink_sldasm9",
+      "mount_frame": "satellite_13_mount",
+      "mount_to_arm_root_xyz_m": [
+        0.009087204933166504,
+        0.008519247174263,
+        0.16000000119209304
+      ],
+      "mount_to_arm_root_rpy_rad": [
+        -1.5707963267948966,
+        0,
+        0.0
+      ],
+      "assembly": "combinations/satellite_13__starlink_sldasm9.urdf",
+      "static_surface_check": {
+        "method": "full_mesh_AABB_tree_and_triangle_SAT",
+        "joint_pose": "all_zero",
+        "surface_intersection_found": false,
+        "narrowphase_pairs_tested": 371,
+        "first_intersection": null,
+        "exclusions": [
+          "solid containment",
+          "self collision",
+          "motion sweep",
+          "mount strength"
+        ]
+      },
+      "support_surface_check": {
+        "method": "full_mesh_AABB_tree_and_triangle_SAT",
+        "joint_pose": "all_zero",
+        "surface_intersection_found": false,
+        "narrowphase_pairs_tested": 2568,
+        "first_intersection": null,
+        "exclusions": [
+          "solid containment",
+          "self collision",
+          "motion sweep",
+          "mount strength"
+        ]
+      },
+      "status": "angular_endpoints_surface_clear",
+      "dynamics_ready": false,
+      "angular_surface_checks": [
+        {
+          "u": 0,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        },
+        {
+          "u": 1,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "satellite_id": "satellite_13",
+      "arm_id": "airbus_vispa",
+      "mount_frame": "satellite_13_mount",
+      "mount_to_arm_root_xyz_m": [
+        -0.0039634800766936845,
+        -5.90604237737935e-09,
+        0.05768312767349515
+      ],
+      "mount_to_arm_root_rpy_rad": [
+        0,
+        0,
+        0.0
+      ],
+      "assembly": "combinations/satellite_13__airbus_vispa.urdf",
+      "static_surface_check": {
+        "method": "full_mesh_AABB_tree_and_triangle_SAT",
+        "joint_pose": "all_zero",
+        "surface_intersection_found": false,
+        "narrowphase_pairs_tested": 2694,
+        "first_intersection": null,
+        "exclusions": [
+          "solid containment",
+          "self collision",
+          "motion sweep",
+          "mount strength"
+        ]
+      },
+      "support_surface_check": {
+        "method": "full_mesh_AABB_tree_and_triangle_SAT",
+        "joint_pose": "all_zero",
+        "surface_intersection_found": false,
+        "narrowphase_pairs_tested": 639,
+        "first_intersection": null,
+        "exclusions": [
+          "solid containment",
+          "self collision",
+          "motion sweep",
+          "mount strength"
+        ]
+      },
+      "status": "angular_endpoints_surface_clear",
+      "dynamics_ready": false,
+      "gripper_surface_check": [
+        {
+          "finger_q_m": 0.0,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        },
+        {
+          "finger_q_m": 0.04,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        }
+      ],
+      "angular_surface_checks": [
+        {
+          "u": 0,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        },
+        {
+          "u": 1,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "satellite_id": "satellite_9",
+      "arm_id": "starlink_sldasm9",
+      "mount_frame": "satellite_9_mount",
+      "mount_to_arm_root_xyz_m": [
+        0.009087204933166504,
+        0.008519247174263,
+        0.16000000119209337
+      ],
+      "mount_to_arm_root_rpy_rad": [
+        -1.5707963267948966,
+        0,
+        0.0
+      ],
+      "assembly": "combinations/satellite_9__starlink_sldasm9.urdf",
+      "static_surface_check": {
+        "method": "full_mesh_AABB_tree_and_triangle_SAT",
+        "joint_pose": "all_zero",
+        "surface_intersection_found": false,
+        "narrowphase_pairs_tested": 271,
+        "first_intersection": null,
+        "exclusions": [
+          "solid containment",
+          "self collision",
+          "motion sweep",
+          "mount strength"
+        ]
+      },
+      "support_surface_check": {
+        "method": "full_mesh_AABB_tree_and_triangle_SAT",
+        "joint_pose": "all_zero",
+        "surface_intersection_found": false,
+        "narrowphase_pairs_tested": 3922,
+        "first_intersection": null,
+        "exclusions": [
+          "solid containment",
+          "self collision",
+          "motion sweep",
+          "mount strength"
+        ]
+      },
+      "status": "angular_endpoints_surface_clear",
+      "dynamics_ready": false,
+      "angular_surface_checks": [
+        {
+          "u": 0,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        },
+        {
+          "u": 1,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "satellite_id": "satellite_9",
+      "arm_id": "airbus_vispa",
+      "mount_frame": "satellite_9_mount",
+      "mount_to_arm_root_xyz_m": [
+        -0.0039634800766936845,
+        -5.90604237737935e-09,
+        0.05768312767349548
+      ],
+      "mount_to_arm_root_rpy_rad": [
+        0,
+        0,
+        0.0
+      ],
+      "assembly": "combinations/satellite_9__airbus_vispa.urdf",
+      "static_surface_check": {
+        "method": "full_mesh_AABB_tree_and_triangle_SAT",
+        "joint_pose": "all_zero",
+        "surface_intersection_found": false,
+        "narrowphase_pairs_tested": 8165,
+        "first_intersection": null,
+        "exclusions": [
+          "solid containment",
+          "self collision",
+          "motion sweep",
+          "mount strength"
+        ]
+      },
+      "support_surface_check": {
+        "method": "full_mesh_AABB_tree_and_triangle_SAT",
+        "joint_pose": "all_zero",
+        "surface_intersection_found": false,
+        "narrowphase_pairs_tested": 1550,
+        "first_intersection": null,
+        "exclusions": [
+          "solid containment",
+          "self collision",
+          "motion sweep",
+          "mount strength"
+        ]
+      },
+      "status": "angular_endpoints_surface_clear",
+      "dynamics_ready": false,
+      "gripper_surface_check": [
+        {
+          "finger_q_m": 0.0,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        },
+        {
+          "finger_q_m": 0.04,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        }
+      ],
+      "angular_surface_checks": [
+        {
+          "u": 0,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        },
+        {
+          "u": 1,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "satellite_id": "navstar",
+      "arm_id": "starlink_sldasm9",
+      "mount_frame": "navstar_mount",
+      "mount_to_arm_root_xyz_m": [
+        0.009087204933166504,
+        0.008519247174263,
+        0.16000000119209296
+      ],
+      "mount_to_arm_root_rpy_rad": [
+        -1.5707963267948966,
+        0,
+        0.0
+      ],
+      "assembly": "combinations/navstar__starlink_sldasm9.urdf",
+      "static_surface_check": {
+        "method": "full_mesh_AABB_tree_and_triangle_SAT",
+        "joint_pose": "all_zero",
+        "surface_intersection_found": false,
+        "narrowphase_pairs_tested": 1710,
+        "first_intersection": null,
+        "exclusions": [
+          "solid containment",
+          "self collision",
+          "motion sweep",
+          "mount strength"
+        ]
+      },
+      "support_surface_check": {
+        "method": "full_mesh_AABB_tree_and_triangle_SAT",
+        "joint_pose": "all_zero",
+        "surface_intersection_found": false,
+        "narrowphase_pairs_tested": 4858,
+        "first_intersection": null,
+        "exclusions": [
+          "solid containment",
+          "self collision",
+          "motion sweep",
+          "mount strength"
+        ]
+      },
+      "status": "angular_endpoints_surface_clear",
+      "dynamics_ready": false,
+      "angular_surface_checks": [
+        {
+          "u": 0,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        },
+        {
+          "u": 1,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "satellite_id": "navstar",
+      "arm_id": "airbus_vispa",
+      "mount_frame": "navstar_mount",
+      "mount_to_arm_root_xyz_m": [
+        -0.0039634800766936845,
+        -5.90604237737935e-09,
+        0.05768312767349508
+      ],
+      "mount_to_arm_root_rpy_rad": [
+        0,
+        0,
+        0.0
+      ],
+      "assembly": "combinations/navstar__airbus_vispa.urdf",
+      "static_surface_check": {
+        "method": "full_mesh_AABB_tree_and_triangle_SAT",
+        "joint_pose": "all_zero",
+        "surface_intersection_found": false,
+        "narrowphase_pairs_tested": 980,
+        "first_intersection": null,
+        "exclusions": [
+          "solid containment",
+          "self collision",
+          "motion sweep",
+          "mount strength"
+        ]
+      },
+      "support_surface_check": {
+        "method": "full_mesh_AABB_tree_and_triangle_SAT",
+        "joint_pose": "all_zero",
+        "surface_intersection_found": false,
+        "narrowphase_pairs_tested": 3468,
+        "first_intersection": null,
+        "exclusions": [
+          "solid containment",
+          "self collision",
+          "motion sweep",
+          "mount strength"
+        ]
+      },
+      "status": "angular_endpoints_surface_clear",
+      "dynamics_ready": false,
+      "gripper_surface_check": [
+        {
+          "finger_q_m": 0.0,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        },
+        {
+          "finger_q_m": 0.04,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        }
+      ],
+      "angular_surface_checks": [
+        {
+          "u": 0,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        },
+        {
+          "u": 1,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "satellite_id": "satellite_15",
+      "arm_id": "starlink_sldasm9",
+      "mount_frame": "satellite_15_mount",
+      "mount_to_arm_root_xyz_m": [
+        0.009087204933166504,
+        0.008519247174263,
+        0.16000000119209304
+      ],
+      "mount_to_arm_root_rpy_rad": [
+        -1.5707963267948966,
+        0,
+        0.0
+      ],
+      "assembly": "combinations/satellite_15__starlink_sldasm9.urdf",
+      "static_surface_check": {
+        "method": "full_mesh_AABB_tree_and_triangle_SAT",
+        "joint_pose": "all_zero",
+        "surface_intersection_found": false,
+        "narrowphase_pairs_tested": 202,
+        "first_intersection": null,
+        "exclusions": [
+          "solid containment",
+          "self collision",
+          "motion sweep",
+          "mount strength"
+        ]
+      },
+      "support_surface_check": {
+        "method": "full_mesh_AABB_tree_and_triangle_SAT",
+        "joint_pose": "all_zero",
+        "surface_intersection_found": false,
+        "narrowphase_pairs_tested": 4478,
+        "first_intersection": null,
+        "exclusions": [
+          "solid containment",
+          "self collision",
+          "motion sweep",
+          "mount strength"
+        ]
+      },
+      "status": "angular_endpoints_surface_clear",
+      "dynamics_ready": false,
+      "angular_surface_checks": [
+        {
+          "u": 0,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        },
+        {
+          "u": 1,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "satellite_id": "satellite_15",
+      "arm_id": "airbus_vispa",
+      "mount_frame": "satellite_15_mount",
+      "mount_to_arm_root_xyz_m": [
+        -0.0039634800766936845,
+        -5.90604237737935e-09,
+        0.05768312767349515
+      ],
+      "mount_to_arm_root_rpy_rad": [
+        0,
+        0,
+        0.0
+      ],
+      "assembly": "combinations/satellite_15__airbus_vispa.urdf",
+      "static_surface_check": {
+        "method": "full_mesh_AABB_tree_and_triangle_SAT",
+        "joint_pose": "all_zero",
+        "surface_intersection_found": false,
+        "narrowphase_pairs_tested": 68,
+        "first_intersection": null,
+        "exclusions": [
+          "solid containment",
+          "self collision",
+          "motion sweep",
+          "mount strength"
+        ]
+      },
+      "support_surface_check": {
+        "method": "full_mesh_AABB_tree_and_triangle_SAT",
+        "joint_pose": "all_zero",
+        "surface_intersection_found": false,
+        "narrowphase_pairs_tested": 2326,
+        "first_intersection": null,
+        "exclusions": [
+          "solid containment",
+          "self collision",
+          "motion sweep",
+          "mount strength"
+        ]
+      },
+      "status": "angular_endpoints_surface_clear",
+      "dynamics_ready": false,
+      "gripper_surface_check": [
+        {
+          "finger_q_m": 0.0,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        },
+        {
+          "finger_q_m": 0.04,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        }
+      ],
+      "angular_surface_checks": [
+        {
+          "u": 0,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        },
+        {
+          "u": 1,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "satellite_id": "satellite_16",
+      "arm_id": "starlink_sldasm9",
+      "mount_frame": "satellite_16_mount",
+      "mount_to_arm_root_xyz_m": [
+        0.009087204933166504,
+        0.008519247174263,
+        0.16000000119209382
+      ],
+      "mount_to_arm_root_rpy_rad": [
+        -1.5707963267948966,
+        0,
+        0.0
+      ],
+      "assembly": "combinations/satellite_16__starlink_sldasm9.urdf",
+      "static_surface_check": {
+        "method": "full_mesh_AABB_tree_and_triangle_SAT",
+        "joint_pose": "all_zero",
+        "surface_intersection_found": false,
+        "narrowphase_pairs_tested": 0,
+        "first_intersection": null,
+        "exclusions": [
+          "solid containment",
+          "self collision",
+          "motion sweep",
+          "mount strength"
+        ]
+      },
+      "support_surface_check": {
+        "method": "full_mesh_AABB_tree_and_triangle_SAT",
+        "joint_pose": "all_zero",
+        "surface_intersection_found": false,
+        "narrowphase_pairs_tested": 1450,
+        "first_intersection": null,
+        "exclusions": [
+          "solid containment",
+          "self collision",
+          "motion sweep",
+          "mount strength"
+        ]
+      },
+      "status": "angular_endpoints_surface_clear",
+      "dynamics_ready": false,
+      "angular_surface_checks": [
+        {
+          "u": 0,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        },
+        {
+          "u": 1,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "satellite_id": "satellite_16",
+      "arm_id": "airbus_vispa",
+      "mount_frame": "satellite_16_mount",
+      "mount_to_arm_root_xyz_m": [
+        -0.0039634800766936845,
+        -5.90604237737935e-09,
+        0.057683127673495926
+      ],
+      "mount_to_arm_root_rpy_rad": [
+        0,
+        0,
+        0.0
+      ],
+      "assembly": "combinations/satellite_16__airbus_vispa.urdf",
+      "static_surface_check": {
+        "method": "full_mesh_AABB_tree_and_triangle_SAT",
+        "joint_pose": "all_zero",
+        "surface_intersection_found": false,
+        "narrowphase_pairs_tested": 0,
+        "first_intersection": null,
+        "exclusions": [
+          "solid containment",
+          "self collision",
+          "motion sweep",
+          "mount strength"
+        ]
+      },
+      "support_surface_check": {
+        "method": "full_mesh_AABB_tree_and_triangle_SAT",
+        "joint_pose": "all_zero",
+        "surface_intersection_found": false,
+        "narrowphase_pairs_tested": 10,
+        "first_intersection": null,
+        "exclusions": [
+          "solid containment",
+          "self collision",
+          "motion sweep",
+          "mount strength"
+        ]
+      },
+      "status": "angular_endpoints_surface_clear",
+      "dynamics_ready": false,
+      "gripper_surface_check": [
+        {
+          "finger_q_m": 0.0,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        },
+        {
+          "finger_q_m": 0.04,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        }
+      ],
+      "angular_surface_checks": [
+        {
+          "u": 0,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        },
+        {
+          "u": 1,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "satellite_id": "scifi",
+      "arm_id": "starlink_sldasm9",
+      "mount_frame": "scifi_mount",
+      "mount_to_arm_root_xyz_m": [
+        -0.008519247174263014,
+        0.009087204933166518,
+        0.16000000119209307
+      ],
+      "mount_to_arm_root_rpy_rad": [
+        -1.5707963267948966,
+        0,
+        1.5707963267948966
+      ],
+      "assembly": "combinations/scifi__starlink_sldasm9.urdf",
+      "static_surface_check": {
+        "method": "full_mesh_AABB_tree_and_triangle_SAT",
+        "joint_pose": "all_zero",
+        "surface_intersection_found": false,
+        "narrowphase_pairs_tested": 0,
+        "first_intersection": null,
+        "exclusions": [
+          "solid containment",
+          "self collision",
+          "motion sweep",
+          "mount strength"
+        ]
+      },
+      "support_surface_check": {
+        "method": "full_mesh_AABB_tree_and_triangle_SAT",
+        "joint_pose": "all_zero",
+        "surface_intersection_found": false,
+        "narrowphase_pairs_tested": 2743,
+        "first_intersection": null,
+        "exclusions": [
+          "solid containment",
+          "self collision",
+          "motion sweep",
+          "mount strength"
+        ]
+      },
+      "status": "angular_endpoints_surface_clear",
+      "dynamics_ready": false,
+      "angular_surface_checks": [
+        {
+          "u": 0,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        },
+        {
+          "u": 1,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "satellite_id": "scifi",
+      "arm_id": "airbus_vispa",
+      "mount_frame": "scifi_mount",
+      "mount_to_arm_root_xyz_m": [
+        5.90604237737935e-09,
+        -0.003963480076693698,
+        0.05768312767349515
+      ],
+      "mount_to_arm_root_rpy_rad": [
+        0,
+        0,
+        1.5707963267948966
+      ],
+      "assembly": "combinations/scifi__airbus_vispa.urdf",
+      "static_surface_check": {
+        "method": "full_mesh_AABB_tree_and_triangle_SAT",
+        "joint_pose": "all_zero",
+        "surface_intersection_found": false,
+        "narrowphase_pairs_tested": 5840,
+        "first_intersection": null,
+        "exclusions": [
+          "solid containment",
+          "self collision",
+          "motion sweep",
+          "mount strength"
+        ]
+      },
+      "support_surface_check": {
+        "method": "full_mesh_AABB_tree_and_triangle_SAT",
+        "joint_pose": "all_zero",
+        "surface_intersection_found": false,
+        "narrowphase_pairs_tested": 469,
+        "first_intersection": null,
+        "exclusions": [
+          "solid containment",
+          "self collision",
+          "motion sweep",
+          "mount strength"
+        ]
+      },
+      "status": "angular_endpoints_surface_clear",
+      "dynamics_ready": false,
+      "gripper_surface_check": [
+        {
+          "finger_q_m": 0.0,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        },
+        {
+          "finger_q_m": 0.04,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        }
+      ],
+      "angular_surface_checks": [
+        {
+          "u": 0,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        },
+        {
+          "u": 1,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "satellite_id": "solidworks_satellite",
+      "arm_id": "starlink_sldasm9",
+      "mount_frame": "solidworks_satellite_mount",
+      "mount_to_arm_root_xyz_m": [
+        0.009087204933166504,
+        0.008519247174263,
+        0.16000000119209293
+      ],
+      "mount_to_arm_root_rpy_rad": [
+        -1.5707963267948966,
+        0,
+        0.0
+      ],
+      "assembly": "combinations/solidworks_satellite__starlink_sldasm9.urdf",
+      "static_surface_check": {
+        "method": "full_mesh_AABB_tree_and_triangle_SAT",
+        "joint_pose": "all_zero",
+        "surface_intersection_found": false,
+        "narrowphase_pairs_tested": 212,
+        "first_intersection": null,
+        "exclusions": [
+          "solid containment",
+          "self collision",
+          "motion sweep",
+          "mount strength"
+        ]
+      },
+      "support_surface_check": {
+        "method": "full_mesh_AABB_tree_and_triangle_SAT",
+        "joint_pose": "all_zero",
+        "surface_intersection_found": false,
+        "narrowphase_pairs_tested": 6418,
+        "first_intersection": null,
+        "exclusions": [
+          "solid containment",
+          "self collision",
+          "motion sweep",
+          "mount strength"
+        ]
+      },
+      "status": "angular_endpoints_surface_clear",
+      "dynamics_ready": false,
+      "angular_surface_checks": [
+        {
+          "u": 0,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        },
+        {
+          "u": 1,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "satellite_id": "solidworks_satellite",
+      "arm_id": "airbus_vispa",
+      "mount_frame": "solidworks_satellite_mount",
+      "mount_to_arm_root_xyz_m": [
+        -0.0039634800766936845,
+        -5.90604237737935e-09,
+        0.05768312767349504
+      ],
+      "mount_to_arm_root_rpy_rad": [
+        0,
+        0,
+        0.0
+      ],
+      "assembly": "combinations/solidworks_satellite__airbus_vispa.urdf",
+      "static_surface_check": {
+        "method": "full_mesh_AABB_tree_and_triangle_SAT",
+        "joint_pose": "all_zero",
+        "surface_intersection_found": false,
+        "narrowphase_pairs_tested": 0,
+        "first_intersection": null,
+        "exclusions": [
+          "solid containment",
+          "self collision",
+          "motion sweep",
+          "mount strength"
+        ]
+      },
+      "support_surface_check": {
+        "method": "full_mesh_AABB_tree_and_triangle_SAT",
+        "joint_pose": "all_zero",
+        "surface_intersection_found": false,
+        "narrowphase_pairs_tested": 3002,
+        "first_intersection": null,
+        "exclusions": [
+          "solid containment",
+          "self collision",
+          "motion sweep",
+          "mount strength"
+        ]
+      },
+      "status": "angular_endpoints_surface_clear",
+      "dynamics_ready": false,
+      "gripper_surface_check": [
+        {
+          "finger_q_m": 0.0,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        },
+        {
+          "finger_q_m": 0.04,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        }
+      ],
+      "angular_surface_checks": [
+        {
+          "u": 0,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        },
+        {
+          "u": 1,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "satellite_id": "satellite_14",
+      "arm_id": "starlink_sldasm9",
+      "mount_frame": "satellite_14_mount",
+      "mount_to_arm_root_xyz_m": [
+        0.009087204933166504,
+        0.008519247174263,
+        0.16000000119209298
+      ],
+      "mount_to_arm_root_rpy_rad": [
+        -1.5707963267948966,
+        0,
+        0.0
+      ],
+      "assembly": "combinations/satellite_14__starlink_sldasm9.urdf",
+      "static_surface_check": {
+        "method": "full_mesh_AABB_tree_and_triangle_SAT",
+        "joint_pose": "all_zero",
+        "surface_intersection_found": false,
+        "narrowphase_pairs_tested": 0,
+        "first_intersection": null,
+        "exclusions": [
+          "solid containment",
+          "self collision",
+          "motion sweep",
+          "mount strength"
+        ]
+      },
+      "support_surface_check": {
+        "method": "full_mesh_AABB_tree_and_triangle_SAT",
+        "joint_pose": "all_zero",
+        "surface_intersection_found": false,
+        "narrowphase_pairs_tested": 0,
+        "first_intersection": null,
+        "exclusions": [
+          "solid containment",
+          "self collision",
+          "motion sweep",
+          "mount strength"
+        ]
+      },
+      "status": "angular_endpoints_surface_clear",
+      "dynamics_ready": false,
+      "angular_surface_checks": [
+        {
+          "u": 0,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        },
+        {
+          "u": 1,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "satellite_id": "satellite_14",
+      "arm_id": "airbus_vispa",
+      "mount_frame": "satellite_14_mount",
+      "mount_to_arm_root_xyz_m": [
+        -0.0039634800766936845,
+        -5.90604237737935e-09,
+        0.057683127673495094
+      ],
+      "mount_to_arm_root_rpy_rad": [
+        0,
+        0,
+        0.0
+      ],
+      "assembly": "combinations/satellite_14__airbus_vispa.urdf",
+      "static_surface_check": {
+        "method": "full_mesh_AABB_tree_and_triangle_SAT",
+        "joint_pose": "all_zero",
+        "surface_intersection_found": false,
+        "narrowphase_pairs_tested": 0,
+        "first_intersection": null,
+        "exclusions": [
+          "solid containment",
+          "self collision",
+          "motion sweep",
+          "mount strength"
+        ]
+      },
+      "support_surface_check": {
+        "method": "full_mesh_AABB_tree_and_triangle_SAT",
+        "joint_pose": "all_zero",
+        "surface_intersection_found": false,
+        "narrowphase_pairs_tested": 0,
+        "first_intersection": null,
+        "exclusions": [
+          "solid containment",
+          "self collision",
+          "motion sweep",
+          "mount strength"
+        ]
+      },
+      "status": "angular_endpoints_surface_clear",
+      "dynamics_ready": false,
+      "gripper_surface_check": [
+        {
+          "finger_q_m": 0.0,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        },
+        {
+          "finger_q_m": 0.04,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        }
+      ],
+      "angular_surface_checks": [
+        {
+          "u": 0,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        },
+        {
+          "u": 1,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "satellite_id": "satellite_sb1",
+      "arm_id": "starlink_sldasm9",
+      "mount_frame": "satellite_sb1_mount",
+      "mount_to_arm_root_xyz_m": [
+        0.009087204933166504,
+        0.008519247174263,
+        0.16000000119209293
+      ],
+      "mount_to_arm_root_rpy_rad": [
+        -1.5707963267948966,
+        0,
+        0.0
+      ],
+      "assembly": "combinations/satellite_sb1__starlink_sldasm9.urdf",
+      "static_surface_check": {
+        "method": "full_mesh_AABB_tree_and_triangle_SAT",
+        "joint_pose": "all_zero",
+        "surface_intersection_found": false,
+        "narrowphase_pairs_tested": 0,
+        "first_intersection": null,
+        "exclusions": [
+          "solid containment",
+          "self collision",
+          "motion sweep",
+          "mount strength"
+        ]
+      },
+      "support_surface_check": {
+        "method": "full_mesh_AABB_tree_and_triangle_SAT",
+        "joint_pose": "all_zero",
+        "surface_intersection_found": false,
+        "narrowphase_pairs_tested": 0,
+        "first_intersection": null,
+        "exclusions": [
+          "solid containment",
+          "self collision",
+          "motion sweep",
+          "mount strength"
+        ]
+      },
+      "status": "angular_endpoints_surface_clear",
+      "dynamics_ready": false,
+      "angular_surface_checks": [
+        {
+          "u": 0,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        },
+        {
+          "u": 1,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "satellite_id": "satellite_sb1",
+      "arm_id": "airbus_vispa",
+      "mount_frame": "satellite_sb1_mount",
+      "mount_to_arm_root_xyz_m": [
+        -0.0039634800766936845,
+        -5.90604237737935e-09,
+        0.05768312767349504
+      ],
+      "mount_to_arm_root_rpy_rad": [
+        0,
+        0,
+        0.0
+      ],
+      "assembly": "combinations/satellite_sb1__airbus_vispa.urdf",
+      "static_surface_check": {
+        "method": "full_mesh_AABB_tree_and_triangle_SAT",
+        "joint_pose": "all_zero",
+        "surface_intersection_found": false,
+        "narrowphase_pairs_tested": 0,
+        "first_intersection": null,
+        "exclusions": [
+          "solid containment",
+          "self collision",
+          "motion sweep",
+          "mount strength"
+        ]
+      },
+      "support_surface_check": {
+        "method": "full_mesh_AABB_tree_and_triangle_SAT",
+        "joint_pose": "all_zero",
+        "surface_intersection_found": false,
+        "narrowphase_pairs_tested": 0,
+        "first_intersection": null,
+        "exclusions": [
+          "solid containment",
+          "self collision",
+          "motion sweep",
+          "mount strength"
+        ]
+      },
+      "status": "angular_endpoints_surface_clear",
+      "dynamics_ready": false,
+      "gripper_surface_check": [
+        {
+          "finger_q_m": 0.0,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        },
+        {
+          "finger_q_m": 0.04,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        }
+      ],
+      "angular_surface_checks": [
+        {
+          "u": 0,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        },
+        {
+          "u": 1,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "satellite_id": "satellite_model1",
+      "arm_id": "starlink_sldasm9",
+      "mount_frame": "satellite_model1_mount",
+      "mount_to_arm_root_xyz_m": [
+        0.009087204933166504,
+        0.008519247174263,
+        0.16000000119209315
+      ],
+      "mount_to_arm_root_rpy_rad": [
+        -1.5707963267948966,
+        0,
+        0.0
+      ],
+      "assembly": "combinations/satellite_model1__starlink_sldasm9.urdf",
+      "static_surface_check": {
+        "method": "full_mesh_AABB_tree_and_triangle_SAT",
+        "joint_pose": "all_zero",
+        "surface_intersection_found": false,
+        "narrowphase_pairs_tested": 3014,
+        "first_intersection": null,
+        "exclusions": [
+          "solid containment",
+          "self collision",
+          "motion sweep",
+          "mount strength"
+        ]
+      },
+      "support_surface_check": {
+        "method": "full_mesh_AABB_tree_and_triangle_SAT",
+        "joint_pose": "all_zero",
+        "surface_intersection_found": false,
+        "narrowphase_pairs_tested": 5780,
+        "first_intersection": null,
+        "exclusions": [
+          "solid containment",
+          "self collision",
+          "motion sweep",
+          "mount strength"
+        ]
+      },
+      "status": "angular_endpoints_surface_clear",
+      "dynamics_ready": false,
+      "angular_surface_checks": [
+        {
+          "u": 0,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        },
+        {
+          "u": 1,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "satellite_id": "satellite_model1",
+      "arm_id": "airbus_vispa",
+      "mount_frame": "satellite_model1_mount",
+      "mount_to_arm_root_xyz_m": [
+        0.0039634800766936845,
+        5.90604237737935e-09,
+        0.05768312767349526
+      ],
+      "mount_to_arm_root_rpy_rad": [
+        0,
+        0,
+        3.141592653589793
+      ],
+      "assembly": "combinations/satellite_model1__airbus_vispa.urdf",
+      "static_surface_check": {
+        "method": "full_mesh_AABB_tree_and_triangle_SAT",
+        "joint_pose": "all_zero",
+        "surface_intersection_found": false,
+        "narrowphase_pairs_tested": 73392,
+        "first_intersection": null,
+        "exclusions": [
+          "solid containment",
+          "self collision",
+          "motion sweep",
+          "mount strength"
+        ]
+      },
+      "support_surface_check": {
+        "method": "full_mesh_AABB_tree_and_triangle_SAT",
+        "joint_pose": "all_zero",
+        "surface_intersection_found": false,
+        "narrowphase_pairs_tested": 1954,
+        "first_intersection": null,
+        "exclusions": [
+          "solid containment",
+          "self collision",
+          "motion sweep",
+          "mount strength"
+        ]
+      },
+      "status": "angular_endpoints_surface_clear",
+      "dynamics_ready": false,
+      "gripper_surface_check": [
+        {
+          "finger_q_m": 0.0,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        },
+        {
+          "finger_q_m": 0.04,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        }
+      ],
+      "angular_surface_checks": [
+        {
+          "u": 0,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        },
+        {
+          "u": 1,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "satellite_id": "catch01",
+      "arm_id": "starlink_sldasm9",
+      "mount_frame": "catch01_mount",
+      "mount_to_arm_root_xyz_m": [
+        0.009087204933166504,
+        0.008519247174263,
+        0.16000000119209293
+      ],
+      "mount_to_arm_root_rpy_rad": [
+        -1.5707963267948966,
+        0,
+        0.0
+      ],
+      "assembly": "combinations/catch01__starlink_sldasm9.urdf",
+      "static_surface_check": {
+        "method": "full_mesh_AABB_tree_and_triangle_SAT",
+        "joint_pose": "all_zero",
+        "surface_intersection_found": false,
+        "narrowphase_pairs_tested": 0,
+        "first_intersection": null,
+        "exclusions": [
+          "solid containment",
+          "self collision",
+          "motion sweep",
+          "mount strength"
+        ]
+      },
+      "support_surface_check": {
+        "method": "full_mesh_AABB_tree_and_triangle_SAT",
+        "joint_pose": "all_zero",
+        "surface_intersection_found": false,
+        "narrowphase_pairs_tested": 0,
+        "first_intersection": null,
+        "exclusions": [
+          "solid containment",
+          "self collision",
+          "motion sweep",
+          "mount strength"
+        ]
+      },
+      "status": "angular_endpoints_surface_clear",
+      "dynamics_ready": false,
+      "angular_surface_checks": [
+        {
+          "u": 0,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        },
+        {
+          "u": 1,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "satellite_id": "catch01",
+      "arm_id": "airbus_vispa",
+      "mount_frame": "catch01_mount",
+      "mount_to_arm_root_xyz_m": [
+        -0.0039634800766936845,
+        -5.90604237737935e-09,
+        0.05768312767349504
+      ],
+      "mount_to_arm_root_rpy_rad": [
+        0,
+        0,
+        0.0
+      ],
+      "assembly": "combinations/catch01__airbus_vispa.urdf",
+      "static_surface_check": {
+        "method": "full_mesh_AABB_tree_and_triangle_SAT",
+        "joint_pose": "all_zero",
+        "surface_intersection_found": false,
+        "narrowphase_pairs_tested": 0,
+        "first_intersection": null,
+        "exclusions": [
+          "solid containment",
+          "self collision",
+          "motion sweep",
+          "mount strength"
+        ]
+      },
+      "support_surface_check": {
+        "method": "full_mesh_AABB_tree_and_triangle_SAT",
+        "joint_pose": "all_zero",
+        "surface_intersection_found": false,
+        "narrowphase_pairs_tested": 0,
+        "first_intersection": null,
+        "exclusions": [
+          "solid containment",
+          "self collision",
+          "motion sweep",
+          "mount strength"
+        ]
+      },
+      "status": "angular_endpoints_surface_clear",
+      "dynamics_ready": false,
+      "gripper_surface_check": [
+        {
+          "finger_q_m": 0.0,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        },
+        {
+          "finger_q_m": 0.04,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        }
+      ],
+      "angular_surface_checks": [
+        {
+          "u": 0,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        },
+        {
+          "u": 1,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "satellite_id": "artificial1",
+      "arm_id": "starlink_sldasm9",
+      "mount_frame": "artificial1_mount",
+      "mount_to_arm_root_xyz_m": [
+        0.009087204933166504,
+        0.008519247174263,
+        0.16000000119209293
+      ],
+      "mount_to_arm_root_rpy_rad": [
+        -1.5707963267948966,
+        0,
+        0.0
+      ],
+      "assembly": "combinations/artificial1__starlink_sldasm9.urdf",
+      "static_surface_check": {
+        "method": "full_mesh_AABB_tree_and_triangle_SAT",
+        "joint_pose": "all_zero",
+        "surface_intersection_found": false,
+        "narrowphase_pairs_tested": 61689,
+        "first_intersection": null,
+        "exclusions": [
+          "solid containment",
+          "self collision",
+          "motion sweep",
+          "mount strength"
+        ]
+      },
+      "support_surface_check": {
+        "method": "full_mesh_AABB_tree_and_triangle_SAT",
+        "joint_pose": "all_zero",
+        "surface_intersection_found": false,
+        "narrowphase_pairs_tested": 0,
+        "first_intersection": null,
+        "exclusions": [
+          "solid containment",
+          "self collision",
+          "motion sweep",
+          "mount strength"
+        ]
+      },
+      "status": "angular_endpoints_surface_clear",
+      "dynamics_ready": false,
+      "angular_surface_checks": [
+        {
+          "u": 0,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        },
+        {
+          "u": 1,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "satellite_id": "artificial1",
+      "arm_id": "airbus_vispa",
+      "mount_frame": "artificial1_mount",
+      "mount_to_arm_root_xyz_m": [
+        -0.0039634800766936845,
+        -5.90604237737935e-09,
+        0.05768312767349504
+      ],
+      "mount_to_arm_root_rpy_rad": [
+        0,
+        0,
+        0.0
+      ],
+      "assembly": "combinations/artificial1__airbus_vispa.urdf",
+      "static_surface_check": {
+        "method": "full_mesh_AABB_tree_and_triangle_SAT",
+        "joint_pose": "all_zero",
+        "surface_intersection_found": false,
+        "narrowphase_pairs_tested": 976847,
+        "first_intersection": null,
+        "exclusions": [
+          "solid containment",
+          "self collision",
+          "motion sweep",
+          "mount strength"
+        ]
+      },
+      "support_surface_check": {
+        "method": "full_mesh_AABB_tree_and_triangle_SAT",
+        "joint_pose": "all_zero",
+        "surface_intersection_found": false,
+        "narrowphase_pairs_tested": 0,
+        "first_intersection": null,
+        "exclusions": [
+          "solid containment",
+          "self collision",
+          "motion sweep",
+          "mount strength"
+        ]
+      },
+      "status": "angular_endpoints_surface_clear",
+      "dynamics_ready": false,
+      "gripper_surface_check": [
+        {
+          "finger_q_m": 0.0,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 186192,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        },
+        {
+          "finger_q_m": 0.04,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 186192,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        }
+      ],
+      "angular_surface_checks": [
+        {
+          "u": 0,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 173009,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        },
+        {
+          "u": 1,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 163512,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "satellite_id": "satellite_6",
+      "arm_id": "starlink_sldasm9",
+      "mount_frame": "satellite_6_mount",
+      "mount_to_arm_root_xyz_m": [
+        0.009087204933166504,
+        0.008519247174263,
+        0.16000000119209298
+      ],
+      "mount_to_arm_root_rpy_rad": [
+        -1.5707963267948966,
+        0,
+        0.0
+      ],
+      "assembly": "combinations/satellite_6__starlink_sldasm9.urdf",
+      "static_surface_check": {
+        "method": "full_mesh_AABB_tree_and_triangle_SAT",
+        "joint_pose": "all_zero",
+        "surface_intersection_found": false,
+        "narrowphase_pairs_tested": 0,
+        "first_intersection": null,
+        "exclusions": [
+          "solid containment",
+          "self collision",
+          "motion sweep",
+          "mount strength"
+        ]
+      },
+      "support_surface_check": {
+        "method": "full_mesh_AABB_tree_and_triangle_SAT",
+        "joint_pose": "all_zero",
+        "surface_intersection_found": false,
+        "narrowphase_pairs_tested": 3398,
+        "first_intersection": null,
+        "exclusions": [
+          "solid containment",
+          "self collision",
+          "motion sweep",
+          "mount strength"
+        ]
+      },
+      "status": "angular_endpoints_surface_clear",
+      "dynamics_ready": false,
+      "asset_status": "partial_assembly_experimental",
+      "source_geometry_complete": false,
+      "angular_surface_checks": [
+        {
+          "u": 0,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        },
+        {
+          "u": 1,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "satellite_id": "satellite_6",
+      "arm_id": "airbus_vispa",
+      "mount_frame": "satellite_6_mount",
+      "mount_to_arm_root_xyz_m": [
+        -0.0039634800766936845,
+        -5.90604237737935e-09,
+        0.057683127673495094
+      ],
+      "mount_to_arm_root_rpy_rad": [
+        0,
+        0,
+        0.0
+      ],
+      "assembly": "combinations/satellite_6__airbus_vispa.urdf",
+      "static_surface_check": {
+        "method": "full_mesh_AABB_tree_and_triangle_SAT",
+        "joint_pose": "all_zero",
+        "surface_intersection_found": false,
+        "narrowphase_pairs_tested": 742,
+        "first_intersection": null,
+        "exclusions": [
+          "solid containment",
+          "self collision",
+          "motion sweep",
+          "mount strength"
+        ]
+      },
+      "support_surface_check": {
+        "method": "full_mesh_AABB_tree_and_triangle_SAT",
+        "joint_pose": "all_zero",
+        "surface_intersection_found": false,
+        "narrowphase_pairs_tested": 888,
+        "first_intersection": null,
+        "exclusions": [
+          "solid containment",
+          "self collision",
+          "motion sweep",
+          "mount strength"
+        ]
+      },
+      "status": "angular_endpoints_surface_clear",
+      "dynamics_ready": false,
+      "asset_status": "partial_assembly_experimental",
+      "source_geometry_complete": false,
+      "gripper_surface_check": [
+        {
+          "finger_q_m": 0.0,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        },
+        {
+          "finger_q_m": 0.04,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        }
+      ],
+      "angular_surface_checks": [
+        {
+          "u": 0,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        },
+        {
+          "u": 1,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "satellite_id": "sputnik",
+      "arm_id": "starlink_sldasm9",
+      "mount_frame": "sputnik_mount",
+      "mount_to_arm_root_xyz_m": [
+        0.009087204933166504,
+        0.008519247174263,
+        0.16000000119209293
+      ],
+      "mount_to_arm_root_rpy_rad": [
+        -1.5707963267948966,
+        0,
+        0.0
+      ],
+      "assembly": "combinations/sputnik__starlink_sldasm9.urdf",
+      "static_surface_check": {
+        "method": "full_mesh_AABB_tree_and_triangle_SAT",
+        "joint_pose": "all_zero",
+        "surface_intersection_found": false,
+        "narrowphase_pairs_tested": 11361,
+        "first_intersection": null,
+        "exclusions": [
+          "solid containment",
+          "self collision",
+          "motion sweep",
+          "mount strength"
+        ]
+      },
+      "support_surface_check": {
+        "method": "full_mesh_AABB_tree_and_triangle_SAT",
+        "joint_pose": "all_zero",
+        "surface_intersection_found": false,
+        "narrowphase_pairs_tested": 9480,
+        "first_intersection": null,
+        "exclusions": [
+          "solid containment",
+          "self collision",
+          "motion sweep",
+          "mount strength"
+        ]
+      },
+      "status": "angular_endpoints_surface_clear",
+      "dynamics_ready": false,
+      "angular_surface_checks": [
+        {
+          "u": 0,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        },
+        {
+          "u": 1,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "satellite_id": "sputnik",
+      "arm_id": "airbus_vispa",
+      "mount_frame": "sputnik_mount",
+      "mount_to_arm_root_xyz_m": [
+        -0.0039634800766936845,
+        -5.90604237737935e-09,
+        0.05768312767349504
+      ],
+      "mount_to_arm_root_rpy_rad": [
+        0,
+        0,
+        0.0
+      ],
+      "assembly": "combinations/sputnik__airbus_vispa.urdf",
+      "static_surface_check": {
+        "method": "full_mesh_AABB_tree_and_triangle_SAT",
+        "joint_pose": "all_zero",
+        "surface_intersection_found": false,
+        "narrowphase_pairs_tested": 165260,
+        "first_intersection": null,
+        "exclusions": [
+          "solid containment",
+          "self collision",
+          "motion sweep",
+          "mount strength"
+        ]
+      },
+      "support_surface_check": {
+        "method": "full_mesh_AABB_tree_and_triangle_SAT",
+        "joint_pose": "all_zero",
+        "surface_intersection_found": false,
+        "narrowphase_pairs_tested": 2604,
+        "first_intersection": null,
+        "exclusions": [
+          "solid containment",
+          "self collision",
+          "motion sweep",
+          "mount strength"
+        ]
+      },
+      "status": "angular_endpoints_surface_clear",
+      "dynamics_ready": false,
+      "gripper_surface_check": [
+        {
+          "finger_q_m": 0.0,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        },
+        {
+          "finger_q_m": 0.04,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        }
+      ],
+      "angular_surface_checks": [
+        {
+          "u": 0,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        },
+        {
+          "u": 1,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "satellite_id": "satellite_17",
+      "arm_id": "starlink_sldasm9",
+      "mount_frame": "satellite_17_mount",
+      "mount_to_arm_root_xyz_m": [
+        0.009087204933166504,
+        0.008519247174263,
+        0.16000000119209337
+      ],
+      "mount_to_arm_root_rpy_rad": [
+        -1.5707963267948966,
+        0,
+        0.0
+      ],
+      "assembly": "combinations/satellite_17__starlink_sldasm9.urdf",
+      "static_surface_check": {
+        "method": "full_mesh_AABB_tree_and_triangle_SAT",
+        "joint_pose": "all_zero",
+        "surface_intersection_found": false,
+        "narrowphase_pairs_tested": 643,
+        "first_intersection": null,
+        "exclusions": [
+          "solid containment",
+          "self collision",
+          "motion sweep",
+          "mount strength"
+        ]
+      },
+      "support_surface_check": {
+        "method": "full_mesh_AABB_tree_and_triangle_SAT",
+        "joint_pose": "all_zero",
+        "surface_intersection_found": false,
+        "narrowphase_pairs_tested": 5011,
+        "first_intersection": null,
+        "exclusions": [
+          "solid containment",
+          "self collision",
+          "motion sweep",
+          "mount strength"
+        ]
+      },
+      "status": "angular_endpoints_surface_clear",
+      "dynamics_ready": false,
+      "angular_surface_checks": [
+        {
+          "u": 0,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        },
+        {
+          "u": 1,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "satellite_id": "satellite_17",
+      "arm_id": "airbus_vispa",
+      "mount_frame": "satellite_17_mount",
+      "mount_to_arm_root_xyz_m": [
+        -0.0039634800766936845,
+        -5.90604237737935e-09,
+        0.05768312767349548
+      ],
+      "mount_to_arm_root_rpy_rad": [
+        0,
+        0,
+        0.0
+      ],
+      "assembly": "combinations/satellite_17__airbus_vispa.urdf",
+      "static_surface_check": {
+        "method": "full_mesh_AABB_tree_and_triangle_SAT",
+        "joint_pose": "all_zero",
+        "surface_intersection_found": false,
+        "narrowphase_pairs_tested": 0,
+        "first_intersection": null,
+        "exclusions": [
+          "solid containment",
+          "self collision",
+          "motion sweep",
+          "mount strength"
+        ]
+      },
+      "support_surface_check": {
+        "method": "full_mesh_AABB_tree_and_triangle_SAT",
+        "joint_pose": "all_zero",
+        "surface_intersection_found": false,
+        "narrowphase_pairs_tested": 0,
+        "first_intersection": null,
+        "exclusions": [
+          "solid containment",
+          "self collision",
+          "motion sweep",
+          "mount strength"
+        ]
+      },
+      "status": "angular_endpoints_surface_clear",
+      "dynamics_ready": false,
+      "gripper_surface_check": [
+        {
+          "finger_q_m": 0.0,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        },
+        {
+          "finger_q_m": 0.04,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        }
+      ],
+      "angular_surface_checks": [
+        {
+          "u": 0,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        },
+        {
+          "u": 1,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "satellite_id": "legacy10",
+      "arm_id": "starlink_sldasm9",
+      "mount_frame": "legacy10_mount",
+      "mount_to_arm_root_xyz_m": [
+        0.009087204933166504,
+        0.008519247174263,
+        0.16000000119209304
+      ],
+      "mount_to_arm_root_rpy_rad": [
+        -1.5707963267948966,
+        0,
+        0.0
+      ],
+      "assembly": "combinations/legacy10__starlink_sldasm9.urdf",
+      "static_surface_check": {
+        "method": "full_mesh_AABB_tree_and_triangle_SAT",
+        "joint_pose": "all_zero",
+        "surface_intersection_found": false,
+        "narrowphase_pairs_tested": 0,
+        "first_intersection": null,
+        "exclusions": [
+          "solid containment",
+          "self collision",
+          "motion sweep",
+          "mount strength"
+        ]
+      },
+      "support_surface_check": {
+        "method": "full_mesh_AABB_tree_and_triangle_SAT",
+        "joint_pose": "all_zero",
+        "surface_intersection_found": false,
+        "narrowphase_pairs_tested": 1818,
+        "first_intersection": null,
+        "exclusions": [
+          "solid containment",
+          "self collision",
+          "motion sweep",
+          "mount strength"
+        ]
+      },
+      "status": "angular_endpoints_surface_clear",
+      "dynamics_ready": false,
+      "angular_surface_checks": [
+        {
+          "u": 0,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        },
+        {
+          "u": 1,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "satellite_id": "legacy10",
+      "arm_id": "airbus_vispa",
+      "mount_frame": "legacy10_mount",
+      "mount_to_arm_root_xyz_m": [
+        -0.0039634800766936845,
+        -5.90604237737935e-09,
+        0.05768312767349515
+      ],
+      "mount_to_arm_root_rpy_rad": [
+        0,
+        0,
+        0.0
+      ],
+      "assembly": "combinations/legacy10__airbus_vispa.urdf",
+      "static_surface_check": {
+        "method": "full_mesh_AABB_tree_and_triangle_SAT",
+        "joint_pose": "all_zero",
+        "surface_intersection_found": false,
+        "narrowphase_pairs_tested": 0,
+        "first_intersection": null,
+        "exclusions": [
+          "solid containment",
+          "self collision",
+          "motion sweep",
+          "mount strength"
+        ]
+      },
+      "support_surface_check": {
+        "method": "full_mesh_AABB_tree_and_triangle_SAT",
+        "joint_pose": "all_zero",
+        "surface_intersection_found": false,
+        "narrowphase_pairs_tested": 0,
+        "first_intersection": null,
+        "exclusions": [
+          "solid containment",
+          "self collision",
+          "motion sweep",
+          "mount strength"
+        ]
+      },
+      "status": "angular_endpoints_surface_clear",
+      "dynamics_ready": false,
+      "gripper_surface_check": [
+        {
+          "finger_q_m": 0.0,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        },
+        {
+          "finger_q_m": 0.04,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        }
+      ],
+      "angular_surface_checks": [
+        {
+          "u": 0,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        },
+        {
+          "u": 1,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "satellite_id": "satellite_11",
+      "arm_id": "starlink_sldasm9",
+      "mount_frame": "satellite_11_mount",
+      "mount_to_arm_root_xyz_m": [
+        0.009087204933166504,
+        0.008519247174263,
+        0.16000000119209296
+      ],
+      "mount_to_arm_root_rpy_rad": [
+        -1.5707963267948966,
+        0,
+        0.0
+      ],
+      "assembly": "combinations/satellite_11__starlink_sldasm9.urdf",
+      "static_surface_check": {
+        "method": "full_mesh_AABB_tree_and_triangle_SAT",
+        "joint_pose": "all_zero",
+        "surface_intersection_found": false,
+        "narrowphase_pairs_tested": 0,
+        "first_intersection": null,
+        "exclusions": [
+          "solid containment",
+          "self collision",
+          "motion sweep",
+          "mount strength"
+        ]
+      },
+      "support_surface_check": {
+        "method": "full_mesh_AABB_tree_and_triangle_SAT",
+        "joint_pose": "all_zero",
+        "surface_intersection_found": false,
+        "narrowphase_pairs_tested": 2940,
+        "first_intersection": null,
+        "exclusions": [
+          "solid containment",
+          "self collision",
+          "motion sweep",
+          "mount strength"
+        ]
+      },
+      "status": "angular_endpoints_surface_clear",
+      "dynamics_ready": false,
+      "angular_surface_checks": [
+        {
+          "u": 0,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        },
+        {
+          "u": 1,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "satellite_id": "satellite_11",
+      "arm_id": "airbus_vispa",
+      "mount_frame": "satellite_11_mount",
+      "mount_to_arm_root_xyz_m": [
+        -0.0039634800766936845,
+        -5.90604237737935e-09,
+        0.057683127673495066
+      ],
+      "mount_to_arm_root_rpy_rad": [
+        0,
+        0,
+        0.0
+      ],
+      "assembly": "combinations/satellite_11__airbus_vispa.urdf",
+      "static_surface_check": {
+        "method": "full_mesh_AABB_tree_and_triangle_SAT",
+        "joint_pose": "all_zero",
+        "surface_intersection_found": false,
+        "narrowphase_pairs_tested": 0,
+        "first_intersection": null,
+        "exclusions": [
+          "solid containment",
+          "self collision",
+          "motion sweep",
+          "mount strength"
+        ]
+      },
+      "support_surface_check": {
+        "method": "full_mesh_AABB_tree_and_triangle_SAT",
+        "joint_pose": "all_zero",
+        "surface_intersection_found": false,
+        "narrowphase_pairs_tested": 43,
+        "first_intersection": null,
+        "exclusions": [
+          "solid containment",
+          "self collision",
+          "motion sweep",
+          "mount strength"
+        ]
+      },
+      "status": "angular_endpoints_surface_clear",
+      "dynamics_ready": false,
+      "gripper_surface_check": [
+        {
+          "finger_q_m": 0.0,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        },
+        {
+          "finger_q_m": 0.04,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        }
+      ],
+      "angular_surface_checks": [
+        {
+          "u": 0,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        },
+        {
+          "u": 1,
+          "check": {
+            "method": "full_mesh_AABB_tree_and_triangle_SAT",
+            "joint_pose": "all_zero",
+            "surface_intersection_found": false,
+            "narrowphase_pairs_tested": 0,
+            "first_intersection": null,
+            "exclusions": [
+              "solid containment",
+              "self collision",
+              "motion sweep",
+              "mount strength"
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "revision": "20261105 VISPA with reused Starlink gripper",
+  "unmounted_satellites": []
+}

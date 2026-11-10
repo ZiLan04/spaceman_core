@@ -1,0 +1,43 @@
+<?xml version='1.0' encoding='utf-8'?>
+<robot name="satellite_4_starlink_preview">
+  <link name="base_link">
+    <visual>
+      <geometry>
+        <mesh filename="satellite.stl" scale="1 1 1" />
+      </geometry>
+      <material name="satellite_body_color">
+        <color rgba="0.65 0.72 0.8 1" />
+      </material>
+    </visual>
+    <collision>
+      <geometry>
+        <mesh filename="satellite.stl" scale="1 1 1" />
+      </geometry>
+    </collision>
+  </link>
+  <link name="satellite_4_mount" />
+  <joint name="satellite_mount_fixed" type="fixed">
+    <parent link="base_link" />
+    <child link="satellite_4_mount" />
+    <origin xyz="0 0.5000001517447981 0.8" rpy="-1.5707963267948966 0.0 0.0" />
+  </joint>
+  <link name="concept_mount_pad">
+    <visual>
+      <origin xyz="0 0 0.015" />
+      <geometry>
+        <box size=".32 .32 .03" />
+      </geometry>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0.015" />
+      <geometry>
+        <box size=".32 .32 .03" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="pad_fixed" type="fixed">
+    <parent link="satellite_4_mount" />
+    <child link="concept_mount_pad" />
+    <origin xyz="0 0 0" rpy="0 0 0" />
+  </joint>
+</robot>

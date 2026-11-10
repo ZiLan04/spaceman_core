@@ -1,0 +1,91 @@
+{
+  "satellite_id": "satellite_6",
+  "mount_frame": "satellite_6_mount",
+  "mount_xyz_m": [
+    0.24293569051620173,
+    0.1141647029853909,
+    -0.28765164731723913
+  ],
+  "mount_rpy_rad": [
+    -2.779097495272817,
+    -0.00452000544159592,
+    -0.001714223556978478
+  ],
+  "source": {
+    "satellite_id": "satellite_6",
+    "source_archive": "卫星 (6)可以预览部分模型，但是应该需要组装.zip",
+    "file": "卫星 (6)可以预览部分模型，但是应该需要组装\\temp\\Assem1 with Background.SLDASM",
+    "status": "decoded",
+    "diagnostics": [
+      {
+        "code": "modern.configuration_manager_version_unsupported",
+        "severity": "info",
+        "kind": "unsupported",
+        "message": "configuration-manager header layout is not enabled for this internal version",
+        "offset": null,
+        "stream_path": "Contents/CMgrHdr2",
+        "details": {
+          "internal_version": "11000"
+        }
+      },
+      {
+        "code": "modern.property_stream_has_no_named_values",
+        "severity": "info",
+        "kind": "preserved",
+        "message": "property stream contains no named properties in the selected section",
+        "offset": null,
+        "stream_path": "docProps/Config-0-Properties.xml",
+        "details": {}
+      },
+      {
+        "code": "modern.property_stream_has_no_named_values",
+        "severity": "info",
+        "kind": "preserved",
+        "message": "property stream contains no named properties in the selected section",
+        "offset": null,
+        "stream_path": "docProps/custom.xml",
+        "details": {}
+      },
+      {
+        "code": "display.assembly_placement_unverified",
+        "severity": "info",
+        "kind": "inferred",
+        "message": "assembly display tables are returned in their stored coordinates; component placement is not decoded",
+        "offset": null,
+        "stream_path": null,
+        "details": {}
+      }
+    ],
+    "cache": "sources/satellite_6_reconstructed/geometry.npy",
+    "triangles": 290401,
+    "bounds": [
+      [
+        -12000.0,
+        -16271.2626953125,
+        -18624.470703125
+      ],
+      [
+        25569.91015625,
+        21958.666015625,
+        53946.4921875
+      ]
+    ],
+    "units": "millimeter",
+    "source_sha256": "a9c516832525ee2f4b1e38ae452ed17c6578b1ed656b20be4ca9278aa8c54e55",
+    "scope": "saved display tessellation, not exact BRep; assembly occurrence transforms not independently reconstructed",
+    "method": "explicit swTransform reconstruction of 11 available part occurrences; 26 missing/unreadable occurrences listed in assembly_provenance.json",
+    "asset_status": "partial_assembly_experimental",
+    "source_to_model_scale": 6.985318512839166e-05
+  },
+  "surface_fit": {
+    "grid": "17x17",
+    "footprint_m": [
+      0.32,
+      0.32
+    ],
+    "coverage": 1,
+    "clearance_m": 0.002
+  },
+  "status": "automatically_screened_candidate_pending_task_and_structural_review",
+  "dynamics_ready": false
+}

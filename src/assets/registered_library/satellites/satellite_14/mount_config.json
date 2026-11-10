@@ -1,0 +1,80 @@
+{
+  "satellite_id": "satellite_14",
+  "mount_frame": "satellite_14_mount",
+  "mount_xyz_m": [
+    -0.47098720948629275,
+    -0.2859545646737885,
+    0.0007778720686670624
+  ],
+  "mount_rpy_rad": [
+    0.005423569964189135,
+    -1.5707963267948966,
+    0.0
+  ],
+  "source": {
+    "satellite_id": "satellite_14",
+    "source_archive": "卫星 (14)可用.zip",
+    "file": "卫星 (14)可用\\Basic Sat.SLDPRT",
+    "status": "decoded",
+    "diagnostics": [
+      {
+        "code": "modern.configuration_manager_version_unsupported",
+        "severity": "info",
+        "kind": "unsupported",
+        "message": "configuration-manager header layout is not enabled for this internal version",
+        "offset": null,
+        "stream_path": "Contents/CMgrHdr2",
+        "details": {
+          "internal_version": "12000"
+        }
+      },
+      {
+        "code": "modern.property_stream_has_no_named_values",
+        "severity": "info",
+        "kind": "preserved",
+        "message": "property stream contains no named properties in the selected section",
+        "offset": null,
+        "stream_path": "docProps/Config-0-Properties.xml",
+        "details": {}
+      },
+      {
+        "code": "modern.property_stream_has_no_named_values",
+        "severity": "info",
+        "kind": "preserved",
+        "message": "property stream contains no named properties in the selected section",
+        "offset": null,
+        "stream_path": "docProps/custom.xml",
+        "details": {}
+      }
+    ],
+    "cache": "sources\\satellite_14\\geometry.npy",
+    "triangles": 7660,
+    "bounds": [
+      [
+        -1376.6400146484375,
+        -695.2208862304688,
+        -361.0921325683594
+      ],
+      [
+        1376.6400146484375,
+        494.4295349121094,
+        361.0921325683594
+      ]
+    ],
+    "units": "millimeter",
+    "source_sha256": "12f8a6f1c1a450b2224f9e8d1a0574e9fafce2f123911125ec96b69cfc972e3d",
+    "scope": "saved display tessellation, not exact BRep; assembly occurrence transforms not independently reconstructed",
+    "source_to_model_scale": 0.002905625259644591
+  },
+  "surface_fit": {
+    "grid": "17x17",
+    "footprint_m": [
+      0.32,
+      0.32
+    ],
+    "coverage": 1,
+    "clearance_m": 0.002
+  },
+  "status": "automatically_screened_candidate_pending_task_and_structural_review",
+  "dynamics_ready": false
+}

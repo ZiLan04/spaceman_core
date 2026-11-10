@@ -1,0 +1,3005 @@
+{
+  "schema_version": 1,
+  "upstream_commit": "e3b6d20c19eb9e6ce26ab5157df02ea06bb5b555",
+  "units": {
+    "position": "m",
+    "urdf_rpy": "rad",
+    "spawn_euler": "degree",
+    "quaternion": "wxyz"
+  },
+  "satellites": {
+    "satellite_2": {
+      "bounds_m": [
+        [
+          -1.21,
+          -9.030999999999999,
+          -0.355
+        ],
+        [
+          1.21,
+          9.030999999999999,
+          7.455
+        ]
+      ],
+      "mount_frame": "A_upper_plus_x_mount",
+      "mount_xyz_m": [
+        1.21,
+        0.0,
+        6.0
+      ],
+      "mount_rpy_rad": [
+        -1.5707963267948966,
+        0.0,
+        -1.5707963267948966
+      ],
+      "grasp_sites": [
+        {
+          "id": "body_surface_candidate",
+          "link": "base_link",
+          "position": [
+            1.21,
+            0.0,
+            6.0
+          ],
+          "quaternion": [
+            0.5000000000000001,
+            -0.5000000000000001,
+            0.5000000000000001,
+            -0.5000000000000001
+          ],
+          "status": "candidate_not_grasp_validated",
+          "source": "reviewed body mount patch; not a grasp handle",
+          "normal": [
+            1.0000000000000004,
+            0.0,
+            0.0
+          ]
+        }
+      ],
+      "inspection_eligible": true,
+      "task_ready": false,
+      "asset_status": "geometry_candidate",
+      "notes": []
+    },
+    "satellite_4": {
+      "bounds_m": [
+        [
+          -5.3669114112854,
+          -0.8472309112548828,
+          -1.933552861213684
+        ],
+        [
+          5.3669114112854,
+          0.8472315669059753,
+          2.54799747467041
+        ]
+      ],
+      "mount_frame": "satellite_4_mount",
+      "mount_xyz_m": [
+        0,
+        0.5000001517447981,
+        0.8
+      ],
+      "mount_rpy_rad": [
+        -1.5707963267948966,
+        0.0,
+        0.0
+      ],
+      "grasp_sites": [
+        {
+          "id": "body_surface_candidate",
+          "link": "base_link",
+          "position": [
+            0,
+            0.5000001517447981,
+            0.8
+          ],
+          "quaternion": [
+            0.7071067811865476,
+            -0.7071067811865476,
+            0.0,
+            0.0
+          ],
+          "status": "candidate_not_grasp_validated",
+          "source": "reviewed body mount patch; not a grasp handle",
+          "normal": [
+            0.0,
+            1.0000000000000002,
+            0.0
+          ]
+        }
+      ],
+      "inspection_eligible": true,
+      "task_ready": false,
+      "asset_status": "geometry_candidate",
+      "notes": []
+    },
+    "satellite_5": {
+      "bounds_m": [
+        [
+          -2.3921921253204346,
+          -3.800346612930298,
+          -0.14639464020729065
+        ],
+        [
+          2.392489433288574,
+          3.8005197048187256,
+          1.5099999904632568
+        ]
+      ],
+      "mount_frame": "satellite_5_mount",
+      "mount_xyz_m": [
+        -0.38,
+        -0.12,
+        1.1863715513837443
+      ],
+      "mount_rpy_rad": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "grasp_sites": [
+        {
+          "id": "body_surface_candidate",
+          "link": "base_link",
+          "position": [
+            -0.38,
+            -0.12,
+            1.1863715513837443
+          ],
+          "quaternion": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "status": "candidate_not_grasp_validated",
+          "source": "reviewed body mount patch; not a grasp handle",
+          "normal": [
+            0.0,
+            0.0,
+            1.0
+          ]
+        }
+      ],
+      "inspection_eligible": true,
+      "task_ready": false,
+      "asset_status": "geometry_candidate",
+      "notes": []
+    },
+    "satellite_8": {
+      "bounds_m": [
+        [
+          -1.4846035242080688,
+          -0.9316635727882385,
+          -2.3456711769104004
+        ],
+        [
+          3.670851707458496,
+          0.901329517364502,
+          3.647301435470581
+        ]
+      ],
+      "mount_frame": "satellite_8_mount",
+      "mount_xyz_m": [
+        0.15477028499931625,
+        -0.178627828679634,
+        0.5965685106964815
+      ],
+      "mount_rpy_rad": [
+        -1.5292767408638297,
+        -0.009960664339460301,
+        1.8061152658260409
+      ],
+      "grasp_sites": [
+        {
+          "id": "body_surface_candidate",
+          "link": "base_link",
+          "position": [
+            0.15477028499931625,
+            -0.178627828679634,
+            0.5965685106964815
+          ],
+          "quaternion": [
+            0.44954533096477955,
+            -0.42583823830121165,
+            -0.5458104024363832,
+            0.5645013682893253
+          ],
+          "status": "candidate_not_grasp_validated",
+          "source": "reviewed body mount patch; not a grasp handle",
+          "normal": [
+            -0.9715055723964663,
+            -0.23335425445461755,
+            0.04150559878550755
+          ]
+        }
+      ],
+      "inspection_eligible": true,
+      "task_ready": false,
+      "asset_status": "geometry_candidate",
+      "notes": []
+    },
+    "uydu": {
+      "bounds_m": [
+        [
+          -4.0,
+          -0.9131565093994141,
+          -0.6564792394638062
+        ],
+        [
+          4.0,
+          1.1270695924758911,
+          1.0716418027877808
+        ]
+      ],
+      "mount_frame": "uydu_mount",
+      "mount_xyz_m": [
+        0.15,
+        0.15,
+        0.4046098543457654
+      ],
+      "mount_rpy_rad": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "grasp_sites": [
+        {
+          "id": "body_surface_candidate",
+          "link": "base_link",
+          "position": [
+            0.15,
+            0.15,
+            0.4046098543457654
+          ],
+          "quaternion": [
+            1.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "status": "candidate_not_grasp_validated",
+          "source": "reviewed body mount patch; not a grasp handle",
+          "normal": [
+            0.0,
+            0.0,
+            1.0
+          ]
+        }
+      ],
+      "inspection_eligible": true,
+      "task_ready": false,
+      "asset_status": "geometry_candidate",
+      "notes": []
+    },
+    "design": {
+      "bounds_m": [
+        [
+          -1.398218035697937,
+          -0.5894343852996826,
+          -3.99788761138916
+        ],
+        [
+          0.32243070006370544,
+          1.2931904792785645,
+          4.00211238861084
+        ]
+      ],
+      "mount_frame": "design_mount",
+      "mount_xyz_m": [
+        0.26368193436445714,
+        0.52,
+        0.0
+      ],
+      "mount_rpy_rad": [
+        3.141592653589793,
+        -1.5707963267948966,
+        0.0
+      ],
+      "grasp_sites": [
+        {
+          "id": "body_surface_candidate",
+          "link": "base_link",
+          "position": [
+            0.26368193436445714,
+            0.52,
+            0.0
+          ],
+          "quaternion": [
+            4.329780281177467e-17,
+            0.7071067811865476,
+            -4.329780281177467e-17,
+            0.7071067811865476
+          ],
+          "status": "candidate_not_grasp_validated",
+          "source": "reviewed body mount patch; not a grasp handle",
+          "normal": [
+            1.0000000000000002,
+            -1.2246467991473535e-16,
+            1.8746997283273227e-33
+          ]
+        }
+      ],
+      "inspection_eligible": true,
+      "task_ready": false,
+      "asset_status": "geometry_candidate",
+      "notes": []
+    },
+    "station": {
+      "bounds_m": [
+        [
+          -3.175950050354004,
+          -4.241026878356934,
+          -3.925727605819702
+        ],
+        [
+          1.8846235275268555,
+          3.7589728832244873,
+          4.045133113861084
+        ]
+      ],
+      "mount_frame": "station_mount",
+      "mount_xyz_m": [
+        -1.2,
+        0.6066343669416991,
+        0.0
+      ],
+      "mount_rpy_rad": [
+        -1.5707963267948966,
+        -1.5707963267948966,
+        0.0
+      ],
+      "grasp_sites": [
+        {
+          "id": "body_surface_candidate",
+          "link": "base_link",
+          "position": [
+            -1.2,
+            0.6066343669416991,
+            0.0
+          ],
+          "quaternion": [
+            0.5000000000000001,
+            -0.5000000000000001,
+            -0.5000000000000001,
+            -0.5000000000000001
+          ],
+          "status": "candidate_not_grasp_validated",
+          "source": "reviewed body mount patch; not a grasp handle",
+          "normal": [
+            0.0,
+            1.0000000000000004,
+            0.0
+          ]
+        }
+      ],
+      "inspection_eligible": true,
+      "task_ready": false,
+      "asset_status": "geometry_candidate",
+      "notes": []
+    },
+    "gps": {
+      "bounds_m": [
+        [
+          -4.0,
+          -1.5608320236206055,
+          -0.8163265585899353
+        ],
+        [
+          4.0,
+          1.5608320236206055,
+          1.789638876914978
+        ]
+      ],
+      "mount_frame": "gps_mount",
+      "mount_xyz_m": [
+        -0.28457456828885463,
+        0.0,
+        0.15
+      ],
+      "mount_rpy_rad": [
+        0.0,
+        -1.5707963267948966,
+        0.0
+      ],
+      "grasp_sites": [
+        {
+          "id": "body_surface_candidate",
+          "link": "base_link",
+          "position": [
+            -0.28457456828885463,
+            0.0,
+            0.15
+          ],
+          "quaternion": [
+            0.7071067811865476,
+            0.0,
+            -0.7071067811865476,
+            0.0
+          ],
+          "status": "candidate_not_grasp_validated",
+          "source": "reviewed body mount patch; not a grasp handle",
+          "normal": [
+            -1.0000000000000002,
+            0.0,
+            0.0
+          ]
+        }
+      ],
+      "inspection_eligible": true,
+      "task_ready": false,
+      "asset_status": "geometry_candidate",
+      "notes": []
+    },
+    "artificial2": {
+      "bounds_m": [
+        [
+          -3.8716883659362793,
+          0.037620775401592255,
+          -3.6488161087036133
+        ],
+        [
+          3.855278491973877,
+          2.28006649017334,
+          4.351183891296387
+        ]
+      ],
+      "mount_frame": "artificial2_mount",
+      "mount_xyz_m": [
+        -0.22911911390164835,
+        1.1,
+        0.35
+      ],
+      "mount_rpy_rad": [
+        0.0,
+        -1.5707963267948966,
+        0.0
+      ],
+      "grasp_sites": [
+        {
+          "id": "body_surface_candidate",
+          "link": "base_link",
+          "position": [
+            -0.22911911390164835,
+            1.1,
+            0.35
+          ],
+          "quaternion": [
+            0.7071067811865476,
+            0.0,
+            -0.7071067811865476,
+            0.0
+          ],
+          "status": "candidate_not_grasp_validated",
+          "source": "reviewed body mount patch; not a grasp handle",
+          "normal": [
+            -1.0000000000000002,
+            0.0,
+            0.0
+          ]
+        }
+      ],
+      "inspection_eligible": true,
+      "task_ready": false,
+      "asset_status": "geometry_candidate",
+      "notes": []
+    },
+    "legacy10": {
+      "bounds_m": [
+        [
+          -3.999999761581421,
+          -1.0604586601257324,
+          -0.9503169059753418
+        ],
+        [
+          4.0,
+          1.060458779335022,
+          4.766445159912109
+        ]
+      ],
+      "mount_frame": "legacy10_mount",
+      "mount_xyz_m": [
+        0.6696842409943525,
+        0.04390860234940623,
+        2.6205085134159303
+      ],
+      "mount_rpy_rad": [
+        -1.4013235016818726e-12,
+        -1.5707955494145627,
+        -3.06792001243422
+      ],
+      "grasp_sites": [
+        {
+          "id": "body_surface_candidate",
+          "link": "base_link",
+          "position": [
+            0.6696842409943525,
+            0.04390860234940623,
+            2.6205085134159303
+          ],
+          "quaternion": [
+            0.026041331955647434,
+            -0.7066268190453645,
+            -0.026041311711635963,
+            -0.7066273683633707
+          ],
+          "status": "candidate_not_grasp_validated",
+          "source": "reviewed body mount patch; not a grasp handle",
+          "normal": [
+            0.997287398228325,
+            0.07360601425409419,
+            7.773803341130361e-07
+          ]
+        }
+      ],
+      "inspection_eligible": true,
+      "task_ready": false,
+      "asset_status": "geometry_candidate",
+      "notes": []
+    },
+    "satellite_11": {
+      "bounds_m": [
+        [
+          -4.0,
+          -2.2011985778808594,
+          0.0
+        ],
+        [
+          4.0,
+          2.201176166534424,
+          4.99269962310791
+        ]
+      ],
+      "mount_frame": "satellite_11_mount",
+      "mount_xyz_m": [
+        -0.3692992002694974,
+        0.36206781363916873,
+        3.4259989261627197
+      ],
+      "mount_rpy_rad": [
+        0.2945705079256369,
+        -1.5707963267948966,
+        0.0
+      ],
+      "grasp_sites": [
+        {
+          "id": "body_surface_candidate",
+          "link": "base_link",
+          "position": [
+            -0.3692992002694974,
+            0.36206781363916873,
+            3.4259989261627197
+          ],
+          "quaternion": [
+            0.6994510212536325,
+            0.10377026966935465,
+            -0.6994510212536325,
+            0.10377026966935465
+          ],
+          "status": "candidate_not_grasp_validated",
+          "source": "reviewed body mount patch; not a grasp handle",
+          "normal": [
+            -0.9569269245309977,
+            -0.2903288843839798,
+            0.0
+          ]
+        }
+      ],
+      "inspection_eligible": true,
+      "task_ready": false,
+      "asset_status": "geometry_candidate",
+      "notes": []
+    },
+    "satellite_12": {
+      "bounds_m": [
+        [
+          -4.006150245666504,
+          -2.00785231590271,
+          -1.6825302839279175
+        ],
+        [
+          3.993849754333496,
+          1.6560900211334229,
+          1.7017933130264282
+        ]
+      ],
+      "mount_frame": "satellite_12_mount",
+      "mount_xyz_m": [
+        -0.42978277927665665,
+        -0.048447198595315544,
+        0.12321589375317275
+      ],
+      "mount_rpy_rad": [
+        -1.232595164407831e-32,
+        -1.1780967567368361,
+        1.0555399031630314e-16
+      ],
+      "grasp_sites": [
+        {
+          "id": "body_surface_candidate",
+          "link": "base_link",
+          "position": [
+            -0.42978277927665665,
+            -0.048447198595315544,
+            0.12321589375317275
+          ],
+          "quaternion": [
+            0.8314697479614755,
+            2.932131678288141e-17,
+            -0.5555700299916116,
+            4.3882474862312293e-17
+          ],
+          "status": "candidate_not_grasp_validated",
+          "source": "reviewed body mount patch; not a grasp handle",
+          "normal": [
+            -0.9238793456241495,
+            -9.751915150144395e-17,
+            0.3826838835502394
+          ]
+        }
+      ],
+      "inspection_eligible": true,
+      "task_ready": false,
+      "asset_status": "geometry_candidate",
+      "notes": []
+    },
+    "satellite_13": {
+      "bounds_m": [
+        [
+          -3.9992146492004395,
+          -2.5865142345428467,
+          -2.057917833328247
+        ],
+        [
+          4.0007853507995605,
+          2.57519268989563,
+          2.0678646564483643
+        ]
+      ],
+      "mount_frame": "satellite_13_mount",
+      "mount_xyz_m": [
+        -0.4318182499635565,
+        -0.4150752094962243,
+        0.029176153837355293
+      ],
+      "mount_rpy_rad": [
+        -3.141592653589793,
+        -1.325373661799296,
+        -3.034633267420518
+      ],
+      "grasp_sites": [
+        {
+          "id": "body_surface_candidate",
+          "link": "base_link",
+          "position": [
+            -0.4318182499635565,
+            -0.4150752094962243,
+            0.029176153837355293
+          ],
+          "quaternion": [
+            -0.6143576084939921,
+            -0.04214019630472798,
+            0.7872149496514694,
+            -0.03288701546471163
+          ],
+          "status": "candidate_not_grasp_validated",
+          "source": "reviewed body mount patch; not a grasp handle",
+          "normal": [
+            -0.9644912571020712,
+            -0.1035566008929602,
+            -0.24296634619873303
+          ]
+        }
+      ],
+      "inspection_eligible": true,
+      "task_ready": false,
+      "asset_status": "geometry_candidate",
+      "notes": []
+    },
+    "satellite_9": {
+      "bounds_m": [
+        [
+          -2.8089146614074707,
+          -7.932708263397217,
+          -0.6077361106872559
+        ],
+        [
+          2.5680930614471436,
+          0.06729192286729813,
+          5.74237585067749
+        ]
+      ],
+      "mount_frame": "satellite_9_mount",
+      "mount_xyz_m": [
+        0.613773162348958,
+        -4.00767726065443,
+        2.343015079491069
+      ],
+      "mount_rpy_rad": [
+        3.141592653589793,
+        -1.1777297939944262,
+        -1.5706291085819188
+      ],
+      "grasp_sites": [
+        {
+          "id": "body_surface_candidate",
+          "link": "base_link",
+          "position": [
+            0.613773162348958,
+            -4.00767726065443,
+            2.343015079491069
+          ],
+          "quaternion": [
+            0.3927066153999939,
+            0.5880591283385415,
+            -0.5879608023626933,
+            0.39277228858947527
+          ],
+          "status": "candidate_not_grasp_validated",
+          "source": "reviewed body mount patch; not a grasp handle",
+          "normal": [
+            0.00015446595948565012,
+            -0.9237388397795969,
+            -0.3830228870745346
+          ]
+        }
+      ],
+      "inspection_eligible": true,
+      "task_ready": false,
+      "asset_status": "geometry_candidate",
+      "notes": []
+    },
+    "navstar": {
+      "bounds_m": [
+        [
+          -1.8723865747451782,
+          -0.8691481947898865,
+          -3.978672742843628
+        ],
+        [
+          1.7836769819259644,
+          0.8748125433921814,
+          4.021327495574951
+        ]
+      ],
+      "mount_frame": "navstar_mount",
+      "mount_xyz_m": [
+        -0.06259960387694356,
+        0.04391826006281371,
+        0.9515232222782899
+      ],
+      "mount_rpy_rad": [
+        -0.823698879557603,
+        -1.5707963267948966,
+        0.0
+      ],
+      "grasp_sites": [
+        {
+          "id": "body_surface_candidate",
+          "link": "base_link",
+          "position": [
+            -0.06259960387694356,
+            0.04391826006281371,
+            0.9515232222782899
+          ],
+          "quaternion": [
+            0.6479799622905452,
+            -0.2830582421869105,
+            -0.6479799622905452,
+            -0.2830582421869105
+          ],
+          "status": "candidate_not_grasp_validated",
+          "source": "reviewed body mount patch; not a grasp handle",
+          "normal": [
+            -0.6795121261202255,
+            0.7336642763932091,
+            0.0
+          ]
+        }
+      ],
+      "inspection_eligible": true,
+      "task_ready": false,
+      "asset_status": "geometry_candidate",
+      "notes": []
+    },
+    "satellite_15": {
+      "bounds_m": [
+        [
+          -3.6264214515686035,
+          -3.9665350914001465,
+          -1.0403742790222168
+        ],
+        [
+          2.7193901538848877,
+          4.0334649085998535,
+          1.3916900157928467
+        ]
+      ],
+      "mount_frame": "satellite_15_mount",
+      "mount_xyz_m": [
+        -0.49366891630210286,
+        0.5608585823519294,
+        0.24660813695555958
+      ],
+      "mount_rpy_rad": [
+        0.0,
+        -1.079922418600288,
+        -1.5707963267948966
+      ],
+      "grasp_sites": [
+        {
+          "id": "body_surface_candidate",
+          "link": "base_link",
+          "position": [
+            -0.49366891630210286,
+            0.5608585823519294,
+            0.24660813695555958
+          ],
+          "quaternion": [
+            0.6065057267405608,
+            -0.3635255196418873,
+            -0.3635255196418873,
+            -0.6065057267405608
+          ],
+          "status": "candidate_not_grasp_validated",
+          "source": "reviewed body mount patch; not a grasp handle",
+          "normal": [
+            0.0,
+            0.8819212379165714,
+            0.47139678627638326
+          ]
+        }
+      ],
+      "inspection_eligible": true,
+      "task_ready": false,
+      "asset_status": "geometry_candidate",
+      "notes": []
+    },
+    "satellite_16": {
+      "bounds_m": [
+        [
+          -0.8364143967628479,
+          -7.834812641143799,
+          -0.8364142179489136
+        ],
+        [
+          0.8364140391349792,
+          0.16518734395503998,
+          0.8364142179489136
+        ]
+      ],
+      "mount_frame": "satellite_16_mount",
+      "mount_xyz_m": [
+        0.054587137540405395,
+        -7.8260790473016195,
+        -0.05458727652902946
+      ],
+      "mount_rpy_rad": [
+        3.1415926535897922,
+        -1.473089441440349,
+        -1.4726166555900306
+      ],
+      "grasp_sites": [
+        {
+          "id": "body_surface_candidate",
+          "link": "base_link",
+          "position": [
+            0.054587137540405395,
+            -7.8260790473016195,
+            -0.05458727652902946
+          ],
+          "quaternion": [
+            0.45110660590044965,
+            0.5488933661587431,
+            -0.49748549864090597,
+            0.49772189156386293
+          ],
+          "status": "candidate_not_grasp_validated",
+          "source": "reviewed body mount patch; not a grasp handle",
+          "normal": [
+            0.09755449938958755,
+            -0.9904376936365732,
+            -0.09755149754213349
+          ]
+        }
+      ],
+      "inspection_eligible": true,
+      "task_ready": false,
+      "asset_status": "geometry_candidate",
+      "notes": []
+    },
+    "scifi": {
+      "bounds_m": [
+        [
+          -4.000000476837158,
+          -3.1692566871643066,
+          -1.5172533988952637
+        ],
+        [
+          3.9999992847442627,
+          1.7223821878433228,
+          1.5290324687957764
+        ]
+      ],
+      "mount_frame": "scifi_mount",
+      "mount_xyz_m": [
+        0.619519532530782,
+        -0.7921738257843349,
+        -0.10568590329828764
+      ],
+      "mount_rpy_rad": [
+        3.141592653589793,
+        -1.401868605194988,
+        0.18410646478623383
+      ],
+      "grasp_sites": [
+        {
+          "id": "body_surface_candidate",
+          "link": "base_link",
+          "position": [
+            0.619519532530782,
+            -0.7921738257843349,
+            -0.10568590329828764
+          ],
+          "quaternion": [
+            -0.05928426528221102,
+            0.7610042377983635,
+            0.07025144431628884,
+            0.6422014174029482
+          ],
+          "status": "candidate_not_grasp_validated",
+          "source": "reviewed body mount patch; not a grasp handle",
+          "normal": [
+            0.9691063898049078,
+            0.1804623084580999,
+            -0.16812543075118544
+          ]
+        }
+      ],
+      "inspection_eligible": true,
+      "task_ready": false,
+      "asset_status": "geometry_candidate",
+      "notes": []
+    },
+    "sputnik": {
+      "bounds_m": [
+        [
+          -1.4713736772537231,
+          -4.0,
+          -0.1451166421175003
+        ],
+        [
+          1.3316010236740112,
+          4.0,
+          1.7120200395584106
+        ]
+      ],
+      "mount_frame": "sputnik_mount",
+      "mount_xyz_m": [
+        -0.3409793727239791,
+        -0.2415249735665143,
+        1.3379246962589
+      ],
+      "mount_rpy_rad": [
+        2.220446049250313e-16,
+        -0.6000516122871551,
+        1.0874598085095768
+      ],
+      "grasp_sites": [
+        {
+          "id": "body_surface_candidate",
+          "link": "base_link",
+          "position": [
+            -0.3409793727239791,
+            -0.2415249735665143,
+            1.3379246962589
+          ],
+          "quaternion": [
+            0.8175561502946468,
+            0.15289468918381902,
+            -0.2529228703753661,
+            0.4942217890541313
+          ],
+          "status": "candidate_not_grasp_validated",
+          "source": "reviewed body mount patch; not a grasp handle",
+          "normal": [
+            -0.2624295228005078,
+            -0.4999999739584784,
+            0.8253064713209385
+          ]
+        }
+      ],
+      "inspection_eligible": true,
+      "task_ready": false,
+      "asset_status": "geometry_candidate",
+      "notes": []
+    },
+    "solidworks_satellite": {
+      "bounds_m": [
+        [
+          -4.672469139099121,
+          -0.9181838631629944,
+          -4.0
+        ],
+        [
+          0.0,
+          0.9181838631629944,
+          4.0
+        ]
+      ],
+      "mount_frame": "solidworks_satellite_mount",
+      "mount_xyz_m": [
+        -2.437326161586077,
+        0.20975094889472667,
+        -0.29954458009684976
+      ],
+      "mount_rpy_rad": [
+        3.141592653589793,
+        -0.654498604372334,
+        1.5707963267948966
+      ],
+      "grasp_sites": [
+        {
+          "id": "body_surface_candidate",
+          "link": "base_link",
+          "position": [
+            -2.437326161586077,
+            0.20975094889472667,
+            -0.29954458009684976
+          ],
+          "quaternion": [
+            -0.22729207081151187,
+            0.6695807005478986,
+            0.6695807005478986,
+            0.22729207081151193
+          ],
+          "status": "candidate_not_grasp_validated",
+          "source": "reviewed body mount patch; not a grasp handle",
+          "normal": [
+            5.551115123125783e-17,
+            0.6087615360118188,
+            -0.7933532581848587
+          ]
+        }
+      ],
+      "inspection_eligible": true,
+      "task_ready": false,
+      "asset_status": "geometry_candidate",
+      "notes": []
+    },
+    "satellite_14": {
+      "bounds_m": [
+        [
+          -4.0,
+          -2.0200514793395996,
+          -1.0491983890533447
+        ],
+        [
+          4.0,
+          1.43662691116333,
+          1.0491983890533447
+        ]
+      ],
+      "mount_frame": "satellite_14_mount",
+      "mount_xyz_m": [
+        -0.47098720948629275,
+        -0.2859545646737885,
+        0.0007778720686670624
+      ],
+      "mount_rpy_rad": [
+        0.005423569964189135,
+        -1.5707963267948966,
+        0.0
+      ],
+      "grasp_sites": [
+        {
+          "id": "body_surface_candidate",
+          "link": "base_link",
+          "position": [
+            -0.47098720948629275,
+            -0.2859545646737885,
+            0.0007778720686670624
+          ],
+          "quaternion": [
+            0.7071041812350699,
+            0.0019175191997885426,
+            -0.7071041812350699,
+            0.0019175191997885426
+          ],
+          "status": "candidate_not_grasp_validated",
+          "source": "reviewed body mount patch; not a grasp handle",
+          "normal": [
+            -0.9999852924804741,
+            -0.005423543375076016,
+            5.551115123125783e-17
+          ]
+        }
+      ],
+      "inspection_eligible": true,
+      "task_ready": false,
+      "asset_status": "geometry_candidate",
+      "notes": []
+    },
+    "satellite_sb1": {
+      "bounds_m": [
+        [
+          -4.0,
+          -1.5608320236206055,
+          -0.8163265585899353
+        ],
+        [
+          4.0,
+          1.5608320236206055,
+          1.789638876914978
+        ]
+      ],
+      "mount_frame": "satellite_sb1_mount",
+      "mount_xyz_m": [
+        0.3630675039246468,
+        -0.08451072736787024,
+        0.2428048142333857
+      ],
+      "mount_rpy_rad": [
+        3.141592653589793,
+        -1.5707963267948963,
+        0.0
+      ],
+      "grasp_sites": [
+        {
+          "id": "body_surface_candidate",
+          "link": "base_link",
+          "position": [
+            0.3630675039246468,
+            -0.08451072736787024,
+            0.2428048142333857
+          ],
+          "quaternion": [
+            4.3297802811774677e-17,
+            0.7071067811865477,
+            -4.329780281177466e-17,
+            0.7071067811865475
+          ],
+          "status": "candidate_not_grasp_validated",
+          "source": "reviewed body mount patch; not a grasp handle",
+          "normal": [
+            1.0000000000000002,
+            -1.2246467991473535e-16,
+            -3.3306690738754696e-16
+          ]
+        }
+      ],
+      "inspection_eligible": true,
+      "task_ready": false,
+      "asset_status": "geometry_candidate",
+      "notes": []
+    },
+    "satellite_model1": {
+      "bounds_m": [
+        [
+          -3.9375,
+          -0.6108660101890564,
+          -0.40625
+        ],
+        [
+          4.0625,
+          0.7265625,
+          2.018749952316284
+        ]
+      ],
+      "mount_frame": "satellite_model1_mount",
+      "mount_xyz_m": [
+        0.5324822822133548,
+        -0.1754639344281227,
+        0.8381867257517503
+      ],
+      "mount_rpy_rad": [
+        -1.161091223167432e-10,
+        -1.5707959412852832,
+        2.617993232740724
+      ],
+      "grasp_sites": [
+        {
+          "id": "body_surface_candidate",
+          "link": "base_link",
+          "position": [
+            0.5324822822133548,
+            -0.1754639344281227,
+            0.8381867257517503
+          ],
+          "quaternion": [
+            0.18301295756571492,
+            0.6830125111830329,
+            -0.18301288701247403,
+            0.6830127744909728
+          ],
+          "status": "candidate_not_grasp_validated",
+          "source": "reviewed body mount patch; not a grasp handle",
+          "normal": [
+            0.8660250811007539,
+            -0.5000005589039711,
+            3.8550961341948797e-07
+          ]
+        }
+      ],
+      "inspection_eligible": true,
+      "task_ready": false,
+      "asset_status": "geometry_candidate",
+      "notes": []
+    },
+    "catch01": {
+      "bounds_m": [
+        [
+          -3.9767072200775146,
+          -2.242204427719116,
+          -1.3044747114181519
+        ],
+        [
+          4.023292541503906,
+          2.164350748062134,
+          1.4661768674850464
+        ]
+      ],
+      "mount_frame": "catch01_mount",
+      "mount_xyz_m": [
+        0.09559771518449763,
+        -1.6485399213057776,
+        -0.16306270113460017
+      ],
+      "mount_rpy_rad": [
+        1.5707963267948966,
+        -1.5707963267948966,
+        0.0
+      ],
+      "grasp_sites": [
+        {
+          "id": "body_surface_candidate",
+          "link": "base_link",
+          "position": [
+            0.09559771518449763,
+            -1.6485399213057776,
+            -0.16306270113460017
+          ],
+          "quaternion": [
+            0.5000000000000001,
+            0.5000000000000001,
+            -0.5000000000000001,
+            0.5000000000000001
+          ],
+          "status": "candidate_not_grasp_validated",
+          "source": "reviewed body mount patch; not a grasp handle",
+          "normal": [
+            0.0,
+            -1.0000000000000004,
+            0.0
+          ]
+        }
+      ],
+      "inspection_eligible": true,
+      "task_ready": false,
+      "asset_status": "native_STEP_recovery_12_unmeshed_faces",
+      "notes": [
+        "12 unmeshed CAD faces"
+      ]
+    },
+    "satellite_17": {
+      "bounds_m": [
+        [
+          -1.390374779701233,
+          -0.002268875017762184,
+          -4.0
+        ],
+        [
+          1.390374779701233,
+          2.86627459526062,
+          4.0
+        ]
+      ],
+      "mount_frame": "satellite_17_mount",
+      "mount_xyz_m": [
+        0.21167709790354092,
+        1.2761797060204623,
+        2.356391633916866
+      ],
+      "mount_rpy_rad": [
+        -1.4432899320127035e-15,
+        -1.4584003706330262,
+        1.9683187523291181
+      ],
+      "grasp_sites": [
+        {
+          "id": "body_surface_candidate",
+          "link": "base_link",
+          "position": [
+            0.21167709790354092,
+            1.2761797060204623,
+            2.356391633916866
+          ],
+          "quaternion": [
+            0.4127963896808603,
+            0.5548771991231563,
+            -0.3688245715019059,
+            0.621030490407777
+          ],
+          "status": "candidate_not_grasp_validated",
+          "source": "reviewed body mount patch; not a grasp handle",
+          "normal": [
+            0.3846924150919408,
+            -0.9162052180570671,
+            0.11215945869935348
+          ]
+        }
+      ],
+      "inspection_eligible": true,
+      "task_ready": false,
+      "asset_status": "dedicated_support_geometry_candidate",
+      "notes": []
+    },
+    "artificial1": {
+      "bounds_m": [
+        [
+          -4.0,
+          -0.7673949003219604,
+          -0.3595603108406067
+        ],
+        [
+          4.0,
+          1.6225225925445557,
+          2.575684070587158
+        ]
+      ],
+      "mount_frame": "artificial1_mount",
+      "mount_xyz_m": [
+        -0.49925461956241124,
+        0.013972663783229844,
+        0.8680413642841108
+      ],
+      "mount_rpy_rad": [
+        0.0,
+        -1.5707963267948966,
+        0.0
+      ],
+      "grasp_sites": [
+        {
+          "id": "body_surface_candidate",
+          "link": "base_link",
+          "position": [
+            -0.49925461956241124,
+            0.013972663783229844,
+            0.8680413642841108
+          ],
+          "quaternion": [
+            0.7071067811865476,
+            0.0,
+            -0.7071067811865476,
+            0.0
+          ],
+          "status": "candidate_not_grasp_validated",
+          "source": "reviewed body mount patch; not a grasp handle",
+          "normal": [
+            -1.0000000000000002,
+            0.0,
+            0.0
+          ]
+        }
+      ],
+      "inspection_eligible": true,
+      "task_ready": false,
+      "asset_status": "geometry_candidate",
+      "notes": []
+    },
+    "satellite_6": {
+      "bounds_m": [
+        [
+          -2.177809476852417,
+          -0.40626540780067444,
+          -3.9941649436950684
+        ],
+        [
+          0.7650770545005798,
+          1.5363364219665527,
+          4.005835056304932
+        ]
+      ],
+      "mount_frame": "satellite_6_mount",
+      "mount_xyz_m": [
+        0.24293569051620173,
+        0.1141647029853909,
+        -0.28765164731723913
+      ],
+      "mount_rpy_rad": [
+        -2.779097495272817,
+        -0.00452000544159592,
+        -0.001714223556978478
+      ],
+      "grasp_sites": [
+        {
+          "id": "body_surface_candidate",
+          "link": "base_link",
+          "position": [
+            0.24293569051620173,
+            0.1141647029853909,
+            -0.28765164731723913
+          ],
+          "quaternion": [
+            0.18025442477245895,
+            -0.983617049523559,
+            0.00043568917575951004,
+            -0.0023774800652512145
+          ],
+          "status": "candidate_not_grasp_validated",
+          "source": "reviewed body mount patch; not a grasp handle",
+          "normal": [
+            0.004834129657679191,
+            0.35460057923184474,
+            -0.9350053798769787
+          ]
+        }
+      ],
+      "inspection_eligible": false,
+      "task_ready": false,
+      "asset_status": "partial_assembly_experimental",
+      "notes": []
+    }
+  },
+  "arms": {
+    "starlink_sldasm9": {
+      "root_link": "starlink_space_manipulator_base_link",
+      "urdf": "arms/starlink_sldasm9/arm.urdf",
+      "joint_names": [
+        "starlink_space_manipulator_Shoulder_link_1_yaw",
+        "starlink_space_manipulator_Upper_arm_Link_1_roll",
+        "starlink_space_manipulator_Mid_arm_Link_1_roll",
+        "starlink_space_manipulator_Upper_wrist_Link_1_yaw",
+        "starlink_space_manipulator_Upper_wrist_Link_2_roll",
+        "starlink__space_manipulator_2F-Body_Link_yaw",
+        "angular_joint_1",
+        "angular_joint_tip_1",
+        "angular_joint_2",
+        "angular_joint_tip_2"
+      ],
+      "initial_joint_positions": {
+        "starlink_space_manipulator_Shoulder_link_1_yaw": 0.0,
+        "starlink_space_manipulator_Upper_arm_Link_1_roll": 0.0,
+        "starlink_space_manipulator_Mid_arm_Link_1_roll": 0.0,
+        "starlink_space_manipulator_Upper_wrist_Link_1_yaw": 0.0,
+        "starlink_space_manipulator_Upper_wrist_Link_2_roll": 0.0,
+        "starlink__space_manipulator_2F-Body_Link_yaw": 0.0,
+        "angular_joint_1": 0.0,
+        "angular_joint_tip_1": 0.0,
+        "angular_joint_2": 0.0,
+        "angular_joint_tip_2": 0.0
+      },
+      "gripper": {
+        "model": "Kinova JACO two-finger rotary articulated hand",
+        "scale": 2,
+        "repository": "https://github.com/Kinovarobotics/kinova-ros",
+        "commit": "924781d3dfe241b2b94b3c72a804b80d3658cf02",
+        "license": "BSD-3-Clause",
+        "joints": [
+          "angular_joint_1",
+          "angular_joint_tip_1",
+          "angular_joint_2",
+          "angular_joint_tip_2"
+        ],
+        "command": "u=0 open, u=1 curl; proximal=1.0*u rad, distal=.65*u rad",
+        "physical_gripper_dof": 4,
+        "mimic": false,
+        "tcp": "angular_tcp",
+        "tcp_status": "approximate; contact calibration pending",
+        "dynamics_ready": false,
+        "notes": "scaled simulation variant; no space qualification, mechanical flange or scaled inertia verification"
+      },
+      "tcp_status": "upstream_provisional"
+    },
+    "airbus_vispa": {
+      "root_link": "vispa_Link_0",
+      "urdf": "arms/airbus_vispa/arm.urdf",
+      "joint_names": [
+        "vispa_Joint_1",
+        "vispa_Joint_2",
+        "vispa_Joint_3",
+        "vispa_Joint_4",
+        "vispa_Joint_5",
+        "vispa_Joint_6",
+        "angular_joint_1",
+        "angular_joint_tip_1",
+        "angular_joint_2",
+        "angular_joint_tip_2"
+      ],
+      "initial_joint_positions": {
+        "vispa_Joint_1": 0.0,
+        "vispa_Joint_2": 0.0,
+        "vispa_Joint_3": 0.0,
+        "vispa_Joint_4": 0.0,
+        "vispa_Joint_5": 0.0,
+        "vispa_Joint_6": 0.0,
+        "angular_joint_1": 0.0,
+        "angular_joint_tip_1": 0.0,
+        "angular_joint_2": 0.0,
+        "angular_joint_tip_2": 0.0
+      },
+      "gripper": {
+        "model": "Kinova JACO two-finger rotary articulated hand",
+        "scale": 2,
+        "repository": "https://github.com/Kinovarobotics/kinova-ros",
+        "commit": "924781d3dfe241b2b94b3c72a804b80d3658cf02",
+        "license": "BSD-3-Clause",
+        "joints": [
+          "angular_joint_1",
+          "angular_joint_tip_1",
+          "angular_joint_2",
+          "angular_joint_tip_2"
+        ],
+        "command": "u=0 open, u=1 curl; proximal=1.0*u rad, distal=.65*u rad",
+        "physical_gripper_dof": 4,
+        "mimic": false,
+        "tcp": "angular_tcp",
+        "tcp_status": "approximate; contact calibration pending",
+        "dynamics_ready": false,
+        "notes": "scaled simulation variant; no space qualification, mechanical flange or scaled inertia verification"
+      },
+      "tcp_status": "geometric_provisional"
+    }
+  },
+  "pairs": {
+    "satellite_2__starlink_sldasm9": {
+      "satellite": "satellite_2",
+      "arm": "starlink_sldasm9",
+      "bounds_m": [
+        [
+          -1.21,
+          -9.030999999999999,
+          -0.355
+        ],
+        [
+          4.399501628909224,
+          9.030999999999999,
+          7.455
+        ]
+      ],
+      "mount_to_arm_root_xyz_m": [
+        0.009087204933166504,
+        0.008519247174263,
+        0.1500000020861624
+      ],
+      "mount_to_arm_root_rpy_rad": [
+        -1.5707963267948966,
+        0,
+        0
+      ],
+      "status": "inspection_only"
+    },
+    "satellite_2__airbus_vispa": {
+      "satellite": "satellite_2",
+      "arm": "airbus_vispa",
+      "bounds_m": [
+        [
+          -1.21,
+          -9.030999999999999,
+          -0.355
+        ],
+        [
+          4.718010619539242,
+          9.030999999999999,
+          7.455
+        ]
+      ],
+      "mount_to_arm_root_xyz_m": [
+        -0.0039634800766936845,
+        -5.90604237737935e-09,
+        0.047683128567564514
+      ],
+      "mount_to_arm_root_rpy_rad": [
+        0,
+        0,
+        0.0
+      ],
+      "status": "inspection_only"
+    },
+    "satellite_4__starlink_sldasm9": {
+      "satellite": "satellite_4",
+      "arm": "starlink_sldasm9",
+      "bounds_m": [
+        [
+          -5.3669114112854,
+          -0.8472309112548828,
+          -1.933552861213684
+        ],
+        [
+          5.3669114112854,
+          3.6895017806540222,
+          2.54799747467041
+        ]
+      ],
+      "mount_to_arm_root_xyz_m": [
+        0.009087204933166504,
+        0.008519247174263,
+        0.15000000208616263
+      ],
+      "mount_to_arm_root_rpy_rad": [
+        -1.5707963267948966,
+        0,
+        0
+      ],
+      "status": "inspection_only"
+    },
+    "satellite_4__airbus_vispa": {
+      "satellite": "satellite_4",
+      "arm": "airbus_vispa",
+      "bounds_m": [
+        [
+          -5.3669114112854,
+          -0.8472309112548828,
+          -1.933552861213684
+        ],
+        [
+          5.3669114112854,
+          4.008010771284041,
+          2.54799747467041
+        ]
+      ],
+      "mount_to_arm_root_xyz_m": [
+        -0.0039634800766936845,
+        -5.90604237737935e-09,
+        0.047683128567564736
+      ],
+      "mount_to_arm_root_rpy_rad": [
+        0,
+        0,
+        0.0
+      ],
+      "status": "inspection_only"
+    },
+    "satellite_5__starlink_sldasm9": {
+      "satellite": "satellite_5",
+      "arm": "starlink_sldasm9",
+      "bounds_m": [
+        [
+          -2.3921921253204346,
+          -3.800346612930298,
+          -0.14639464020729065
+        ],
+        [
+          2.392489433288574,
+          3.8005197048187256,
+          4.375873179622415
+        ]
+      ],
+      "mount_to_arm_root_xyz_m": [
+        0.009087204933166504,
+        0.008519247174263,
+        0.15000000141561035
+      ],
+      "mount_to_arm_root_rpy_rad": [
+        -1.5707963267948966,
+        0,
+        0
+      ],
+      "status": "inspection_only"
+    },
+    "satellite_5__airbus_vispa": {
+      "satellite": "satellite_5",
+      "arm": "airbus_vispa",
+      "bounds_m": [
+        [
+          -2.3921921253204346,
+          -3.800346612930298,
+          -0.14639464020729065
+        ],
+        [
+          2.392489433288574,
+          3.8005197048187256,
+          4.694382170252433
+        ]
+      ],
+      "mount_to_arm_root_xyz_m": [
+        -0.0039634800766936845,
+        -5.90604237737935e-09,
+        0.047683127897012456
+      ],
+      "mount_to_arm_root_rpy_rad": [
+        0,
+        0,
+        0.0
+      ],
+      "status": "inspection_only"
+    },
+    "satellite_8__starlink_sldasm9": {
+      "satellite": "satellite_8",
+      "arm": "starlink_sldasm9",
+      "bounds_m": [
+        [
+          -2.9269553895059253,
+          -1.1734911953008722,
+          -2.3456711769104004
+        ],
+        [
+          3.670851707458496,
+          0.901329517364502,
+          3.647301435470581
+        ]
+      ],
+      "mount_to_arm_root_xyz_m": [
+        0.009087204933166504,
+        0.008519247174263,
+        0.17734242334961897
+      ],
+      "mount_to_arm_root_rpy_rad": [
+        -1.5707963267948966,
+        0,
+        0
+      ],
+      "status": "inspection_only"
+    },
+    "satellite_8__airbus_vispa": {
+      "satellite": "satellite_8",
+      "arm": "airbus_vispa",
+      "bounds_m": [
+        [
+          -3.3285267870368065,
+          -1.2087228778660302,
+          -2.3456711769104004
+        ],
+        [
+          3.670851707458496,
+          0.901329517364502,
+          3.647301435470581
+        ]
+      ],
+      "mount_to_arm_root_xyz_m": [
+        5.90604237737935e-09,
+        -0.003963480076693698,
+        0.07502554983102108
+      ],
+      "mount_to_arm_root_rpy_rad": [
+        0,
+        0,
+        1.5707963267948966
+      ],
+      "status": "inspection_only"
+    },
+    "uydu__starlink_sldasm9": {
+      "satellite": "uydu",
+      "arm": "starlink_sldasm9",
+      "bounds_m": [
+        [
+          -4.0,
+          -1.0721556524989408,
+          -0.6564792394638062
+        ],
+        [
+          4.0,
+          1.1270695924758911,
+          3.5941114825844362
+        ]
+      ],
+      "mount_to_arm_root_xyz_m": [
+        0.009087204933166504,
+        0.008519247174263,
+        0.15000000141561035
+      ],
+      "mount_to_arm_root_rpy_rad": [
+        -1.5707963267948966,
+        0,
+        0
+      ],
+      "status": "inspection_only"
+    },
+    "uydu__airbus_vispa": {
+      "satellite": "uydu",
+      "arm": "airbus_vispa",
+      "bounds_m": [
+        [
+          -4.0,
+          -0.9131565093994141,
+          -0.6564792394638062
+        ],
+        [
+          4.0,
+          1.1270695924758911,
+          3.912620473214455
+        ]
+      ],
+      "mount_to_arm_root_xyz_m": [
+        5.90604237737935e-09,
+        -0.003963480076693698,
+        0.047683127897012456
+      ],
+      "mount_to_arm_root_rpy_rad": [
+        0,
+        0,
+        1.5707963267948966
+      ],
+      "status": "inspection_only"
+    },
+    "design__starlink_sldasm9": {
+      "satellite": "design",
+      "arm": "starlink_sldasm9",
+      "bounds_m": [
+        [
+          -1.398218035697937,
+          -0.5894343852996826,
+          -3.99788761138916
+        ],
+        [
+          3.4531835626031286,
+          1.7421556524989414,
+          4.00211238861084
+        ]
+      ],
+      "mount_to_arm_root_xyz_m": [
+        0.009087204933166504,
+        0.008519247174263,
+        0.15000000141561035
+      ],
+      "mount_to_arm_root_rpy_rad": [
+        -1.5707963267948966,
+        0,
+        0
+      ],
+      "status": "inspection_only"
+    },
+    "design__airbus_vispa": {
+      "satellite": "design",
+      "arm": "airbus_vispa",
+      "bounds_m": [
+        [
+          -1.398218035697937,
+          -0.5894343852996826,
+          -3.99788761138916
+        ],
+        [
+          3.7716925532331476,
+          1.2931904792785645,
+          4.00211238861084
+        ]
+      ],
+      "mount_to_arm_root_xyz_m": [
+        -0.0039634800766936845,
+        -5.90604237737935e-09,
+        0.047683127897012456
+      ],
+      "mount_to_arm_root_rpy_rad": [
+        0,
+        0,
+        0.0
+      ],
+      "status": "inspection_only"
+    },
+    "station__starlink_sldasm9": {
+      "satellite": "station",
+      "arm": "starlink_sldasm9",
+      "bounds_m": [
+        [
+          -3.175950050354004,
+          -4.241026878356934,
+          -3.925727605819702
+        ],
+        [
+          1.8846235275268555,
+          3.7961359951803724,
+          4.045133113861084
+        ]
+      ],
+      "mount_to_arm_root_xyz_m": [
+        -0.008519247174263014,
+        0.009087204933166518,
+        0.15000000141561026
+      ],
+      "mount_to_arm_root_rpy_rad": [
+        -1.5707963267948966,
+        0,
+        1.5707963267948966
+      ],
+      "status": "inspection_only"
+    },
+    "station__airbus_vispa": {
+      "satellite": "station",
+      "arm": "airbus_vispa",
+      "bounds_m": [
+        [
+          -3.175950050354004,
+          -4.241026878356934,
+          -3.925727605819702
+        ],
+        [
+          1.8846235275268555,
+          4.11464498581039,
+          4.045133113861084
+        ]
+      ],
+      "mount_to_arm_root_xyz_m": [
+        -5.90604237737935e-09,
+        0.0039634800766936845,
+        0.047683127897012345
+      ],
+      "mount_to_arm_root_rpy_rad": [
+        0,
+        0,
+        4.71238898038469
+      ],
+      "status": "inspection_only"
+    },
+    "gps__starlink_sldasm9": {
+      "satellite": "gps",
+      "arm": "starlink_sldasm9",
+      "bounds_m": [
+        [
+          -4.0,
+          -1.5608320236206055,
+          -0.8163265585899353
+        ],
+        [
+          4.0,
+          1.5608320236206055,
+          1.789638876914978
+        ]
+      ],
+      "mount_to_arm_root_xyz_m": [
+        0.009087204933166504,
+        0.008519247174263,
+        0.15000000141561035
+      ],
+      "mount_to_arm_root_rpy_rad": [
+        -1.5707963267948966,
+        0,
+        0
+      ],
+      "status": "inspection_only"
+    },
+    "gps__airbus_vispa": {
+      "satellite": "gps",
+      "arm": "airbus_vispa",
+      "bounds_m": [
+        [
+          -4.0,
+          -1.5608320236206055,
+          -0.8163265585899353
+        ],
+        [
+          4.0,
+          1.5608320236206055,
+          1.789638876914978
+        ]
+      ],
+      "mount_to_arm_root_xyz_m": [
+        -0.0039634800766936845,
+        -5.90604237737935e-09,
+        0.047683127897012456
+      ],
+      "mount_to_arm_root_rpy_rad": [
+        0,
+        0,
+        0.0
+      ],
+      "status": "inspection_only"
+    },
+    "artificial2__starlink_sldasm9": {
+      "satellite": "artificial2",
+      "arm": "starlink_sldasm9",
+      "bounds_m": [
+        [
+          -3.8716883659362793,
+          -0.1221556524989411,
+          -3.6488161087036133
+        ],
+        [
+          3.855278491973877,
+          2.28006649017334,
+          4.351183891296387
+        ]
+      ],
+      "mount_to_arm_root_xyz_m": [
+        0.009087204933166504,
+        0.008519247174263,
+        0.15000000141561035
+      ],
+      "mount_to_arm_root_rpy_rad": [
+        -1.5707963267948966,
+        0,
+        0
+      ],
+      "status": "inspection_only"
+    },
+    "artificial2__airbus_vispa": {
+      "satellite": "artificial2",
+      "arm": "airbus_vispa",
+      "bounds_m": [
+        [
+          -3.8716883659362793,
+          0.037620775401592255,
+          -3.6488161087036133
+        ],
+        [
+          3.855278491973877,
+          2.28006649017334,
+          4.351183891296387
+        ]
+      ],
+      "mount_to_arm_root_xyz_m": [
+        -0.0039634800766936845,
+        -5.90604237737935e-09,
+        0.047683127897012456
+      ],
+      "mount_to_arm_root_rpy_rad": [
+        0,
+        0,
+        0.0
+      ],
+      "status": "inspection_only"
+    },
+    "legacy10__starlink_sldasm9": {
+      "satellite": "legacy10",
+      "arm": "starlink_sldasm9",
+      "bounds_m": [
+        [
+          -3.999999761581421,
+          -1.0604586601257324,
+          -0.9503169059753418
+        ],
+        [
+          4.0,
+          1.484755918306307,
+          4.766445159912109
+        ]
+      ],
+      "mount_to_arm_root_xyz_m": [
+        0.009087204933166504,
+        0.008519247174263,
+        0.16000000119209304
+      ],
+      "mount_to_arm_root_rpy_rad": [
+        -1.5707963267948966,
+        0,
+        0.0
+      ],
+      "status": "inspection_only"
+    },
+    "legacy10__airbus_vispa": {
+      "satellite": "legacy10",
+      "arm": "airbus_vispa",
+      "bounds_m": [
+        [
+          -3.999999761581421,
+          -1.0604586601257324,
+          -0.9503169059753418
+        ],
+        [
+          4.193516204240615,
+          1.060458779335022,
+          4.766445159912109
+        ]
+      ],
+      "mount_to_arm_root_xyz_m": [
+        -0.0039634800766936845,
+        -5.90604237737935e-09,
+        0.05768312767349515
+      ],
+      "mount_to_arm_root_rpy_rad": [
+        0,
+        0,
+        0.0
+      ],
+      "status": "inspection_only"
+    },
+    "satellite_11__starlink_sldasm9": {
+      "satellite": "satellite_11",
+      "arm": "starlink_sldasm9",
+      "bounds_m": [
+        [
+          -4.0,
+          -2.2011985778808594,
+          0.0
+        ],
+        [
+          4.0,
+          2.201176166534424,
+          4.99269962310791
+        ]
+      ],
+      "mount_to_arm_root_xyz_m": [
+        0.009087204933166504,
+        0.008519247174263,
+        0.16000000119209296
+      ],
+      "mount_to_arm_root_rpy_rad": [
+        -1.5707963267948966,
+        0,
+        0.0
+      ],
+      "status": "inspection_only"
+    },
+    "satellite_11__airbus_vispa": {
+      "satellite": "satellite_11",
+      "arm": "airbus_vispa",
+      "bounds_m": [
+        [
+          -4.0,
+          -2.2011985778808594,
+          0.0
+        ],
+        [
+          4.0,
+          2.201176166534424,
+          4.99269962310791
+        ]
+      ],
+      "mount_to_arm_root_xyz_m": [
+        -0.0039634800766936845,
+        -5.90604237737935e-09,
+        0.057683127673495066
+      ],
+      "mount_to_arm_root_rpy_rad": [
+        0,
+        0,
+        0.0
+      ],
+      "status": "inspection_only"
+    },
+    "satellite_12__starlink_sldasm9": {
+      "satellite": "satellite_12",
+      "arm": "starlink_sldasm9",
+      "bounds_m": [
+        [
+          -4.006150245666504,
+          -2.00785231590271,
+          -1.6825302839279175
+        ],
+        [
+          3.993849754333496,
+          1.6560900211334229,
+          1.7017933130264282
+        ]
+      ],
+      "mount_to_arm_root_xyz_m": [
+        0.009087204933166504,
+        0.008519247174263,
+        0.16000000119209293
+      ],
+      "mount_to_arm_root_rpy_rad": [
+        -1.5707963267948966,
+        0,
+        0.0
+      ],
+      "status": "inspection_only"
+    },
+    "satellite_12__airbus_vispa": {
+      "satellite": "satellite_12",
+      "arm": "airbus_vispa",
+      "bounds_m": [
+        [
+          -4.006150245666504,
+          -2.00785231590271,
+          -1.6825302839279175
+        ],
+        [
+          3.993849754333496,
+          1.6560900211334229,
+          1.7017933130264282
+        ]
+      ],
+      "mount_to_arm_root_xyz_m": [
+        -0.0039634800766936845,
+        -5.90604237737935e-09,
+        0.05768312767349504
+      ],
+      "mount_to_arm_root_rpy_rad": [
+        0,
+        0,
+        0.0
+      ],
+      "status": "inspection_only"
+    },
+    "satellite_13__starlink_sldasm9": {
+      "satellite": "satellite_13",
+      "arm": "starlink_sldasm9",
+      "bounds_m": [
+        [
+          -3.9992146492004395,
+          -2.5865142345428467,
+          -2.057917833328247
+        ],
+        [
+          4.0007853507995605,
+          2.57519268989563,
+          2.0678646564483643
+        ]
+      ],
+      "mount_to_arm_root_xyz_m": [
+        0.009087204933166504,
+        0.008519247174263,
+        0.16000000119209304
+      ],
+      "mount_to_arm_root_rpy_rad": [
+        -1.5707963267948966,
+        0,
+        0.0
+      ],
+      "status": "inspection_only"
+    },
+    "satellite_13__airbus_vispa": {
+      "satellite": "satellite_13",
+      "arm": "airbus_vispa",
+      "bounds_m": [
+        [
+          -3.9992146492004395,
+          -2.5865142345428467,
+          -2.057917833328247
+        ],
+        [
+          4.0007853507995605,
+          2.57519268989563,
+          2.0678646564483643
+        ]
+      ],
+      "mount_to_arm_root_xyz_m": [
+        -0.0039634800766936845,
+        -5.90604237737935e-09,
+        0.05768312767349515
+      ],
+      "mount_to_arm_root_rpy_rad": [
+        0,
+        0,
+        0.0
+      ],
+      "status": "inspection_only"
+    },
+    "satellite_9__starlink_sldasm9": {
+      "satellite": "satellite_9",
+      "arm": "starlink_sldasm9",
+      "bounds_m": [
+        [
+          -2.8089146614074707,
+          -7.932708263397217,
+          -0.6077361106872559
+        ],
+        [
+          2.5680930614471436,
+          0.06729192286729813,
+          5.74237585067749
+        ]
+      ],
+      "mount_to_arm_root_xyz_m": [
+        0.009087204933166504,
+        0.008519247174263,
+        0.16000000119209337
+      ],
+      "mount_to_arm_root_rpy_rad": [
+        -1.5707963267948966,
+        0,
+        0.0
+      ],
+      "status": "inspection_only"
+    },
+    "satellite_9__airbus_vispa": {
+      "satellite": "satellite_9",
+      "arm": "airbus_vispa",
+      "bounds_m": [
+        [
+          -2.8089146614074707,
+          -7.932708263397217,
+          -0.6077361106872559
+        ],
+        [
+          2.5680930614471436,
+          0.06729192286729813,
+          5.74237585067749
+        ]
+      ],
+      "mount_to_arm_root_xyz_m": [
+        -0.0039634800766936845,
+        -5.90604237737935e-09,
+        0.05768312767349548
+      ],
+      "mount_to_arm_root_rpy_rad": [
+        0,
+        0,
+        0.0
+      ],
+      "status": "inspection_only"
+    },
+    "navstar__starlink_sldasm9": {
+      "satellite": "navstar",
+      "arm": "starlink_sldasm9",
+      "bounds_m": [
+        [
+          -3.009130069904492,
+          -0.8691481947898865,
+          -3.978672742843628
+        ],
+        [
+          1.7836769819259644,
+          1.7484195088266958,
+          4.021327495574951
+        ]
+      ],
+      "mount_to_arm_root_xyz_m": [
+        0.009087204933166504,
+        0.008519247174263,
+        0.16000000119209296
+      ],
+      "mount_to_arm_root_rpy_rad": [
+        -1.5707963267948966,
+        0,
+        0.0
+      ],
+      "status": "inspection_only"
+    },
+    "navstar__airbus_vispa": {
+      "satellite": "navstar",
+      "arm": "airbus_vispa",
+      "bounds_m": [
+        [
+          -2.6069090302250286,
+          -0.8691481947898865,
+          -3.978672742843628
+        ],
+        [
+          1.7836769819259644,
+          2.767317660890582,
+          4.021327495574951
+        ]
+      ],
+      "mount_to_arm_root_xyz_m": [
+        -0.0039634800766936845,
+        -5.90604237737935e-09,
+        0.05768312767349508
+      ],
+      "mount_to_arm_root_rpy_rad": [
+        0,
+        0,
+        0.0
+      ],
+      "status": "inspection_only"
+    },
+    "satellite_15__starlink_sldasm9": {
+      "satellite": "satellite_15",
+      "arm": "starlink_sldasm9",
+      "bounds_m": [
+        [
+          -3.6264214515686035,
+          -3.9665350914001465,
+          -1.0403742790222168
+        ],
+        [
+          2.7193901538848877,
+          4.0334649085998535,
+          1.7576866758275218
+        ]
+      ],
+      "mount_to_arm_root_xyz_m": [
+        0.009087204933166504,
+        0.008519247174263,
+        0.16000000119209304
+      ],
+      "mount_to_arm_root_rpy_rad": [
+        -1.5707963267948966,
+        0,
+        0.0
+      ],
+      "status": "inspection_only"
+    },
+    "satellite_15__airbus_vispa": {
+      "satellite": "satellite_15",
+      "arm": "airbus_vispa",
+      "bounds_m": [
+        [
+          -3.6264214515686035,
+          -3.9665350914001465,
+          -1.0403742790222168
+        ],
+        [
+          2.7193901538848877,
+          4.0334649085998535,
+          1.9133942523734726
+        ]
+      ],
+      "mount_to_arm_root_xyz_m": [
+        -0.0039634800766936845,
+        -5.90604237737935e-09,
+        0.05768312767349515
+      ],
+      "mount_to_arm_root_rpy_rad": [
+        0,
+        0,
+        0.0
+      ],
+      "status": "inspection_only"
+    },
+    "satellite_16__starlink_sldasm9": {
+      "satellite": "satellite_16",
+      "arm": "starlink_sldasm9",
+      "bounds_m": [
+        [
+          -0.8364143967628479,
+          -10.90087996768016,
+          -0.8364142179489136
+        ],
+        [
+          1.5624922212242893,
+          0.16518734395503998,
+          0.8364142179489136
+        ]
+      ],
+      "mount_to_arm_root_xyz_m": [
+        0.009087204933166504,
+        0.008519247174263,
+        0.16000000119209382
+      ],
+      "mount_to_arm_root_rpy_rad": [
+        -1.5707963267948966,
+        0,
+        0.0
+      ],
+      "status": "inspection_only"
+    },
+    "satellite_16__airbus_vispa": {
+      "satellite": "satellite_16",
+      "arm": "airbus_vispa",
+      "bounds_m": [
+        [
+          -0.8364143967628479,
+          -11.331141542778205,
+          -0.8364142179489136
+        ],
+        [
+          0.8364140391349792,
+          0.16518734395503998,
+          0.8364142179489136
+        ]
+      ],
+      "mount_to_arm_root_xyz_m": [
+        -0.0039634800766936845,
+        -5.90604237737935e-09,
+        0.057683127673495926
+      ],
+      "mount_to_arm_root_rpy_rad": [
+        0,
+        0,
+        0.0
+      ],
+      "status": "inspection_only"
+    },
+    "scifi__starlink_sldasm9": {
+      "satellite": "scifi",
+      "arm": "starlink_sldasm9",
+      "bounds_m": [
+        [
+          -4.000000476837158,
+          -3.1692566871643066,
+          -1.5172533988952637
+        ],
+        [
+          3.9999992847442627,
+          1.7223821878433228,
+          1.5290324687957764
+        ]
+      ],
+      "mount_to_arm_root_xyz_m": [
+        -0.008519247174263014,
+        0.009087204933166518,
+        0.16000000119209307
+      ],
+      "mount_to_arm_root_rpy_rad": [
+        -1.5707963267948966,
+        0,
+        1.5707963267948966
+      ],
+      "status": "inspection_only"
+    },
+    "scifi__airbus_vispa": {
+      "satellite": "scifi",
+      "arm": "airbus_vispa",
+      "bounds_m": [
+        [
+          -4.000000476837158,
+          -3.1692566871643066,
+          -1.5172533988952637
+        ],
+        [
+          4.064010334473639,
+          1.7223821878433228,
+          1.5290324687957764
+        ]
+      ],
+      "mount_to_arm_root_xyz_m": [
+        5.90604237737935e-09,
+        -0.003963480076693698,
+        0.05768312767349515
+      ],
+      "mount_to_arm_root_rpy_rad": [
+        0,
+        0,
+        1.5707963267948966
+      ],
+      "status": "inspection_only"
+    },
+    "sputnik__starlink_sldasm9": {
+      "satellite": "sputnik",
+      "arm": "starlink_sldasm9",
+      "bounds_m": [
+        [
+          -1.4713736772537231,
+          -4.0,
+          -0.1451166421175003
+        ],
+        [
+          1.3316010236740112,
+          4.0,
+          3.975804192468393
+        ]
+      ],
+      "mount_to_arm_root_xyz_m": [
+        0.009087204933166504,
+        0.008519247174263,
+        0.16000000119209293
+      ],
+      "mount_to_arm_root_rpy_rad": [
+        -1.5707963267948966,
+        0,
+        0.0
+      ],
+      "status": "inspection_only"
+    },
+    "sputnik__airbus_vispa": {
+      "satellite": "sputnik",
+      "arm": "airbus_vispa",
+      "bounds_m": [
+        [
+          -1.4713736772537231,
+          -4.0,
+          -0.1451166421175003
+        ],
+        [
+          1.3316010236740112,
+          4.0,
+          4.243973426264778
+        ]
+      ],
+      "mount_to_arm_root_xyz_m": [
+        -0.0039634800766936845,
+        -5.90604237737935e-09,
+        0.05768312767349504
+      ],
+      "mount_to_arm_root_rpy_rad": [
+        0,
+        0,
+        0.0
+      ],
+      "status": "inspection_only"
+    },
+    "solidworks_satellite__starlink_sldasm9": {
+      "satellite": "solidworks_satellite",
+      "arm": "starlink_sldasm9",
+      "bounds_m": [
+        [
+          -4.672469139099121,
+          -0.9181838631629944,
+          -4.0
+        ],
+        [
+          0.0,
+          2.158316975644392,
+          4.0
+        ]
+      ],
+      "mount_to_arm_root_xyz_m": [
+        0.009087204933166504,
+        0.008519247174263,
+        0.16000000119209293
+      ],
+      "mount_to_arm_root_rpy_rad": [
+        -1.5707963267948966,
+        0,
+        0.0
+      ],
+      "status": "inspection_only"
+    },
+    "solidworks_satellite__airbus_vispa": {
+      "satellite": "solidworks_satellite",
+      "arm": "airbus_vispa",
+      "bounds_m": [
+        [
+          -4.672469139099121,
+          -0.9181838631629944,
+          -4.0
+        ],
+        [
+          0.0,
+          2.357725179289869,
+          4.0
+        ]
+      ],
+      "mount_to_arm_root_xyz_m": [
+        -0.0039634800766936845,
+        -5.90604237737935e-09,
+        0.05768312767349504
+      ],
+      "mount_to_arm_root_rpy_rad": [
+        0,
+        0,
+        0.0
+      ],
+      "status": "inspection_only"
+    },
+    "satellite_14__starlink_sldasm9": {
+      "satellite": "satellite_14",
+      "arm": "starlink_sldasm9",
+      "bounds_m": [
+        [
+          -4.0,
+          -2.0200514793395996,
+          -1.0491983890533447
+        ],
+        [
+          4.0,
+          1.43662691116333,
+          1.0491983890533447
+        ]
+      ],
+      "mount_to_arm_root_xyz_m": [
+        0.009087204933166504,
+        0.008519247174263,
+        0.16000000119209298
+      ],
+      "mount_to_arm_root_rpy_rad": [
+        -1.5707963267948966,
+        0,
+        0.0
+      ],
+      "status": "inspection_only"
+    },
+    "satellite_14__airbus_vispa": {
+      "satellite": "satellite_14",
+      "arm": "airbus_vispa",
+      "bounds_m": [
+        [
+          -4.0,
+          -2.0200514793395996,
+          -1.0491983890533447
+        ],
+        [
+          4.0,
+          1.43662691116333,
+          1.0491983890533447
+        ]
+      ],
+      "mount_to_arm_root_xyz_m": [
+        -0.0039634800766936845,
+        -5.90604237737935e-09,
+        0.057683127673495094
+      ],
+      "mount_to_arm_root_rpy_rad": [
+        0,
+        0,
+        0.0
+      ],
+      "status": "inspection_only"
+    },
+    "satellite_sb1__starlink_sldasm9": {
+      "satellite": "satellite_sb1",
+      "arm": "starlink_sldasm9",
+      "bounds_m": [
+        [
+          -4.0,
+          -1.5608320236206055,
+          -0.8163265585899353
+        ],
+        [
+          4.0,
+          1.5608320236206055,
+          1.789638876914978
+        ]
+      ],
+      "mount_to_arm_root_xyz_m": [
+        0.009087204933166504,
+        0.008519247174263,
+        0.16000000119209293
+      ],
+      "mount_to_arm_root_rpy_rad": [
+        -1.5707963267948966,
+        0,
+        0.0
+      ],
+      "status": "inspection_only"
+    },
+    "satellite_sb1__airbus_vispa": {
+      "satellite": "satellite_sb1",
+      "arm": "airbus_vispa",
+      "bounds_m": [
+        [
+          -4.0,
+          -1.5608320236206055,
+          -0.8163265585899353
+        ],
+        [
+          4.0,
+          1.5608320236206055,
+          1.789638876914978
+        ]
+      ],
+      "mount_to_arm_root_xyz_m": [
+        -0.0039634800766936845,
+        -5.90604237737935e-09,
+        0.05768312767349504
+      ],
+      "mount_to_arm_root_rpy_rad": [
+        0,
+        0,
+        0.0
+      ],
+      "status": "inspection_only"
+    },
+    "satellite_model1__starlink_sldasm9": {
+      "satellite": "satellite_model1",
+      "arm": "starlink_sldasm9",
+      "bounds_m": [
+        [
+          -3.9375,
+          -0.9576949924829232,
+          -0.40625
+        ],
+        [
+          4.0625,
+          0.7265625,
+          2.018749952316284
+        ]
+      ],
+      "mount_to_arm_root_xyz_m": [
+        0.009087204933166504,
+        0.008519247174263,
+        0.16000000119209315
+      ],
+      "mount_to_arm_root_rpy_rad": [
+        -1.5707963267948966,
+        0,
+        0.0
+      ],
+      "status": "inspection_only"
+    },
+    "satellite_model1__airbus_vispa": {
+      "satellite": "satellite_model1",
+      "arm": "airbus_vispa",
+      "bounds_m": [
+        [
+          -3.9375,
+          -2.1162351508518564,
+          -0.40625
+        ],
+        [
+          4.0625,
+          0.7265625,
+          2.018749952316284
+        ]
+      ],
+      "mount_to_arm_root_xyz_m": [
+        0.0039634800766936845,
+        5.90604237737935e-09,
+        0.05768312767349526
+      ],
+      "mount_to_arm_root_rpy_rad": [
+        0,
+        0,
+        3.141592653589793
+      ],
+      "status": "inspection_only"
+    },
+    "catch01__starlink_sldasm9": {
+      "satellite": "catch01",
+      "arm": "starlink_sldasm9",
+      "bounds_m": [
+        [
+          -3.9767072200775146,
+          -4.848041549320932,
+          -1.3044747114181519
+        ],
+        [
+          4.023292541503906,
+          2.164350748062134,
+          1.4661768674850464
+        ]
+      ],
+      "mount_to_arm_root_xyz_m": [
+        0.009087204933166504,
+        0.008519247174263,
+        0.16000000119209293
+      ],
+      "mount_to_arm_root_rpy_rad": [
+        -1.5707963267948966,
+        0,
+        0.0
+      ],
+      "status": "inspection_only"
+    },
+    "catch01__airbus_vispa": {
+      "satellite": "catch01",
+      "arm": "airbus_vispa",
+      "bounds_m": [
+        [
+          -3.9767072200775146,
+          -5.166550539950951,
+          -1.3044747114181519
+        ],
+        [
+          4.023292541503906,
+          2.164350748062134,
+          1.4661768674850464
+        ]
+      ],
+      "mount_to_arm_root_xyz_m": [
+        -0.0039634800766936845,
+        -5.90604237737935e-09,
+        0.05768312767349504
+      ],
+      "mount_to_arm_root_rpy_rad": [
+        0,
+        0,
+        0.0
+      ],
+      "status": "inspection_only"
+    },
+    "satellite_17__starlink_sldasm9": {
+      "satellite": "satellite_17",
+      "arm": "starlink_sldasm9",
+      "bounds_m": [
+        [
+          -1.390374779701233,
+          -1.2899214455068617,
+          -4.0
+        ],
+        [
+          2.5107692902078704,
+          2.86627459526062,
+          4.0
+        ]
+      ],
+      "mount_to_arm_root_xyz_m": [
+        0.009087204933166504,
+        0.008519247174263,
+        0.16000000119209337
+      ],
+      "mount_to_arm_root_rpy_rad": [
+        -1.5707963267948966,
+        0,
+        0.0
+      ],
+      "status": "inspection_only"
+    },
+    "satellite_17__airbus_vispa": {
+      "satellite": "satellite_17",
+      "arm": "airbus_vispa",
+      "bounds_m": [
+        [
+          -1.390374779701233,
+          -2.0300999356605045,
+          -4.0
+        ],
+        [
+          1.759451342284266,
+          2.86627459526062,
+          4.0
+        ]
+      ],
+      "mount_to_arm_root_xyz_m": [
+        -0.0039634800766936845,
+        -5.90604237737935e-09,
+        0.05768312767349548
+      ],
+      "mount_to_arm_root_rpy_rad": [
+        0,
+        0,
+        0.0
+      ],
+      "status": "inspection_only"
+    },
+    "artificial1__starlink_sldasm9": {
+      "satellite": "artificial1",
+      "arm": "starlink_sldasm9",
+      "bounds_m": [
+        [
+          -4.0,
+          -1.2081829887157114,
+          -0.3595603108406067
+        ],
+        [
+          4.0,
+          1.6225225925445557,
+          2.575684070587158
+        ]
+      ],
+      "mount_to_arm_root_xyz_m": [
+        0.009087204933166504,
+        0.008519247174263,
+        0.16000000119209293
+      ],
+      "mount_to_arm_root_rpy_rad": [
+        -1.5707963267948966,
+        0,
+        0.0
+      ],
+      "status": "inspection_only"
+    },
+    "artificial1__airbus_vispa": {
+      "satellite": "artificial1",
+      "arm": "airbus_vispa",
+      "bounds_m": [
+        [
+          -4.017265238207584,
+          -0.7673949003219604,
+          -0.3595603108406067
+        ],
+        [
+          4.0,
+          1.6225225925445557,
+          2.575684070587158
+        ]
+      ],
+      "mount_to_arm_root_xyz_m": [
+        -0.0039634800766936845,
+        -5.90604237737935e-09,
+        0.05768312767349504
+      ],
+      "mount_to_arm_root_rpy_rad": [
+        0,
+        0,
+        0.0
+      ],
+      "status": "inspection_only"
+    },
+    "satellite_6__starlink_sldasm9": {
+      "satellite": "satellite_6",
+      "arm": "starlink_sldasm9",
+      "bounds_m": [
+        [
+          -2.177809476852417,
+          -0.40626540780067444,
+          -3.9941649436950684
+        ],
+        [
+          0.7650770545005798,
+          2.3270004127954125,
+          4.005835056304932
+        ]
+      ],
+      "mount_to_arm_root_xyz_m": [
+        0.009087204933166504,
+        0.008519247174263,
+        0.16000000119209298
+      ],
+      "mount_to_arm_root_rpy_rad": [
+        -1.5707963267948966,
+        0,
+        0.0
+      ],
+      "status": "inspection_only"
+    },
+    "satellite_6__airbus_vispa": {
+      "satellite": "satellite_6",
+      "arm": "airbus_vispa",
+      "bounds_m": [
+        [
+          -2.177809476852417,
+          -0.40626540780067444,
+          -3.9941649436950684
+        ],
+        [
+          0.7650770545005798,
+          1.5582228676002816,
+          4.005835056304932
+        ]
+      ],
+      "mount_to_arm_root_xyz_m": [
+        -0.0039634800766936845,
+        -5.90604237737935e-09,
+        0.057683127673495094
+      ],
+      "mount_to_arm_root_rpy_rad": [
+        0,
+        0,
+        0.0
+      ],
+      "status": "inspection_only"
+    }
+  }
+}

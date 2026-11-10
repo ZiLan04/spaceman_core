@@ -1,0 +1,30 @@
+{
+  "satellite_id": "legacy10",
+  "mount_frame": "legacy10_mount",
+  "mount_xyz_m": [
+    0.6696842409943525,
+    0.04390860234940623,
+    2.6205085134159303
+  ],
+  "mount_rpy_rad": [
+    -1.4013235016818726e-12,
+    -1.5707955494145627,
+    -3.06792001243422
+  ],
+  "source": {
+    "source_archive": "卫星 (10)",
+    "note": "body geometry preserved from previous library"
+  },
+  "surface_fit": {
+    "grid": "17x17",
+    "footprint_m": [
+      0.32,
+      0.32
+    ],
+    "coverage": 1,
+    "clearance_m": 0.002,
+    "region": "upper axial body shoulder below head instruments; +Z provisional work direction"
+  },
+  "status": "body_mount_candidate_pending_structural_and_task_reach_validation",
+  "dynamics_ready": false
+}

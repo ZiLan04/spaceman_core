@@ -1,0 +1,80 @@
+{
+  "satellite_id": "solidworks_satellite",
+  "mount_frame": "solidworks_satellite_mount",
+  "mount_xyz_m": [
+    -2.437326161586077,
+    0.20975094889472667,
+    -0.29954458009684976
+  ],
+  "mount_rpy_rad": [
+    3.141592653589793,
+    -0.654498604372334,
+    1.5707963267948966
+  ],
+  "source": {
+    "satellite_id": "solidworks_satellite",
+    "source_archive": "solidworks中的卫星模型可用.zip",
+    "file": "solidworks中的卫星模型可用\\temp\\Satellite.SLDPRT",
+    "status": "decoded",
+    "diagnostics": [
+      {
+        "code": "modern.configuration_manager_version_unsupported",
+        "severity": "info",
+        "kind": "unsupported",
+        "message": "configuration-manager header layout is not enabled for this internal version",
+        "offset": null,
+        "stream_path": "Contents/CMgrHdr2",
+        "details": {
+          "internal_version": "14000"
+        }
+      },
+      {
+        "code": "modern.property_stream_has_no_named_values",
+        "severity": "info",
+        "kind": "preserved",
+        "message": "property stream contains no named properties in the selected section",
+        "offset": null,
+        "stream_path": "docProps/Config-0-Properties.xml",
+        "details": {}
+      },
+      {
+        "code": "modern.property_stream_has_no_named_values",
+        "severity": "info",
+        "kind": "preserved",
+        "message": "property stream contains no named properties in the selected section",
+        "offset": null,
+        "stream_path": "docProps/custom.xml",
+        "details": {}
+      }
+    ],
+    "cache": "sources\\solidworks_satellite\\geometry.npy",
+    "triangles": 8562,
+    "bounds": [
+      [
+        -255.0,
+        -50.109886169433594,
+        -218.3000030517578
+      ],
+      [
+        0.0,
+        50.109886169433594,
+        218.3000030517578
+      ]
+    ],
+    "units": "millimeter",
+    "source_sha256": "40e727d4e902568829598b7173bc0c496e9aa7bb12fedb5bd8b2b6eb5953fc8a",
+    "scope": "saved display tessellation, not exact BRep; assembly occurrence transforms not independently reconstructed",
+    "source_to_model_scale": 0.01832340789776178
+  },
+  "surface_fit": {
+    "grid": "17x17",
+    "footprint_m": [
+      0.32,
+      0.32
+    ],
+    "coverage": 1,
+    "clearance_m": 0.002
+  },
+  "status": "automatically_screened_candidate_pending_task_and_structural_review",
+  "dynamics_ready": false
+}

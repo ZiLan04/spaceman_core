@@ -14,10 +14,7 @@ from configs.registry import (
 from configs.schema import ManipulatorSpec, SatelliteManipulatorSpec, SatelliteSpec
 
 
-FLEET_SATELLITES = {
-    "artificial2", "design", "gps", "legacy10", "satellite_2",
-    "satellite_4", "satellite_5", "satellite_8", "station", "uydu",
-}
+FLEET_SATELLITES = {'artificial2', 'catch01', 'design', 'satellite_11', 'satellite_model1', 'legacy10', 'solidworks_satellite', 'satellite_8', 'gps', 'artificial1', 'satellite_17', 'satellite_16', 'satellite_9', 'navstar', 'satellite_12', 'satellite_15', 'sputnik', 'satellite_5', 'satellite_14', 'satellite_2', 'satellite_sb1', 'uydu', 'satellite_6', 'satellite_4', 'scifi', 'satellite_13', 'station'}
 FLEET_MANIPULATORS = {"airbus_vispa", "starlink_sldasm9"}
 FLEET_COMBINATIONS = {
     f"{satellite}__{manipulator}"

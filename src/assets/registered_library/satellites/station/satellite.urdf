@@ -1,0 +1,44 @@
+<?xml version='1.0' encoding='utf-8'?>
+<robot name="station_mount">
+  <link name="base_link">
+    <visual>
+      <geometry>
+        <mesh filename="satellite.stl" />
+      </geometry>
+      <material name="satellite_grey">
+        <color rgba=".6 .7 .8 1" />
+      </material>
+    </visual>
+    <collision>
+      <geometry>
+        <mesh filename="satellite.stl" />
+      </geometry>
+    </collision>
+  </link>
+  <link name="station_mount" />
+  <joint name="satellite_mount_fixed" type="fixed">
+    <parent link="base_link" />
+    <child link="station_mount" />
+    <origin xyz="-1.2 0.6066343669416991 0.0" rpy="-1.5707963267948966 -1.5707963267948966 0.0" />
+  </joint>
+  <link name="mount_support">
+    <visual>
+      <geometry>
+        <mesh filename="mount_support.stl" />
+      </geometry>
+      <material name="mount_green">
+        <color rgba=".2 .7 .35 1" />
+      </material>
+    </visual>
+    <collision>
+      <geometry>
+        <mesh filename="mount_support.stl" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="support_fixed" type="fixed">
+    <parent link="station_mount" />
+    <child link="mount_support" />
+    <origin xyz="0 0 0" rpy="0 0 0" />
+  </joint>
+</robot>

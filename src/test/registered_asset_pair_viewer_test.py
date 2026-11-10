@@ -16,6 +16,7 @@ Examples:
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import sys
 import time
@@ -33,6 +34,8 @@ from configs.configs import (  # noqa: E402
     LIGHT_SETTINGS,
     SCENE_SETTINGS,
     TPV_CAM_SETTINGS,
+    SPACE_BACKGROUND_SETTINGS,
+    EARTH_BACKGROUND_SETTINGS,
 )
 from configs.registry import build_genesis_asset, registry  # noqa: E402
 from configs.schema import SatelliteManipulatorSpec, SatelliteSpec  # noqa: E402
@@ -59,6 +62,7 @@ def build_arg_parser() -> argparse.ArgumentParser:
         description="Load a target satellite and satellite-manipulator in a viewer."
     )
     parser.add_argument("--target-satellite", default=DEFAULT_TARGET_SATELLITE)
+    parser.add_argument("--scene-plan", type=Path, help="JSON from asset_pair_api.py plan; applies safe poses and named joints")
     parser.add_argument(
         "--satellite-manipulator", default=DEFAULT_SATELLITE_MANIPULATOR
     )
@@ -122,7 +126,13 @@ def configure_scene(args: argparse.Namespace) -> None:
     SCENE_SETTINGS["renderer"] = None
     SCENE_SETTINGS["show_viewer"] = not args.no_viewer
     if args.no_viewer:
-        os.environ["PYOPENGL_PLATFORM"] = "pyglet"
+        os.environ.pop("PYOPENGL_PLATFORM", None)
+        APP_SETTINGS["backend"] = gs.cpu
+        SPACE_BACKGROUND_SETTINGS["enable"] = False
+        EARTH_BACKGROUND_SETTINGS["enable"] = False
+        # Upstream with_camera() tests key presence, not enable_recording.
+        # Remove the camera for a true display-free loading test.
+        TPV_CAM_SETTINGS.pop("camera", None)
     SCENE_SETTINGS["viewer_options"] = gs.options.ViewerOptions(
         camera_pos=args.viewer_position,
         camera_lookat=args.viewer_lookat,
@@ -133,6 +143,17 @@ def configure_scene(args: argparse.Namespace) -> None:
 
 def main() -> None:
     args = build_arg_parser().parse_args()
+    plan = None
+    if args.scene_plan:
+        from asset_pair_api import resolve_specs
+        plan = json.loads(args.scene_plan.read_text(encoding="utf-8"))
+        resolve_specs(plan)
+        args.target_satellite = plan["target_satellite"]
+        args.satellite_manipulator = plan["pair_id"]
+        args.target_position = plan["target_pose"]["position_m"]
+        args.manipulator_position = plan["carrier_pose"]["position_m"]
+        args.viewer_position = plan["camera"]["position_m"]
+        args.viewer_lookat = plan["camera"]["lookat_m"]
     if args.no_viewer and args.steps <= 0:
         args.steps = 2
 
@@ -143,17 +164,20 @@ def main() -> None:
 
     sim = GenesisSim(num_envs=1, light_preset=args.light_preset)
     target = sim.scene.add_entity(
-        **build_genesis_asset(target_spec, pos=args.target_position),
+        **build_genesis_asset(target_spec, pos=args.target_position, **({"euler": plan["target_pose"]["euler_deg"]} if plan else {})),
         name=f"registry_test_target_{args.target_satellite}",
     )
     manipulator = sim.scene.add_entity(
         **build_genesis_asset(
-            manipulator_spec, pos=args.manipulator_position
+            manipulator_spec, pos=args.manipulator_position, **({"euler": plan["carrier_pose"]["euler_deg"]} if plan else {})
         ),
         name=f"registry_test_manipulator_{args.satellite_manipulator}",
     )
 
     sim.start()
+    if plan:
+        from asset_pair_api import apply_initial_pose
+        apply_initial_pose({"carrier": manipulator}, plan)
     target_qpos = target.get_qpos().detach().clone()
     manipulator_qpos = manipulator.get_qpos().detach().clone()
     print(

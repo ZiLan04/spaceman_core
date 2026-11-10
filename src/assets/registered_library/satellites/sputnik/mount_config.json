@@ -1,0 +1,40 @@
+{
+  "satellite_id": "sputnik",
+  "mount_frame": "sputnik_mount",
+  "mount_xyz_m": [
+    -0.3409793727239791,
+    -0.2415249735665143,
+    1.3379246962589
+  ],
+  "mount_rpy_rad": [
+    2.220446049250313e-16,
+    -0.6000516122871551,
+    1.0874598085095768
+  ],
+  "source": {
+    "satellite_id": "sputnik",
+    "source_archive": "斯普特尼克卫星可用.zip",
+    "member": "scene.gltf",
+    "status": "converted",
+    "triangles": 55653,
+    "source_extent": [
+      5.808782339096069,
+      16.578907012939453,
+      3.84866201877594
+    ],
+    "source_sha256": "e3c738d6c44022017172daf667712e5ceed2f10f66524b1ed34cb6ba9b1d6103",
+    "source_to_model_scale": 0.48254085711176165
+  },
+  "surface_fit": {
+    "grid": "17x17",
+    "footprint_m": [
+      0.32,
+      0.32
+    ],
+    "coverage": 1,
+    "clearance_m": 0.002,
+    "region": "central main bus upper sloped shell; solar wings excluded"
+  },
+  "status": "body_mount_candidate_pending_structural_and_task_reach_validation",
+  "dynamics_ready": false
+}

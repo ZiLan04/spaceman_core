@@ -1,9 +1,227 @@
-extends: _profiles/starlink_sldasm9.yaml
-id: satellite_4__starlink_sldasm9
-urdf: ../../assets/urdf/combinations/satellite_4__starlink_sldasm9.urdf
-grasp_sites:
-  - {id: default, link: satellite_4_mount, position: [0.0, 0.0, 0.0]}
-mount_site: {link: satellite_4_mount, position: [0.0, 0.0, 0.0]}
+kind: satellite_manipulator
+links:
+  base: base_link
+morph:
+  spawn:
+    position:
+    - 15.7338228225708
+    - 0.0
+    - 0.0
+    euler:
+    - 0.0
+    - 0.0
+    - 0.0
+  fixed: true
+  merge_fixed_links: false
+  collision: false
+  scale: 1.0
+material:
+  gravity_compensation: 1.0
+manipulator:
+  base_link: starlink_space_manipulator_base_link
+  end_effector_link: angular_hand
+  pid_apply_link: base_link
+  tcp:
+    link: angular_hand
+    position:
+    - -0.005
+    - 0
+    - -0.34
+    quaternion:
+    - 0
+    - 1
+    - 0
+    - 0
+  reference_pose:
+    link: angular_hand
+    joint: starlink__space_manipulator_2F-Body_Link_yaw
+    position:
+    - 0.0
+    - 0.0
+    - 0.0
+    quaternion:
+    - 1.0
+    - 0.0
+    - 0.0
+    - 0.0
+  arm_joints:
+  - starlink_space_manipulator_Shoulder_link_1_yaw
+  - starlink_space_manipulator_Upper_arm_Link_1_roll
+  - starlink_space_manipulator_Mid_arm_Link_1_roll
+  - starlink_space_manipulator_Upper_wrist_Link_1_yaw
+  - starlink_space_manipulator_Upper_wrist_Link_2_roll
+  - starlink__space_manipulator_2F-Body_Link_yaw
+  ik:
+    smooth_factor: 0.3
+    max_joint_change: 0.05
+  gripper:
+    joint_names:
+    - angular_joint_1
+    - angular_joint_tip_1
+    - angular_joint_2
+    - angular_joint_tip_2
+    revolute:
+    - 1
+    - 0.65
+    - 1
+    - 0.65
+    force_scale: 1.0
+    open_position: 0.0
+    closed_position: 1.0
+    contact_links:
+    - angular_tip_1
+    - angular_tip_2
+  control:
+    initial_dofs:
+    - 0.0
+    - 0.0
+    - 0.0
+    - 0.0
+    - 0.0
+    - 0.0
+    - 0
+    - 0
+    - 0
+    - 0
+    kp:
+    - 4500
+    - 4500
+    - 3500
+    - 3500
+    - 2000
+    - 2000
+    - 10
+    - 10
+    - 10
+    - 10
+    kv:
+    - 450
+    - 450
+    - 350
+    - 350
+    - 200
+    - 200
+    - 1
+    - 1
+    - 1
+    - 1
+    force_min:
+    - -87
+    - -87
+    - -87
+    - -87
+    - -12
+    - -12
+    - -2
+    - -2
+    - -2
+    - -2
+    force_max:
+    - 87
+    - 87
+    - 87
+    - 87
+    - 12
+    - 12
+    - 2
+    - 2
+    - 2
+    - 2
+pid:
+  enable_pid: false
+cameras:
+  wrist:
+    camera:
+      res:
+      - 84
+      - 84
+      pos:
+      - -1
+      - -1
+      - -1
+      lookat:
+      - 0
+      - 0
+      - 0
+      fov: 60
+      GUI: false
+    mount_link: starlink__space_manipulator_2F-Body_Link
+    position_offset:
+    - 0.05
+    - -0.08
+    - -0.07
+    lookat_offset:
+    - 0.05
+    - -1.0
+    - -0.1
+    up_offset:
+    - 0.15
+    - -1.0
+    - -1.0
+  base:
+    camera:
+      res:
+      - 84
+      - 84
+      pos:
+      - -1
+      - -1
+      - -1
+      lookat:
+      - 0
+      - 0
+      - 0
+      fov: 82
+      GUI: false
+    mount_link: starlink_space_manipulator_base_link
+    position_offset:
+    - 0.25
+    - 0.5
+    - 0.4
+    lookat_offset:
+    - -0.5
+    - 0.55
+    - 0.75
+    up_offset:
+    - 0.0
+    - 0.0
+    - 1.0
 parameters:
-  components: {satellite: satellite_4, manipulator: starlink_sldasm9}
-  calibration: {status: provisional, pending: [grasp_site, reference_pose, camera_extrinsics, pid]}
+  components:
+    satellite: satellite_4
+    manipulator: starlink_sldasm9
+  calibration:
+    status: rotary_gripper_unvalidated
+    pending:
+    - grasp_site
+    - initial_task_pose
+    - tcp
+    - pid
+    - camera_extrinsics
+  grasp_site_status: candidate_not_grasp_validated
+  asset_status: geometry_candidate
+  task_ready: false
+id: satellite_4__starlink_sldasm9
+urdf: ../../assets/registered_library/combinations/satellite_4__starlink_sldasm9.urdf
+grasp_sites:
+- id: body_surface_candidate
+  link: base_link
+  position:
+  - 0
+  - 0.5000001517447981
+  - 0.8
+  quaternion:
+  - 0.7071067811865476
+  - -0.7071067811865476
+  - 0.0
+  - 0.0
+mount_site:
+  link: satellite_4_mount
+  position:
+  - 0.0
+  - 0.0
+  - 0.0
+  euler:
+  - 0.0
+  - 0.0
+  - 0.0

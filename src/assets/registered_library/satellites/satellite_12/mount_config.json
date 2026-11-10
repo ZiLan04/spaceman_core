@@ -1,0 +1,39 @@
+{
+  "satellite_id": "satellite_12",
+  "mount_frame": "satellite_12_mount",
+  "mount_xyz_m": [
+    -0.42978277927665665,
+    -0.048447198595315544,
+    0.12321589375317275
+  ],
+  "mount_rpy_rad": [
+    -1.232595164407831e-32,
+    -1.1780967567368361,
+    1.0555399031630314e-16
+  ],
+  "source": {
+    "satellite_id": "satellite_12",
+    "source_archive": "卫星 (12)可用.zip",
+    "member": "76074931/glbfile.glb",
+    "status": "converted",
+    "triangles": 5238,
+    "source_extent": [
+      17.13134002685547,
+      7.8460302352905265,
+      7.2472498416900635
+    ],
+    "source_sha256": "b10e4eef6ae8f1e1b5b33ff5c09132ba94b87a1015b7aacc07325f0cf3007963",
+    "source_to_model_scale": 0.4669803989331262
+  },
+  "surface_fit": {
+    "grid": "17x17",
+    "footprint_m": [
+      0.4,
+      0.4
+    ],
+    "coverage": 1,
+    "clearance_m": 0.002
+  },
+  "status": "automatically_screened_candidate_pending_task_and_structural_review",
+  "dynamics_ready": false
+}

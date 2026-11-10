@@ -1,0 +1,39 @@
+{
+  "satellite_id": "scifi",
+  "mount_frame": "scifi_mount",
+  "mount_xyz_m": [
+    0.619519532530782,
+    -0.7921738257843349,
+    -0.10568590329828764
+  ],
+  "mount_rpy_rad": [
+    3.141592653589793,
+    -1.401868605194988,
+    0.18410646478623383
+  ],
+  "source": {
+    "satellite_id": "scifi",
+    "source_archive": "SciFi卫星可用。.zip",
+    "member": "22458896/scifi-sattelite.blend",
+    "status": "converted",
+    "triangles": 1067664,
+    "source_extent": [
+      14.882594585418701,
+      9.100034952163696,
+      5.66707968711853
+    ],
+    "source_sha256": "abcd38f4adadbb218d2a15500c72b1e2280f8140c3c9152150d65df44bac615a",
+    "source_to_model_scale": 0.5375406790854896
+  },
+  "surface_fit": {
+    "grid": "17x17",
+    "footprint_m": [
+      0.4,
+      0.4
+    ],
+    "coverage": 1,
+    "clearance_m": 0.002
+  },
+  "status": "automatically_screened_candidate_pending_task_and_structural_review",
+  "dynamics_ready": false
+}

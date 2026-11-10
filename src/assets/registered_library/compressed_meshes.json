@@ -1,0 +1,12 @@
+[
+  {
+    "path": "satellites/catch01/satellite.stl",
+    "bytes": 121524984,
+    "sha256": "1b5ed42e0767847ca282aac27b46c8810908c053f82150d9f4f1c19d1caa2d7a"
+  },
+  {
+    "path": "satellites/scifi/satellite.stl",
+    "bytes": 53383284,
+    "sha256": "7451d7cfa34cd538a7991d8f0f411639078a46bcfc939663b8dcde39b6cc8f8b"
+  }
+]

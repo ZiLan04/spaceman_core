@@ -1,0 +1,44 @@
+<?xml version='1.0' encoding='utf-8'?>
+<robot name="satellite_5_provisional_side">
+  <link name="base_link">
+    <visual>
+      <geometry>
+        <mesh filename="satellite.stl" scale="1 1 1" />
+      </geometry>
+      <material name="satellite_body_color">
+        <color rgba="0.65 0.72 0.8 1" />
+      </material>
+    </visual>
+    <collision>
+      <geometry>
+        <mesh filename="satellite.stl" scale="1 1 1" />
+      </geometry>
+    </collision>
+  </link>
+  <link name="satellite_5_mount" />
+  <joint name="satellite_mount_fixed" type="fixed">
+    <parent link="base_link" />
+    <child link="satellite_5_mount" />
+    <origin xyz="-0.38 -0.12 1.1863715513837443" rpy="0.0 0.0 0.0" />
+  </joint>
+  <link name="concept_mount_pad">
+    <visual>
+      <geometry>
+        <mesh filename="body_top_saddle.stl" />
+      </geometry>
+      <material name="saddle_green">
+        <color rgba=".2 .65 .35 1" />
+      </material>
+    </visual>
+    <collision>
+      <geometry>
+        <mesh filename="body_top_saddle.stl" />
+      </geometry>
+    </collision>
+  </link>
+  <joint name="pad_fixed" type="fixed">
+    <parent link="satellite_5_mount" />
+    <child link="concept_mount_pad" />
+    <origin xyz="0 0 0" rpy="0 0 0" />
+  </joint>
+</robot>

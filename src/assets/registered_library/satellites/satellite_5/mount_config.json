@@ -1,0 +1,89 @@
+{
+  "candidate_id": "main_body_top_saddle",
+  "satellite_id": "satellite_5",
+  "parent_link": "base_link",
+  "mount_frame": "satellite_5_mount",
+  "mount_xyz_m": [
+    -0.38,
+    -0.12,
+    1.1863715513837443
+  ],
+  "mount_rpy_rad": [
+    0.0,
+    0.0,
+    0.0
+  ],
+  "mount_frame_axes": "Z satellite +Z; X satellite +X",
+  "arm_id": "starlink_sldasm9",
+  "arm_root_link": "starlink_space_manipulator_base_link",
+  "mount_to_arm_root_xyz_m": [
+    0.0090872,
+    0.0085192,
+    0.15
+  ],
+  "mount_to_arm_root_rpy_rad": [
+    -1.5707963267948966,
+    0,
+    0
+  ],
+  "pad_dimensions_m": [
+    0.32,
+    0.32,
+    0.03
+  ],
+  "status": "held_size_and_structure_confirmation",
+  "source": "local satellite (5) archive",
+  "mesh_scale": [
+    0.04,
+    0.04,
+    0.04
+  ],
+  "scale_status": "PROVISIONAL simulation design scale; not verified real spacecraft dimensions",
+  "assumptions": [
+    "Original provisional scale retained; real dimensions unconfirmed",
+    "Mount is on main body surface selected by face geometry, not outer bounding box",
+    "Structural strength, docking corridors and motion sweep unvalidated"
+  ],
+  "static_screen": {
+    "method": "conservative_5mm_Z_slabs_Y_interval_separation_full_visual_mesh",
+    "joint_pose": "all_zero",
+    "arm_satellite_separation_certified": false,
+    "minimum_separating_gap_m": -0.022617327045191926,
+    "excludes": [
+      "self collision",
+      "motion sweep",
+      "docking corridors",
+      "antenna field of view",
+      "structural attachment",
+      "dynamics"
+    ]
+  },
+  "surface_fit": {
+    "region": "main body upper dome, not antenna",
+    "support": "0.32m square conformal saddle",
+    "sample_grid": "17x17 vertical mesh intersections",
+    "finite_support_fraction": 1.0,
+    "surface_height_range_m": [
+      1.0821947565921786,
+      1.1843715513837443
+    ],
+    "contact_clearance_m": 0.002,
+    "structural_status": "shape fitting only; dome load path unknown"
+  },
+  "revision": 2,
+  "triangle_surface_check": {
+    "method": "full_mesh_AABB_tree_and_triangle_SAT",
+    "joint_pose": "all_zero",
+    "surface_intersection_found": false,
+    "narrowphase_pairs_tested": 0,
+    "first_intersection": null,
+    "exclusions": [
+      "solid containment",
+      "self collision",
+      "motion sweep",
+      "mount strength"
+    ]
+  },
+  "arm_adapter_contract": "arm-specific; read pairs registry, do not assume one arm adapter for all arms",
+  "mount_ready": "geometry_candidate"
+}

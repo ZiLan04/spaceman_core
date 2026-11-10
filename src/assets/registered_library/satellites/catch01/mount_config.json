@@ -1,0 +1,32 @@
+{
+  "satellite_id": "catch01",
+  "mount_frame": "catch01_mount",
+  "mount_xyz_m": [
+    0.09559771518449763,
+    -1.6485399213057776,
+    -0.16306270113460017
+  ],
+  "mount_rpy_rad": [
+    1.5707963267948966,
+    -1.5707963267948966,
+    0.0
+  ],
+  "source": {
+    "satellite_id": "catch01",
+    "source_archive": "catch01_zy_20260902_asm.stp",
+    "cache": "sources/catch01/geometry.npy",
+    "method": "native OCCT 8.0 STEP tessellation",
+    "source_to_model_scale": 0.005818162266098154
+  },
+  "surface_fit": {
+    "grid": "17x17",
+    "footprint_m": [
+      0.32,
+      0.32
+    ],
+    "coverage": 1,
+    "clearance_m": 0.002
+  },
+  "status": "automatically_screened_candidate_pending_task_and_structural_review",
+  "dynamics_ready": false
+}

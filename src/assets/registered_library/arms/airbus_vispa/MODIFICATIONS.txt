@@ -1,0 +1,1 @@
+Uniform simulation-only geometry variant of Airbus VISPA; length scale 1.585391180207. All mesh scales and origin translations scaled. Inertial elements removed: physical mass/inertia require independent assignment. Link names and relative mesh paths adapted. No gripper added. Original upstream license and provenance retained.
