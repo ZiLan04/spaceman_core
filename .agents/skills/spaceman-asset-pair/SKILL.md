@@ -7,6 +7,8 @@ Operate from the repository root. This skill is ordinary Markdown plus Python/JS
 
 ## Select and inspect
 
+For native agent function calling, register `scripts/assets/scene_tool.schema.json` and dispatch its JSON arguments to `scripts/assets/scene_tool.py` or `execute(request)`. Actions are `list_assets`, `plan_scene`, and `render_scene`; render calls are serial and require unique run IDs. For another agent or an OpenAI-compatible DeepSeek API, read `docs/asset-pairs/DEEPSEEK_DEMO.md`. Its optional live API adapter is not a deployment of a specific harness, and a Codex demo does not establish that DeepSeek has run.
+
 Prepare dependencies with the repository's Genesis environment (numpy, scipy, PyYAML; psutil for bounded runs; pytest for checks). Materialize compressed large meshes once:
 
 ```bash

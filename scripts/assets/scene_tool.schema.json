@@ -1,0 +1,20 @@
+{
+  "type": "function",
+  "function": {
+    "name": "spaceman_scene",
+    "description": "List available satellites/arms, plan a selected or seeded-random combination, or safely render one fixed inspection scene in Genesis. No training or grasp execution. Calls must run serially. Read list_assets before choosing IDs. Omit IDs for seeded-random selection; changing topology builds a new scene.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "action": {"type": "string", "enum": ["list_assets", "plan_scene", "render_scene"]},
+        "carrier": {"type": "string", "description": "Carrier satellite ID; omit for random selection"},
+        "arm": {"type": "string", "description": "Registered arm ID; omit for random selection"},
+        "target": {"type": "string", "description": "Target satellite ID; omit for random selection"},
+        "seed": {"type": "integer", "description": "Reproducible random selection seed"},
+        "run_id": {"type": "string", "pattern": "^[A-Za-z0-9_-]{1,64}$", "description": "Required unique output ID for render_scene; do not reuse"}
+      },
+      "required": ["action"],
+      "additionalProperties": false
+    }
+  }
+}
